@@ -28,14 +28,17 @@ jobs:
       
       - name: Install minimal dependencies for migrations
         run: npm install drizzle-kit dotenv postgres
+        working-directory: ./reddit-bot-front
       
       - name: Generate Drizzle migrations
         run: npx drizzle-kit generate
+        working-directory: ./reddit-bot-front
         env:
           DATABASE_URL: ${{ vars.DATABASE_URL }}
       
       - name: Run Drizzle migrations
         run: npx drizzle-kit migrate
+        working-directory: ./reddit-bot-front
         env:
           DATABASE_URL: ${{ vars.DATABASE_URL }}
       
