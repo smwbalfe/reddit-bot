@@ -6,7 +6,7 @@ A Python template for building AI agents with multiple execution modes using Pyd
 
 - **Agent Mode**: Simple Pydantic AI agent with tools
 - **Graph Mode**: LangGraph workflow with state management  
-- **MCP Mode**: Model Context Protocol client/server setu p
+- **MCP Mode**: Model Context Protocol client/server setu  p
  
 ## Installation
 
