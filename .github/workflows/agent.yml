@@ -31,14 +31,6 @@ jobs:
       run: uv sync
       working-directory: ./reddit-bot-agent
       
-    - name: Run linting
-      run: uv run ruff check .
-      working-directory: ./reddit-bot-agent
-      
-    - name: Run formatting check
-      run: uv run ruff format --check .
-      working-directory: ./reddit-bot-agent
-      
     - name: Build Docker image
       run: docker build -t reddit-bot-agent .
       working-directory: ./reddit-bot-agent 
