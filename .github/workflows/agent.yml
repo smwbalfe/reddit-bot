@@ -6,10 +6,10 @@ on:
       - main
       - master
     paths:
-      - 'reddit-bot-agent/**'
+      - 'agent/**'
   pull_request:
     paths:
-      - 'reddit-bot-agent/**'
+      - 'agent/**'
 
 jobs:
   test-and-build:
@@ -29,8 +29,8 @@ jobs:
       
     - name: Install dependencies
       run: uv sync
-      working-directory: ./reddit-bot-agent
+      working-directory: ./agent
       
     - name: Build Docker image
       run: docker build -t reddit-bot-agent .
-      working-directory: ./reddit-bot-agent 
+      working-directory: ./agent 
