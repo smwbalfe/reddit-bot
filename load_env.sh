@@ -1,1 +1,5 @@
-set -a && source .env && set +a
+#!/bin/bash
+
+set -a 
+source .env 
+set +a
