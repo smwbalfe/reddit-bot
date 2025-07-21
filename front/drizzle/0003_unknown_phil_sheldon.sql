@@ -1,0 +1,1 @@
+ALTER TABLE "RedditPost" ADD COLUMN "category" varchar NOT NULL;

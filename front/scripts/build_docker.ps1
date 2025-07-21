@@ -1,0 +1,28 @@
+.\scripts\load_env.ps1
+
+docker stop $(docker ps -q)
+
+# docker build -t saas-template `
+#   --build-arg UPSTASH_REDIS_REST_TOKEN="$env:UPSTASH_REDIS_REST_TOKEN" `
+#   --build-arg UPSTASH_REDIS_REST_URL="$env:UPSTASH_REDIS_REST_URL" `
+#   --build-arg NEXT_PUBLIC_SUPABASE_URL="$env:NEXT_PUBLIC_SUPABASE_URL" `
+#   --build-arg NEXT_PUBLIC_SUPABASE_KEY="$env:NEXT_PUBLIC_SUPABASE_KEY" `
+#   --build-arg NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY="$env:NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY" `
+#   --build-arg NEXT_PUBLIC_POSTHOG_KEY="$env:NEXT_PUBLIC_POSTHOG_KEY" `
+#   --build-arg NEXT_PUBLIC_POSTHOG_HOST="$env:NEXT_PUBLIC_POSTHOG_HOST" `
+#   --build-arg STRIPE_SECRET_KEY="$env:STRIPE_SECRET_KEY" `
+#   --build-arg RESEND_API_KEY="$env:RESEND_API_KEY" `
+#   .
+
+docker run -p 3000:3000 `
+  -e UPSTASH_REDIS_REST_TOKEN="$env:UPSTASH_REDIS_REST_TOKEN" `
+  -e UPSTASH_REDIS_REST_URL="$env:UPSTASH_REDIS_REST_URL" `
+  -e STRIPE_SECRET_KEY="$env:STRIPE_SECRET_KEY" `
+  -e RESEND_API_KEY="$env:RESEND_API_KEY" `
+  -e RESEND_FROM="$env:RESEND_FROM" `
+  -e STRIPE_PRICE_ID="$env:STRIPE_PRICE_ID" `
+  -e STRIPE_WEBHOOK_SECRET="$env:STRIPE_WEBHOOK_SECRET" `
+  -e SUPABASE_SERVICE_ROLE_KEY="$env:SUPABASE_SERVICE_ROLE_KEY" `
+  -e DATABASE_URL="$env:DATABASE_URL" `
+  -e NODE_ENV="development"`
+  saas-template

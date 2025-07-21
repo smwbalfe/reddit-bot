@@ -1,0 +1,53 @@
+services:
+  reddit-bot-agent:
+    build:
+      context: ./reddit-bot-agent
+      dockerfile: Dockerfile
+    ports:
+      - "8000:8000"
+    environment:
+      - LOGFIRE_TOKEN=${LOGFIRE_TOKEN}
+      - REDDIT_CLIENT_ID=${REDDIT_CLIENT_ID}
+      - REDDIT_CLIENT_SECRET=${REDDIT_CLIENT_SECRET}
+      - OPENROUTER_API_KEY=${OPENROUTER_API_KEY}
+    networks:
+      - reddit-bot-network
+    restart: unless-stopped
+
+  reddit-bot-front:
+    build:
+      context: ./reddit-bot-front
+      dockerfile: Dockerfile
+      args:
+        - UPSTASH_REDIS_REST_TOKEN=${UPSTASH_REDIS_REST_TOKEN}
+        - UPSTASH_REDIS_REST_URL=${UPSTASH_REDIS_REST_URL}
+        - NEXT_PUBLIC_SUPABASE_URL=${NEXT_PUBLIC_SUPABASE_URL}
+        - NEXT_PUBLIC_SUPABASE_KEY=${NEXT_PUBLIC_SUPABASE_KEY}
+        - NEXT_PUBLIC_POSTHOG_KEY=${NEXT_PUBLIC_POSTHOG_KEY}
+        - NEXT_PUBLIC_POSTHOG_HOST=${NEXT_PUBLIC_POSTHOG_HOST}
+        - STRIPE_SECRET_KEY=${STRIPE_SECRET_KEY}
+        - RESEND_API_KEY=${RESEND_API_KEY}
+        - NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY=${NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY}
+    ports:
+      - "3000:3000"
+    environment:
+      - UPSTASH_REDIS_REST_TOKEN=${UPSTASH_REDIS_REST_TOKEN}
+      - UPSTASH_REDIS_REST_URL=${UPSTASH_REDIS_REST_URL}
+      - NEXT_PUBLIC_SUPABASE_URL=${NEXT_PUBLIC_SUPABASE_URL}
+      - NEXT_PUBLIC_SUPABASE_KEY=${NEXT_PUBLIC_SUPABASE_KEY}
+      - NEXT_PUBLIC_POSTHOG_KEY=${NEXT_PUBLIC_POSTHOG_KEY}
+      - NEXT_PUBLIC_POSTHOG_HOST=${NEXT_PUBLIC_POSTHOG_HOST}
+      - STRIPE_SECRET_KEY=${STRIPE_SECRET_KEY}
+      - RESEND_API_KEY=${RESEND_API_KEY}
+      - NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY=${NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY}
+      - RESEND_FROM=${RESEND_FROM}
+      - STRIPE_PRICE_ID=${STRIPE_PRICE_ID}
+    depends_on:
+      - reddit-bot-agent
+    networks:
+      - reddit-bot-network
+    restart: unless-stopped
+
+networks:
+  reddit-bot-network:
+    driver: bridge

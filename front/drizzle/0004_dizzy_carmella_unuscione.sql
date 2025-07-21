@@ -1,0 +1,1 @@
+ALTER TABLE "RedditPost" ADD COLUMN "url" text NOT NULL;
