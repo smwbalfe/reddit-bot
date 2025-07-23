@@ -2,17 +2,7 @@ name: Reddit Bot Frontend CI/CD
 
 on:
   push:
-    branches:
-      - main
-      - master
-    paths:
-      - 'front/**'
-      - '.github/workflows/front.yml'
-  
   pull_request:
-    paths:
-      - 'front/**'
-      - '.github/workflows/front.yml'
 
 jobs:
   build:
