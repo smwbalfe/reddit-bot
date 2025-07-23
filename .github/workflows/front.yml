@@ -29,18 +29,12 @@ jobs:
         with:
           node-version: '18'
       
-      - name: Install minimal dependencies for migrations
-        run: npm install drizzle-kit dotenv postgres
+      - name: Install dependencies
+        run: npm install
         working-directory: ./front
       
-      - name: Generate Drizzle migrations
-        run: npx drizzle-kit generate
-        working-directory: ./front
-        env:
-          DATABASE_URL: ${{ vars.DATABASE_URL }}
-      
-      - name: Run Drizzle migrations
-        run: npx drizzle-kit migrate
+      - name: Push schema to production database
+        run: npx drizzle-kit push
         working-directory: ./front
         env:
           DATABASE_URL: ${{ vars.DATABASE_URL }}
