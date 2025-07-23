@@ -1,1 +1,0 @@
-ALTER TABLE "RedditPost" ADD COLUMN "confidence" integer NOT NULL;

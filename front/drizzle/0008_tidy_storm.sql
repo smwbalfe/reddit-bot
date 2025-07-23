@@ -1,1 +1,0 @@
-ALTER TABLE "RedditPost" ALTER COLUMN "confidence" DROP NOT NULL;

@@ -1,2 +1,0 @@
-ALTER TABLE "RedditPost" ADD COLUMN "configId" integer NOT NULL;--> statement-breakpoint
-ALTER TABLE "RedditPost" ADD CONSTRAINT "RedditPost_configId_Config_id_fk" FOREIGN KEY ("configId") REFERENCES "public"."Config"("id") ON DELETE no action ON UPDATE no action;

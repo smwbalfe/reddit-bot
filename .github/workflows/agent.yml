@@ -26,4 +26,21 @@ jobs:
       
     - name: Build Docker image
       run: docker build -t reddit-bot-agent .
+      working-directory: ./agent
+      
+    - name: Login to GitHub Container Registry
+      if: github.event_name == 'push'
+      uses: docker/login-action@v3
+      with:
+        registry: ghcr.io
+        username: ${{ github.actor }}
+        password: ${{ secrets.GITHUB_TOKEN }}
+        
+    - name: Tag and push image
+      if: github.event_name == 'push'
+      run: |
+        docker tag reddit-bot-agent ghcr.io/${{ github.repository_owner }}/reddit-bot-agent:latest
+        docker tag reddit-bot-agent ghcr.io/${{ github.repository_owner }}/reddit-bot-agent:${{ github.sha }}
+        docker push ghcr.io/${{ github.repository_owner }}/reddit-bot-agent:latest
+        docker push ghcr.io/${{ github.repository_owner }}/reddit-bot-agent:${{ github.sha }}
       working-directory: ./agent 
