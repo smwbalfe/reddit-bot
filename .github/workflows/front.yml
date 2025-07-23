@@ -39,6 +39,12 @@ jobs:
         env:
           DATABASE_URL: ${{ vars.DATABASE_URL }}
       
+      - name: Run database migrations
+        run: yarn db:migrate
+        working-directory: ./front
+        env:
+          DATABASE_URL: ${{ vars.DATABASE_URL }}
+      
       - name: Login to GitHub Container Registry
         uses: docker/login-action@v3
         with:
