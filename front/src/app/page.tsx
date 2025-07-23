@@ -1,2 +1,2 @@
-import { Home } from '@/src/lib/features/home'
-export default Home;
+import { Dashboard } from '@/src/lib/features/dashboard'
+export default Dashboard;

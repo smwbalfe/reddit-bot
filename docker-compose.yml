@@ -1,10 +1,8 @@
 services:
   reddit-bot-agent:
     build:
-      context: ./reddit-bot-agent
+      context: ./agent
       dockerfile: Dockerfile
-    ports:
-      - "8000:8000"
     environment:
       - LOGFIRE_TOKEN=${LOGFIRE_TOKEN}
       - REDDIT_CLIENT_ID=${REDDIT_CLIENT_ID}

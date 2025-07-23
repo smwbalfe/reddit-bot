@@ -43,6 +43,27 @@
       "when": 1752613922660,
       "tag": "0005_white_charles_xavier",
       "breakpoints": true
+    },
+    {
+      "idx": 6,
+      "version": "7",
+      "when": 1753141305725,
+      "tag": "0006_tearful_madripoor",
+      "breakpoints": true
+    },
+    {
+      "idx": 7,
+      "version": "7",
+      "when": 1753225501244,
+      "tag": "0007_opposite_captain_america",
+      "breakpoints": true
+    },
+    {
+      "idx": 8,
+      "version": "7",
+      "when": 1753225527110,
+      "tag": "0008_tidy_storm",
+      "breakpoints": true
     }
   ]
 }

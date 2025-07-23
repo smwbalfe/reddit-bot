@@ -12,7 +12,9 @@ dependencies = [
     "python-dotenv",
     "logfire",
     "fastapi",
-    "fastmcp"
+    "fastmcp",
+    "supabase",
+    "asyncpraw"
 ]
 
 requires-python = ">=3.10"

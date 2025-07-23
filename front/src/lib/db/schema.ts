@@ -1,4 +1,4 @@
-import { pgTable, serial, varchar, timestamp, boolean, text, integer } from 'drizzle-orm/pg-core'
+import { pgTable, serial, varchar, timestamp, boolean, text, integer, foreignKey } from 'drizzle-orm/pg-core'
 
 export const accounts = pgTable('Account', {
   id: serial('id').primaryKey(),
@@ -10,14 +10,21 @@ export const accounts = pgTable('Account', {
 
 export const redditPosts = pgTable('RedditPost', {
   id: serial('id').primaryKey(),
+  configId: integer('configId').notNull(),
   subreddit: varchar('subreddit').notNull(),
   title: text('title').notNull(),
   content: text('content').notNull(),
   category: varchar('category').notNull(),
   url: text('url').notNull(),
+  confidence: integer('confidence'),
   createdAt: timestamp('createdAt').defaultNow().notNull(),
   updatedAt: timestamp('updatedAt').defaultNow().notNull(),
-})
+}, (table) => ({
+  configReference: foreignKey({
+    columns: [table.configId],
+    foreignColumns: [configs.id]
+  })
+}))
 
 export const configs = pgTable('Config', {
   id: serial('id').primaryKey(),
