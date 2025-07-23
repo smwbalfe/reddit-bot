@@ -1,0 +1,14 @@
+#!/bin/bash
+
+source .env
+
+docker build -t reddit-agent agent/
+
+docker run -it --rm \
+  -e LOGFIRE_TOKEN=${LOGFIRE_TOKEN} \
+  -e REDDIT_CLIENT_ID=${REDDIT_CLIENT_ID} \
+  -e REDDIT_CLIENT_SECRET=${REDDIT_CLIENT_SECRET} \
+  -e OPENROUTER_API_KEY=${OPENROUTER_API_KEY} \
+  -e NEXT_PUBLIC_SUPABASE_URL=${NEXT_PUBLIC_SUPABASE_URL} \
+  -e SUPABASE_SERVICE_ROLE_KEY=${SUPABASE_SERVICE_ROLE_KEY} \
+  reddit-agent 
