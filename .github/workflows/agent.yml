@@ -2,14 +2,7 @@ name: Reddit Bot Agent CI/CD
 
 on:
   push:
-    branches:
-      - main
-      - master
-    paths:
-      - 'agent/**'
   pull_request:
-    paths:
-      - 'agent/**'
 
 jobs:
   test-and-build:
