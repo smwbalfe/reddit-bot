@@ -11,6 +11,14 @@ load_dotenv()
 
 supabase_url = os.getenv("NEXT_PUBLIC_SUPABASE_URL") or ""
 supabase_key = os.getenv("SUPABASE_SERVICE_ROLE_KEY") or ""
+reddit_client_id = os.getenv("REDDIT_CLIENT_ID") or ""
+reddit_client_secret = os.getenv("REDDIT_CLIENT_SECRET") or ""
+
+print("NEXT_PUBLIC_SUPABASE_URL:", supabase_url)
+print("SUPABASE_SERVICE_ROLE_KEY:", supabase_key)
+print("REDDIT_CLIENT_ID:", reddit_client_id)
+print("REDDIT_CLIENT_SECRET:", reddit_client_secret)
+
 supabase_client = supabase.create_client(supabase_url, supabase_key)
 
 class RedditConfig(BaseModel):
@@ -21,8 +29,8 @@ class RedditConfig(BaseModel):
 def get_reddit_client() -> asyncpraw.Reddit:
     print("Creating Reddit client...")
     return asyncpraw.Reddit(
-        client_id=os.getenv("REDDIT_CLIENT_ID"),
-        client_secret=os.getenv("REDDIT_CLIENT_SECRET"),
+        client_id=reddit_client_id,
+        client_secret=reddit_client_secret,
         user_agent="RedditScraper/1.0",
     )
 
