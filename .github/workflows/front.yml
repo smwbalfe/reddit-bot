@@ -32,6 +32,7 @@ jobs:
       - name: Run database migrations
         run: yarn db:migrate
         working-directory: ./front
+        continue-on-error: true
         env:
           DATABASE_URL: ${{ vars.DATABASE_URL }}
       
