@@ -2,11 +2,7 @@ from pydantic_ai import Agent, RunContext
 from pydantic_ai.tools import Tool
 from models import model
 import os
-import supabase
-
-supabase_url = os.getenv("NEXT_PUBLIC_SUPABASE_URL") or ""
-supabase_key = os.getenv("SUPABASE_SERVICE_ROLE_KEY") or ""
-supabase_client = supabase.create_client(supabase_url, supabase_key)
+from db import insert_reddit_post
 
 agent = Agent(
     model,
@@ -53,16 +49,14 @@ def add_reddit_post(
     """
 
     
-    supabase_client.table("RedditPost").insert(
-        {
-            "subreddit": subreddit,
-            "title": title,
-            "content": content,
-            "category": "post",
-            "url": url,
-            "configId": config_id,
-            "confidence": confidence
-        }
-    ).execute()
+    insert_reddit_post(
+        subreddit=subreddit,
+        title=title,
+        content=content,
+        category="post",
+        url=url,
+        config_id=int(config_id),
+        confidence=confidence
+    )
 
     return f"You were {confidence}% confident the post matches the prompt"

@@ -6,14 +6,11 @@ authors = [
     {name = "Simon Balfe", email = "sbalfedev@gmail.com"},
 ]
 dependencies = [
-    "pydantic[email]",
+    "pydantic",
     "pydantic-ai",
-    "langgraph",
     "python-dotenv",
     "logfire",
-    "fastapi",
-    "fastmcp",
-    "supabase",
+    "psycopg2-binary",
     "asyncpraw"
 ]
 

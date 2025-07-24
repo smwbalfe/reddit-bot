@@ -5,21 +5,15 @@ from dotenv import load_dotenv
 from pydantic import BaseModel
 from tools import agent
 import asyncpraw
-import supabase
+from db import get_configs
 
 load_dotenv()
 
-supabase_url = os.getenv("NEXT_PUBLIC_SUPABASE_URL") or ""
-supabase_key = os.getenv("SUPABASE_SERVICE_ROLE_KEY") or ""
 reddit_client_id = os.getenv("REDDIT_CLIENT_ID") or ""
 reddit_client_secret = os.getenv("REDDIT_CLIENT_SECRET") or ""
 
-print("NEXT_PUBLIC_SUPABASE_URL:", supabase_url)
-print("SUPABASE_SERVICE_ROLE_KEY:", supabase_key)
 print("REDDIT_CLIENT_ID:", reddit_client_id)
 print("REDDIT_CLIENT_SECRET:", reddit_client_secret)
-
-supabase_client = supabase.create_client(supabase_url, supabase_key)
 
 class RedditConfig(BaseModel):
     id: int
@@ -61,14 +55,14 @@ async def main():
     print("Starting Reddit Bot...")
     reddit = get_reddit_client()
     
-    response = supabase_client.table('Config').select('*').execute()
+    config_data = get_configs()
     configs = [
         RedditConfig(
             id=config['id'],
             subreddit=config['subreddit'],
             agentPrompt=config['agentPrompt']
         )
-        for config in response.data
+        for config in config_data
     ]
     
     tasks = []
