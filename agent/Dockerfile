@@ -10,4 +10,4 @@ RUN uv sync --frozen
 
 COPY src/ ./src/
 
-CMD ["uv", "run", "python", "src/reddit.py"]
+CMD ["uv", "run", "python", "-u", "src/reddit.py"]
