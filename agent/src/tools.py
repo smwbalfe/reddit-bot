@@ -1,62 +1,50 @@
 from pydantic_ai import Agent, RunContext
-from pydantic_ai.tools import Tool
 from models import model
-import os
-from db import insert_reddit_post
+from pydantic import BaseModel
+from typing import List
+
+class PromptRequest(BaseModel):
+    subreddit: str
+    prompts: List[str]
+
+class ConfidenceScore(BaseModel):
+    prompt: str
+    confidence: int
+
+class BatchConfidenceResponse(BaseModel):
+    scores: List[ConfidenceScore]
+
+class ConfidenceResponse(BaseModel):
+    confidence: int
 
 agent = Agent(
     model,
-    system_prompt="You are a lead generation agent, you must determine the posts to ping based on user prompts",
+    output_type=ConfidenceResponse,
+    system_prompt="""
+You are a lead generation agent. 
+Analyze the Reddit post and determine how well 
+it matches the agent prompt. Return ONLY a confidence score from 1 to 100 (where 100 is perfect match, 1 is no match).
+ Do not provide explanations, just the number.
+
+ make it as precise as possible dont just return 10, 20, 30, be specific
+""",
 )
 
+batch_agent = Agent(
+    model,
+    output_type=BatchConfidenceResponse,
+    system_prompt="""
+You are a lead generation agent.
+You will receive a JSON input with a subreddit and array of prompts.
+For each prompt, analyze how well it matches the given subreddit context and return a confidence score from 1 to 100 (where 100 is perfect match, 1 is no match).
+Return an array of confidence scores, one for each prompt in the same order.
+Be precise with scores - don't just use round numbers like 10, 20, 30.
+""",
+)
 
-def create_runtime_tool(name: str, description: str, handler_func):
-    """Create and register an agent.tool at runtime"""
-
-    def tool_func(
-        ctx: RunContext, title: str, subreddit: str, content: str, url: str
-    ) -> str:
-        return handler_func(ctx, title, subreddit, content, url)
-
-    tool_func.__name__ = name
-    tool_func.__doc__ = description
-    decorated_tool = agent.tool(tool_func)
-    return decorated_tool
+async def process_batch_prompts(prompt_request: PromptRequest) -> BatchConfidenceResponse:
+    content = f"Subreddit: {prompt_request.subreddit}\nPrompts to evaluate: {prompt_request.prompts}"
+    response = await batch_agent.run(content)
+    return response.output
 
 
-@agent.tool
-def add_reddit_post(
-    ctx: RunContext, title: str, subreddit: str, content: str, url: str, config_id: str, confidence: int
-) -> str:
-    """
-    Add a Reddit post to the database when it matches the content prompt.
-    
-    This tool should be called when a Reddit post's title or content matches
-    the provided content prompt. It stores the post details and assigns a
-    confidence score indicating how well the post matches the prompt.
-    
-    Args:
-        ctx: RunContext for the agent
-        title: The Reddit post title
-        subreddit: The subreddit name where the post was found
-        content: The full content/body of the Reddit post
-        url: The URL link to the Reddit post
-        config_id: The configuration ID for this lead generation instance
-        confidence: Integer from 1-100 indicating confidence that post matches prompt
-        
-    Returns:
-        str: Confirmation message about confidence assessment
-    """
-
-    
-    insert_reddit_post(
-        subreddit=subreddit,
-        title=title,
-        content=content,
-        category="post",
-        url=url,
-        config_id=int(config_id),
-        confidence=confidence
-    )
-
-    return f"You were {confidence}% confident the post matches the prompt"

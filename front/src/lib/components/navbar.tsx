@@ -20,7 +20,7 @@ import { useUser } from '@/src/lib/features/auth/hooks/use-user'
 
 export const Navbar = () => {
 
-    const appName = "RedditBot"
+    const appName = "RedditMonitor"
 
     const { user, loading } = useUser()
     const { handleCheckout, isLoading } = useCheckout(user?.id)

@@ -40,6 +40,5 @@ export type NewAccount = typeof accounts.$inferInsert
 
 export type RedditPost = typeof redditPosts.$inferSelect
 export type NewRedditPost = typeof redditPosts.$inferInsert
-
 export type Config = typeof configs.$inferSelect
 export type NewConfig = typeof configs.$inferInsert

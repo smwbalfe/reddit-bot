@@ -138,37 +138,27 @@ export function Dashboard() {
   }
 
   return (
-    <div className="min-h-screen bg-slate-50">
-      <div className="bg-white border-b border-slate-200">
-        <div className="max-w-5xl mx-auto px-6 py-8">
-          <div className="flex items-center justify-between flex-wrap gap-4">
-            <div className="space-y-2">
-              <h1 className="text-4xl font-bold text-slate-900 tracking-tight">Reddit Monitor</h1>
-              <p className="text-lg text-slate-600">Track opportunities across subreddits</p>
-            </div>
-            <div className="flex items-center gap-6">
-              <div className="flex items-center gap-3">
-                <div className="flex items-center gap-2">
-                  <TrendingUp className="w-5 h-5 text-slate-500" />
-                  <span className="text-base font-medium text-slate-700">{configs.length}</span>
-                  <span className="text-base text-slate-500">monitors</span>
-                </div>
-              </div>
-              <div className="w-10 h-10 rounded-full bg-slate-100 flex items-center justify-center text-base font-semibold text-slate-700 ring-1 ring-slate-200">
-                {user.email?.[0]?.toUpperCase()}
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
+ 
       
       <div className="max-w-5xl mx-auto p-6 space-y-8">
         <Card className="border-0 shadow-sm bg-white">
           <CardHeader className="pb-4">
             <div className="flex justify-between items-start flex-wrap gap-4">
-              <div className="space-y-2">
+              <div className="space-y-3">
                 <CardTitle className="text-2xl font-semibold text-slate-900">New Monitor</CardTitle>
                 <CardDescription className="text-base text-slate-600">Set up monitoring for a subreddit</CardDescription>
+                <div className="flex items-center gap-6">
+                  <div className="flex items-center gap-2">
+                    <TrendingUp className="w-5 h-5 text-slate-500" />
+                    <span className="text-base font-medium text-slate-700">{configs.length}</span>
+                    <span className="text-base text-slate-500">active monitors</span>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <MessageSquare className="w-5 h-5 text-slate-500" />
+                    <span className="text-base font-medium text-slate-700">{posts.length}</span>
+                    <span className="text-base text-slate-500">total posts</span>
+                  </div>
+                </div>
               </div>
               <Button 
                 onClick={() => setShowConfigForm(!showConfigForm)}
@@ -321,6 +311,6 @@ export function Dashboard() {
           </div>
         )}
       </div>
-    </div>
+   
   )
 } 
