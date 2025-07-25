@@ -82,12 +82,6 @@ class PostProcessor:
             confidence=confidence_score
         )
         
-        # Reply to the post
-        try:
-            await post.reply(config.agentPrompt)
-            logger.info(f"Successfully replied to post '{post.title}' with agent prompt")
-        except Exception as e:
-            logger.error(f"Failed to reply to post '{post.title}': {e}")
 
 class ConfigManager:
     def __init__(self, poll_interval: int = 10):
