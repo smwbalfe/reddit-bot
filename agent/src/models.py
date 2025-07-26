@@ -16,6 +16,12 @@ if not openrouter_api_key:
     raise ValueError("OPENROUTER_API_KEY is not set")
 
 model = OpenAIModel(
-    "google/gemini-2.5-flash",
+    "google/gemini-2.5-flash-lite",
     provider=OpenRouterProvider(api_key=openrouter_api_key),
 )
+
+
+
+
+
+
