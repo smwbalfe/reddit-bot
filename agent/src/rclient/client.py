@@ -1,6 +1,9 @@
 import asyncpraw
 import os
 import logging
+from dotenv import load_dotenv
+
+load_dotenv()
 
 logger = logging.getLogger(__name__)
 
@@ -16,7 +19,7 @@ class RedditClient:
             self._reddit = asyncpraw.Reddit(
                 client_id=self.client_id,
                 client_secret=self.client_secret,
-                user_agent="RedditBot/1.0",
+                user_agent="RedditBot1/1.0",
             )
             logger.info("Reddit client created")
         return self._reddit

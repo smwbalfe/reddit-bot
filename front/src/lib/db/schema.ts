@@ -8,37 +8,39 @@ export const accounts = pgTable('Account', {
   welcomeEmailSent: boolean('welcomeEmailSent').default(false).notNull(),
 })
 
+export const icps = pgTable('ICP', {
+  id: serial('id').primaryKey(),
+  userId: varchar('userId').notNull(),
+  name: varchar('name').notNull(),
+  website: varchar('website').notNull(),
+  description: text('description').notNull(),
+  createdAt: timestamp('createdAt').defaultNow().notNull(),
+  updatedAt: timestamp('updatedAt').defaultNow().notNull(),
+})
+
 export const redditPosts = pgTable('RedditPost', {
   id: serial('id').primaryKey(),
-  configId: integer('configId').notNull(),
+  icpId: integer('icpId').notNull(),
   subreddit: varchar('subreddit').notNull(),
   title: text('title').notNull(),
   content: text('content').notNull(),
   category: varchar('category').notNull(),
   url: text('url').notNull(),
   confidence: integer('confidence'),
+  justification: text('justification'),
   createdAt: timestamp('createdAt').defaultNow().notNull(),
   updatedAt: timestamp('updatedAt').defaultNow().notNull(),
 }, (table) => ({
-  configReference: foreignKey({
-    columns: [table.configId],
-    foreignColumns: [configs.id]
+  icpReference: foreignKey({
+    columns: [table.icpId],
+    foreignColumns: [icps.id]
   })
 }))
-
-export const configs = pgTable('Config', {
-  id: serial('id').primaryKey(),
-  userId: varchar('userId').notNull(),
-  subreddit: varchar('subreddit').notNull(),
-  agentPrompt: text('agentPrompt').notNull(),
-  createdAt: timestamp('createdAt').defaultNow().notNull(),
-  updatedAt: timestamp('updatedAt').defaultNow().notNull(),
-})
 
 export type Account = typeof accounts.$inferSelect
 export type NewAccount = typeof accounts.$inferInsert
 
 export type RedditPost = typeof redditPosts.$inferSelect
 export type NewRedditPost = typeof redditPosts.$inferInsert
-export type Config = typeof configs.$inferSelect
-export type NewConfig = typeof configs.$inferInsert
+export type ICP = typeof icps.$inferSelect
+export type NewICP = typeof icps.$inferInsert

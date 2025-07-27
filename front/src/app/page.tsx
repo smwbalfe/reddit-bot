@@ -1,2 +1,10 @@
 import { Dashboard } from '@/src/lib/features/dashboard'
-export default Dashboard;
+import DashboardLayout from '@/src/lib/components/dashboard-layout'
+
+export default function HomePage() {
+  return (
+    <DashboardLayout>
+      <Dashboard />
+    </DashboardLayout>
+  )
+}

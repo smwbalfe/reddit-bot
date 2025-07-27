@@ -4,7 +4,7 @@ import { supabaseBrowserClient } from '@/src/lib/supabase/client'
 import { useCheckout } from '@/src/lib/hooks/use-checkout'
 import { Button } from '@/src/lib/components/ui/button'
 import { Avatar, AvatarFallback, AvatarImage } from '@/src/lib/components/ui/avatar'
-import { LogOut, Zap, Crown, CircleX, User, Router } from 'lucide-react'
+import { LogOut, Zap, Crown, CircleX, User } from 'lucide-react'
 import { useEffect, useState } from 'react'
 import { Badge } from '@/src/lib/components/ui/badge'
 import { deleteCurrentUser } from '../actions/delete-users'
@@ -19,9 +19,6 @@ import { checkSubscription } from '../actions/check-subscription'
 import { useUser } from '@/src/lib/features/auth/hooks/use-user'
 
 export const Navbar = () => {
-
-    const appName = "RedditMonitor"
-
     const { user, loading } = useUser()
     const { handleCheckout, isLoading } = useCheckout(user?.id)
     const [isSubscribed, setIsSubscribed] = useState<boolean | null>(null)
@@ -48,9 +45,9 @@ export const Navbar = () => {
     if (loading || (user && isSubscribed === null)) {
         return (
             <nav className="bg-white border-b border-gray-200 shadow-sm">
-                <div className="container mx-auto px-4 py-3 flex items-center justify-between">
+                <div className="flex items-center justify-between w-full px-6 py-3">
                     <div className="flex items-center">
-                        <span className="font-bold text-xl text-gray-800">{appName}</span>
+                        <h1 className="text-2xl font-bold text-gray-900">SubLead</h1>
                     </div>
                     <div className="flex items-center gap-4">
                         <div className="h-8 w-24 bg-gray-200 animate-pulse rounded-md"></div>
@@ -62,9 +59,9 @@ export const Navbar = () => {
 
     return (
         <nav className="bg-white border-b border-gray-200 shadow-sm">
-            <div className="container mx-auto px-4 py-3 flex items-center justify-between">
+            <div className="flex items-center justify-between w-full px-6 py-3">
                 <div className="flex items-center">
-                    <span className="font-bold text-xl text-gray-800">{appName}</span>
+                    <h1 className="text-2xl font-bold text-gray-900">SubLead</h1>
                 </div>
                 <div className="flex items-center gap-4">
                     {user ? (

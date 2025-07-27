@@ -2,58 +2,31 @@
 
 import { useUser } from "@/src/lib/features/auth/hooks/use-user"
 import { useState, useEffect } from "react"
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/src/lib/components/ui/card"
-import { Button } from "@/src/lib/components/ui/button"
-import { Input } from "@/src/lib/components/ui/input"
-import { Label } from "@/src/lib/components/ui/label"
-import { Badge } from "@/src/lib/components/ui/badge"
-import { createConfig, getUserConfigs, deleteConfig, getUserPosts } from "@/src/lib/actions/create-config"
-import { Config, RedditPost } from "@/src/lib/db/schema"
-import { Plus, ChevronRight, Trash2, MessageSquare, TrendingUp, Activity } from "lucide-react"
+import { Card, CardContent, CardHeader, CardTitle } from "@/src/lib/components/ui/card"
+import { getUserConfigs, getUserPosts } from "@/src/lib/actions/create-config"
+import { ICP } from "@/src/lib/db/schema"
+import { MessageSquare, TrendingUp, Activity, Target, Calendar, BarChart3 } from "lucide-react"
+import Link from "next/link"
 
-function ConfidenceMeter({ confidence }: { confidence: number | null }) {
-  if (!confidence) return null
-  
-  const getColorClass = (score: number) => {
-    if (score >= 80) return "bg-emerald-500"
-    if (score >= 60) return "bg-amber-500"
-    return "bg-rose-500"
-  }
-
-  const getTextColor = (score: number) => {
-    if (score >= 80) return "text-emerald-700"
-    if (score >= 60) return "text-amber-700"
-    return "text-rose-700"
-  }
-
-  return (
-    <div className="flex items-center gap-3">
-      <div className="flex items-center gap-2">
-        <Activity className="w-3 h-3 text-slate-500" />
-        <span className="text-xs text-slate-600 font-medium">Confidence</span>
-      </div>
-      <div className="flex-1 bg-slate-100 rounded-full h-1.5 max-w-20">
-        <div
-          className={`h-1.5 rounded-full transition-all duration-300 ${getColorClass(confidence)}`}
-          style={{ width: `${confidence}%` }}
-        />
-      </div>
-      <span className={`text-xs font-semibold tabular-nums ${getTextColor(confidence)}`}>{confidence}%</span>
-    </div>
-  )
+type PostWithConfigId = {
+  id: number
+  configId: number
+  subreddit: string
+  title: string
+  content: string
+  category: string
+  url: string
+  confidence: number | null
+  justification: string | null
+  createdAt: Date
+  updatedAt: Date
 }
 
 export function Dashboard() {
   const { user } = useUser()
-  const [configs, setConfigs] = useState<Config[]>([])
-  const [posts, setPosts] = useState<RedditPost[]>([])
+  const [configs, setConfigs] = useState<ICP[]>([])
+  const [posts, setPosts] = useState<PostWithConfigId[]>([])
   const [loading, setLoading] = useState(true)
-  const [showConfigForm, setShowConfigForm] = useState(false)
-  const [expandedConfigs, setExpandedConfigs] = useState<Set<number>>(new Set())
-  const [newConfig, setNewConfig] = useState({
-    subreddit: "",
-    agentPrompt: ""
-  })
 
   useEffect(() => {
     if (user?.id) {
@@ -65,7 +38,7 @@ export function Dashboard() {
   const fetchConfigs = async () => {
     if (!user?.id) return
     try {
-      const data = await getUserConfigs(user.id)
+      const data = await getUserConfigs()
       setConfigs(data)
     } catch (error) {
       console.error('Error fetching configs:', error)
@@ -77,56 +50,11 @@ export function Dashboard() {
   const fetchPosts = async () => {
     if (!user?.id) return
     try {
-      const data = await getUserPosts(user.id)
+      const data = await getUserPosts()
       setPosts(data)
     } catch (error) {
       console.error('Error fetching posts:', error)
     }
-  }
-
-  const handleCreateConfig = async () => {
-    if (!user?.id || !newConfig.subreddit || !newConfig.agentPrompt) return
-    
-    try {
-      await createConfig({
-        userId: user.id,
-        subreddit: newConfig.subreddit,
-        agentPrompt: newConfig.agentPrompt
-      })
-      setNewConfig({ subreddit: "", agentPrompt: "" })
-      setShowConfigForm(false)
-      fetchConfigs()
-      fetchPosts()
-    } catch (error) {
-      console.error('Error creating config:', error)
-    }
-  }
-
-  const handleDeleteConfig = async (id: number) => {
-    try {
-      await deleteConfig(id)
-      fetchConfigs()
-      fetchPosts()
-      setExpandedConfigs(prev => {
-        const newSet = new Set(prev)
-        newSet.delete(id)
-        return newSet
-      })
-    } catch (error) {
-      console.error('Error deleting config:', error)
-    }
-  }
-
-  const toggleConfigExpanded = (configId: number) => {
-    setExpandedConfigs(prev => {
-      const newSet = new Set(prev)
-      if (newSet.has(configId)) {
-        newSet.delete(configId)
-      } else {
-        newSet.add(configId)
-      }
-      return newSet
-    })
   }
 
   if (!user) {
@@ -137,180 +65,214 @@ export function Dashboard() {
     )
   }
 
+  const highConfidenceLeads = posts.filter(post => (post.confidence ?? 0) >= 80).length
+  const mediumConfidenceLeads = posts.filter(post => (post.confidence ?? 0) >= 60 && (post.confidence ?? 0) < 80).length
+  const lowConfidenceLeads = posts.filter(post => (post.confidence ?? 0) < 60).length
+  const avgConfidence = posts.length > 0 ? Math.round(posts.reduce((acc, post) => acc + (post.confidence ?? 0), 0) / posts.length) : 0
+  
+  const todayLeads = posts.filter(post => {
+    const postDate = new Date(post.createdAt)
+    const today = new Date()
+    return postDate.toDateString() === today.toDateString()
+  }).length
+
+  const weekLeads = posts.filter(post => {
+    const postDate = new Date(post.createdAt)
+    const weekAgo = new Date()
+    weekAgo.setDate(weekAgo.getDate() - 7)
+    return postDate >= weekAgo
+  }).length
+
   return (
- 
-      
-      <div className="max-w-5xl mx-auto p-6 space-y-8">
-        <Card className="border-0 shadow-sm bg-white">
-          <CardHeader className="pb-4">
-            <div className="flex justify-between items-start flex-wrap gap-4">
-              <div className="space-y-3">
-                <CardTitle className="text-2xl font-semibold text-slate-900">New Monitor</CardTitle>
-                <CardDescription className="text-base text-slate-600">Set up monitoring for a subreddit</CardDescription>
-                <div className="flex items-center gap-6">
-                  <div className="flex items-center gap-2">
-                    <TrendingUp className="w-5 h-5 text-slate-500" />
-                    <span className="text-base font-medium text-slate-700">{configs.length}</span>
-                    <span className="text-base text-slate-500">active monitors</span>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <MessageSquare className="w-5 h-5 text-slate-500" />
-                    <span className="text-base font-medium text-slate-700">{posts.length}</span>
-                    <span className="text-base text-slate-500">total posts</span>
-                  </div>
-                </div>
-              </div>
-              <Button 
-                onClick={() => setShowConfigForm(!showConfigForm)}
-                variant={showConfigForm ? "outline" : "default"}
-                className={showConfigForm ? "" : "bg-slate-900 hover:bg-slate-800 text-white"}
-                size="default"
-              >
-                <Plus className="w-5 h-5" />
-                {showConfigForm ? "Cancel" : "Add Monitor"}
-              </Button>
-            </div>
-          </CardHeader>
+    <div className="max-w-6xl mx-auto p-6 space-y-8">
+      <div className="space-y-2">
+        <h1 className="text-3xl font-bold text-slate-900">Dashboard</h1>
+        <p className="text-slate-600 text-lg">Overview of your lead generation performance</p>
+      </div>
 
-          {showConfigForm && (
-            <CardContent className="border-t border-slate-100 pt-6">
-              <div className="space-y-6">
-                <div className="space-y-3">
-                  <Label htmlFor="subreddit" className="text-base font-medium text-slate-700">Subreddit</Label>
-                  <Input
-                    id="subreddit"
-                    value={newConfig.subreddit}
-                    onChange={(e) => setNewConfig({...newConfig, subreddit: e.target.value})}
-                    placeholder="SaaS"
-                    className="border-slate-200 focus:border-slate-400 focus:ring-slate-400/20"
-                  />
+      {loading ? (
+        <div className="flex justify-center py-16">
+          <div className="animate-spin rounded-full h-8 w-8 border-2 border-slate-300 border-t-slate-600"></div>
+        </div>
+      ) : (
+        <>
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+            <Card className="border-0 shadow-sm bg-white">
+              <CardContent className="p-6">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="text-sm font-medium text-slate-600">Total Leads</p>
+                    <p className="text-3xl font-bold text-slate-900">{posts.length}</p>
+                  </div>
+                  <div className="h-12 w-12 bg-blue-100 rounded-lg flex items-center justify-center">
+                    <MessageSquare className="h-6 w-6 text-blue-600" />
+                  </div>
                 </div>
-                <div className="space-y-3">
-                  <Label htmlFor="agentPrompt" className="text-base font-medium text-slate-700">What to look for</Label>
-                  <Input
-                    id="agentPrompt"
-                    value={newConfig.agentPrompt}
-                    onChange={(e) => setNewConfig({...newConfig, agentPrompt: e.target.value})}
-                    placeholder="Posts about scaling issues"
-                    className="border-slate-200 focus:border-slate-400 focus:ring-slate-400/20"
-                  />
+                <div className="mt-4 flex text-sm text-slate-600">
+                  <span>Today: {todayLeads} • This week: {weekLeads}</span>
                 </div>
-                <Button 
-                  onClick={handleCreateConfig} 
-                  className="w-full bg-slate-900 hover:bg-slate-800 text-white"
-                  disabled={!newConfig.subreddit || !newConfig.agentPrompt}
-                >
-                  Create Monitor
-                </Button>
-              </div>
-            </CardContent>
-          )}
-        </Card>
+              </CardContent>
+            </Card>
 
-        {loading ? (
-          <div className="flex justify-center py-16">
-            <div className="animate-spin rounded-full h-6 w-6 border-2 border-slate-300 border-t-slate-600"></div>
+            <Card className="border-0 shadow-sm bg-white">
+              <CardContent className="p-6">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="text-sm font-medium text-slate-600">Active ICPs</p>
+                    <p className="text-3xl font-bold text-slate-900">{configs.length}</p>
+                  </div>
+                  <div className="h-12 w-12 bg-green-100 rounded-lg flex items-center justify-center">
+                    <Target className="h-6 w-6 text-green-600" />
+                  </div>
+                </div>
+                <div className="mt-4">
+                  <Link href="/leads" className="text-sm text-blue-600 hover:text-blue-800 font-medium">
+                    Manage ICPs →
+                  </Link>
+                </div>
+              </CardContent>
+            </Card>
+
+            <Card className="border-0 shadow-sm bg-white">
+              <CardContent className="p-6">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="text-sm font-medium text-slate-600">Avg Confidence</p>
+                    <p className="text-3xl font-bold text-slate-900">{avgConfidence}%</p>
+                  </div>
+                  <div className="h-12 w-12 bg-amber-100 rounded-lg flex items-center justify-center">
+                    <TrendingUp className="h-6 w-6 text-amber-600" />
+                  </div>
+                </div>
+                <div className="mt-4 flex text-sm text-slate-600">
+                  <span>High: {highConfidenceLeads} • Med: {mediumConfidenceLeads}</span>
+                </div>
+              </CardContent>
+            </Card>
+
+            <Card className="border-0 shadow-sm bg-white">
+              <CardContent className="p-6">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="text-sm font-medium text-slate-600">Low Quality</p>
+                    <p className="text-3xl font-bold text-slate-900">{lowConfidenceLeads}</p>
+                  </div>
+                  <div className="h-12 w-12 bg-red-100 rounded-lg flex items-center justify-center">
+                    <Activity className="h-6 w-6 text-red-600" />
+                  </div>
+                </div>
+                <div className="mt-4 flex text-sm text-slate-600">
+                  <span>&lt; 60% confidence</span>
+                </div>
+              </CardContent>
+            </Card>
           </div>
-        ) : configs.length === 0 ? (
-          <Card className="border-0 shadow-sm bg-white">
-            <CardContent className="text-center py-20">
-              <MessageSquare className="w-16 h-16 text-slate-300 mx-auto mb-6" />
-              <p className="text-slate-500 text-xl font-medium">No monitors yet</p>
-              <p className="text-slate-400 text-base mt-3">Create your first monitor to get started</p>
-            </CardContent>
-          </Card>
-        ) : (
-          <div className="space-y-4">
-            {configs.map((config) => {
-              const configPosts = posts.filter(post => post.configId === config.id)
-              const isExpanded = expandedConfigs.has(config.id)
-              
-              return (
-                <Card key={config.id} className="border-0 shadow-sm bg-white hover:shadow-md transition-all duration-200">
-                  <CardHeader 
-                    className="cursor-pointer hover:bg-slate-50 transition-colors duration-150 rounded-t-xl"
-                    onClick={() => toggleConfigExpanded(config.id)}
-                  >
-                    <div className="flex items-center justify-between gap-4">
-                      <div className="flex items-center gap-4 flex-1 min-w-0">
-                        <div className="flex items-center gap-3">
-                          <ChevronRight 
-                            className={`w-5 h-5 text-slate-400 transition-transform duration-200 ${isExpanded ? 'rotate-90' : ''}`}
-                          />
-                          <Badge variant="outline" className="bg-slate-50 border-slate-200 text-slate-700 font-semibold text-base px-4 py-2">
-                            r/{config.subreddit}
-                          </Badge>
-                        </div>
+
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            <Card className="border-0 shadow-sm bg-white">
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <BarChart3 className="h-5 w-5 text-slate-600" />
+                  Lead Quality Distribution
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-4">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-3">
+                      <div className="w-3 h-3 bg-emerald-500 rounded-full"></div>
+                      <span className="text-sm font-medium text-slate-700">High Confidence (80%+)</span>
+                    </div>
+                    <span className="text-lg font-bold text-slate-900">{highConfidenceLeads}</span>
+                  </div>
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-3">
+                      <div className="w-3 h-3 bg-amber-500 rounded-full"></div>
+                      <span className="text-sm font-medium text-slate-700">Medium Confidence (60-79%)</span>
+                    </div>
+                    <span className="text-lg font-bold text-slate-900">{mediumConfidenceLeads}</span>
+                  </div>
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-3">
+                      <div className="w-3 h-3 bg-rose-500 rounded-full"></div>
+                      <span className="text-sm font-medium text-slate-700">Low Confidence (&lt;60%)</span>
+                    </div>
+                    <span className="text-lg font-bold text-slate-900">{lowConfidenceLeads}</span>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+
+            <Card className="border-0 shadow-sm bg-white">
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <Calendar className="h-5 w-5 text-slate-600" />
+                  Recent Activity
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                {posts.length === 0 ? (
+                  <div className="text-center py-8">
+                    <MessageSquare className="h-12 w-12 text-slate-300 mx-auto mb-4" />
+                    <p className="text-slate-500 font-medium">No leads yet</p>
+                    <p className="text-slate-400 text-sm mt-1">Get started by creating your first ICP</p>
+                    <Link 
+                      href="/leads" 
+                      className="inline-block mt-4 px-4 py-2 bg-slate-900 text-white text-sm rounded-md hover:bg-slate-800 transition-colors"
+                    >
+                      Create ICP
+                    </Link>
+                  </div>
+                ) : (
+                  <div className="space-y-4">
+                    {posts.slice(0, 5).map((post) => (
+                      <div key={post.id} className="flex items-start gap-3 p-3 rounded-lg bg-slate-50">
+                        <div className="w-2 h-2 bg-blue-500 rounded-full mt-2 flex-shrink-0"></div>
                         <div className="flex-1 min-w-0">
-                          <p className="text-base font-medium text-slate-900 truncate">{config.agentPrompt}</p>
-                          <p className="text-sm text-slate-500 mt-2 flex items-center gap-2">
-                            <MessageSquare className="w-4 h-4" />
-                            {configPosts.length} {configPosts.length === 1 ? 'post' : 'posts'}
-                          </p>
+                          <p className="text-sm font-medium text-slate-900 truncate">{post.title}</p>
+                          <div className="flex items-center gap-2 mt-1">
+                            <span className="text-xs text-slate-500">r/{post.subreddit}</span>
+                            <span className="text-xs text-slate-400">•</span>
+                            <span className="text-xs text-slate-500">{post.confidence}% confidence</span>
+                          </div>
                         </div>
                       </div>
-                      <Button
-                        onClick={(e) => {
-                          e.stopPropagation()
-                          handleDeleteConfig(config.id)
-                        }}
-                        variant="ghost"
-                        size="sm"
-                        className="text-slate-400 hover:text-rose-600 hover:bg-rose-50 shrink-0 transition-colors"
+                    ))}
+                    {posts.length > 5 && (
+                      <Link 
+                        href="/leads" 
+                        className="block text-center text-sm text-blue-600 hover:text-blue-800 font-medium pt-2"
                       >
-                        <Trash2 className="w-5 h-5" />
-                      </Button>
-                    </div>
-                  </CardHeader>
-                  
-                  {isExpanded && (
-                    <CardContent className="border-t border-slate-100 pt-6">
-                      {configPosts.length === 0 ? (
-                        <div className="text-center py-16">
-                          <MessageSquare className="w-12 h-12 text-slate-300 mx-auto mb-4" />
-                          <p className="text-slate-500 text-base font-medium">No posts found yet</p>
-                          <p className="text-slate-400 text-sm mt-2">AI is monitoring for relevant posts</p>
-                        </div>
-                      ) : (
-                        <div className="space-y-4">
-                          {configPosts.map(post => (
-                            <div key={post.id} className="border border-slate-200 rounded-lg p-6 bg-slate-50 hover:bg-white hover:shadow-sm transition-all duration-200">
-                              <div className="flex justify-between items-start mb-4">
-                                <h5 className="font-semibold text-lg text-slate-900 leading-snug">{post.title}</h5>
-                                <Badge variant="outline" className="text-sm bg-white border-slate-200 text-slate-600 ml-4 shrink-0 px-3 py-1">
-                                  {post.category}
-                                </Badge>
-                              </div>
-                              <p className="text-slate-600 text-base mb-5 leading-relaxed">{post.content}</p>
-                              <div className="mb-5">
-                                <ConfidenceMeter confidence={post.confidence} />
-                              </div>
-                              <div className="flex justify-between items-center pt-3 border-t border-slate-200">
-                                <span className="text-sm text-slate-500 font-medium">
-                                  {new Date(post.createdAt).toLocaleDateString()}
-                                </span>
-                                <a 
-                                  href={post.url} 
-                                  target="_blank" 
-                                  rel="noopener noreferrer"
-                                  className="text-slate-900 hover:text-slate-700 text-base font-medium flex items-center gap-2 group"
-                                >
-                                  View Post
-                                  <ChevronRight className="w-4 h-4 group-hover:translate-x-0.5 transition-transform" />
-                                </a>
-                              </div>
-                            </div>
-                          ))}
-                        </div>
-                      )}
-                    </CardContent>
-                  )}
-                </Card>
-              )
-            })}
+                        View all {posts.length} leads →
+                      </Link>
+                    )}
+                  </div>
+                )}
+              </CardContent>
+            </Card>
           </div>
-        )}
-      </div>
-   
+
+          <Card className="border-0 shadow-sm bg-gradient-to-r from-blue-50 to-indigo-50">
+            <CardContent className="p-8">
+              <div className="flex items-center justify-between">
+                <div>
+                  <h3 className="text-xl font-semibold text-slate-900 mb-2">Ready to analyze your leads?</h3>
+                  <p className="text-slate-600 mb-4">View detailed AI analysis, manage your ICPs, and explore all discovered leads.</p>
+                  <Link 
+                    href="/leads" 
+                    className="inline-flex items-center px-6 py-3 bg-slate-900 text-white font-medium rounded-lg hover:bg-slate-800 transition-colors"
+                  >
+                    View Leads & Analysis
+                  </Link>
+                </div>
+                <div className="hidden md:block">
+                  <BarChart3 className="h-24 w-24 text-blue-200" />
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        </>
+      )}
+    </div>
   )
 } 
