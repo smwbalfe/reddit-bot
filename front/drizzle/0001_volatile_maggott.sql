@@ -1,0 +1,1 @@
+ALTER TABLE "ICP" ADD COLUMN "name" varchar NOT NULL;
