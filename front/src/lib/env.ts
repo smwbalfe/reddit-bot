@@ -23,10 +23,7 @@ const env = {
 
     RESEND_API_KEY: process.env.RESEND_API_KEY!,
     RESEND_FROM: process.env.RESEND_FROM!,
-    STRIPE_PRICE_ID: process.env.STRIPE_PRICE_ID!,
-    
-    REDDIT_CLIENT_ID: process.env.REDDIT_CLIENT_ID!,
-    REDDIT_CLIENT_SECRET: process.env.REDDIT_CLIENT_SECRET!,
+    NEXT_PUBLIC_STRIPE_PRICE_ID: process.env.NEXT_PUBLIC_STRIPE_PRICE_ID!,
 }
 
 console.log('Environment Variables:', {
@@ -45,9 +42,7 @@ console.log('Environment Variables:', {
     NEXT_PUBLIC_POSTHOG_HOST: env.NEXT_PUBLIC_POSTHOG_HOST,
     RESEND_API_KEY: env.RESEND_API_KEY ? '[REDACTED]' : undefined,
     RESEND_FROM: env.RESEND_FROM,
-    STRIPE_PRICE_ID: env.STRIPE_PRICE_ID,
-    REDDIT_CLIENT_ID: env.REDDIT_CLIENT_ID,
-    REDDIT_CLIENT_SECRET: env.REDDIT_CLIENT_SECRET ? '[REDACTED]' : undefined,
+    NEXT_PUBLIC_STRIPE_PRICE_ID: env.NEXT_PUBLIC_STRIPE_PRICE_ID
 })
 
 export default env;

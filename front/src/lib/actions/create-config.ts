@@ -82,7 +82,7 @@ export async function getUserPosts() {
       content: redditPosts.content,
       category: redditPosts.category,
       url: redditPosts.url,
-      confidence: redditPosts.confidence,
+      leadQuality: redditPosts.leadQuality,
       justification: redditPosts.justification,
       createdAt: redditPosts.createdAt,
       updatedAt: redditPosts.updatedAt,

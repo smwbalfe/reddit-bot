@@ -23,5 +23,3 @@ model = OpenAIModel(
 
 
 
-
-

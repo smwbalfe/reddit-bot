@@ -19,6 +19,7 @@ type CheckoutRequestBody = {
 
 export async function createCheckoutSession(formData: CheckoutRequestBody) {
     const { userId, email, line_item } = formData;
+    console.log('createCheckoutSession called with:', { userId, email, line_item });
 
     if (!userId) {
         throw new Error('User ID is required');

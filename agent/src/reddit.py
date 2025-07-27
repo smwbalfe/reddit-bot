@@ -7,7 +7,9 @@ from src.agent.tools import score_lead_intent
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
 logger = logging.getLogger(__name__)
 
-ACCEPTED_SUBREDDITS = ['cats', 'catpictures', 'AskReddit','catadvice', 'catlovers', 'catowners', 'catcare', 'catmemes', 'catpics', 'catlove', 'catsareassholes', 'catswhoyell', 'catswithjobs', 'catsstandingup', 'catpranks', 'catadoption', 'catrescue']
+ACCEPTED_SUBREDDITS = [
+    'entrepreneur', 'startups', 'AskReddit', 'SaaS', 'Entrepreneur', 'smallbusiness', 'business', 'venturecapital', 'growmybusiness', 'marketing', 'sales', 'ProductManagement', 'nocode', 'indiehackers', 'sideproject', 'juststart', 'ecommerce', 'freelance', 'consulting', 'b2b', 'startup', 'techstartups', 'YCombinator', 'microSaaS', 'bootstrapped', 'mvp', 'ProductHunt', 'growthhacking', 'digitalmarketing', 'contentmarketing', 'emailmarketing', 'socialmediamarketing', 'SEO', 'PPC', 'analytics', 'customerSuccess', 'leadgeneration', 'b2bsales', 'salessoftware', 'crm', 'automation', 'productivity', 'remotework', 'entrepreneurship', 'businessplan', 'funding', 'investing', 'angelinvesting', 'seedfunding', 'seriesA', 'lean', 'agile', 'tools', 'softwarerecommendations', 'monetization', 'revenue', 'mrr', 'arr', 'churn', 'retention', 'onboarding', 'ux', 'ui', 'design', 'webdesign', 'frontend', 'backend', 'fullstack', 'lowcode', 'bubble', 'webflow', 'airtable', 'notion', 'slack', 'discord', 'stripe', 'paypal', 'shopify', 'wordpress', 'woocommerce', 'squarespace', 'wix', 'cloudflare', 'github', 'docker', 'kubernetes', 'heroku', 'netlify', 'vercel', 'supabase', 'firebase', 'mongodb', 'postgresql', 'aws', 'azure', 'gcp', 'serverless', 'api', 'zapier', 'workflow', 'alternatives', 'ArtificialIntelligence', 'MachineLearning', 'ChatGPT', 'OpenAI', 'GPT', 'LLM', 'AITools', 'artificial', 'technology', 'coldemail', 'outbound', 'prospecting', 'salesfunnel', 'outreach', 'coldcalling', 'AiStartups', 'AIBusiness', 'ArtificialIntelligenceNews', 'email', 'emailautomation', 'salesautomation', 'scaling', 'growth', 'futurology', 'singularity'
+]
 SLEEP_INTERVAL = 1
 
 async def process_post(post, db_manager, icps):
@@ -30,8 +32,8 @@ async def process_post(post, db_manager, icps):
                 icp_description=icp['description']
             )
             
-            # Only store posts with medium to high confidence (>30.0)
-            if result.confidence > 30.0:
+            # Only store posts with medium to high lead quality (>30.0)
+            if result.lead_quality > 1.0:
                 db_manager.insert_reddit_post(
                     subreddit=subreddit_name,
                     title=post.title,
@@ -39,11 +41,11 @@ async def process_post(post, db_manager, icps):
                     category=result.category,
                     url=post.url,
                     icp_id=icp['id'],
-                    confidence=result.confidence,
+                    lead_quality=result.lead_quality,
                     justification=result.justification
                 )
                 
-                logger.info(f"Stored post for ICP {icp['name']} with confidence {result.confidence}")
+                logger.info(f"Stored post for ICP {icp['name']} with lead quality {result.lead_quality}")
             
         except Exception as e:
             logger.error(f"Error processing post for ICP {icp['name']}: {e}")

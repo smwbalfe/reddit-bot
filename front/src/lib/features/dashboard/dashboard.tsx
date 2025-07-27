@@ -16,7 +16,7 @@ type PostWithConfigId = {
   content: string
   category: string
   url: string
-  confidence: number | null
+  leadQuality: number | null
   justification: string | null
   createdAt: Date
   updatedAt: Date
@@ -65,10 +65,10 @@ export function Dashboard() {
     )
   }
 
-  const highConfidenceLeads = posts.filter(post => (post.confidence ?? 0) >= 80).length
-  const mediumConfidenceLeads = posts.filter(post => (post.confidence ?? 0) >= 60 && (post.confidence ?? 0) < 80).length
-  const lowConfidenceLeads = posts.filter(post => (post.confidence ?? 0) < 60).length
-  const avgConfidence = posts.length > 0 ? Math.round(posts.reduce((acc, post) => acc + (post.confidence ?? 0), 0) / posts.length) : 0
+  const highQualityLeads = posts.filter(post => (post.leadQuality ?? 0) >= 80).length
+  const mediumQualityLeads = posts.filter(post => (post.leadQuality ?? 0) >= 60 && (post.leadQuality ?? 0) < 80).length
+  const lowQualityLeads = posts.filter(post => (post.leadQuality ?? 0) < 60).length
+  const avgLeadQuality = posts.length > 0 ? Math.round(posts.reduce((acc, post) => acc + (post.leadQuality ?? 0), 0) / posts.length) : 0
   
   const todayLeads = posts.filter(post => {
     const postDate = new Date(post.createdAt)
@@ -118,7 +118,7 @@ export function Dashboard() {
               <CardContent className="p-6">
                 <div className="flex items-center justify-between">
                   <div>
-                    <p className="text-sm font-medium text-slate-600">Active ICPs</p>
+                    <p className="text-sm font-medium text-slate-600">Active Products</p>
                     <p className="text-3xl font-bold text-slate-900">{configs.length}</p>
                   </div>
                   <div className="h-12 w-12 bg-green-100 rounded-lg flex items-center justify-center">
@@ -127,7 +127,7 @@ export function Dashboard() {
                 </div>
                 <div className="mt-4">
                   <Link href="/leads" className="text-sm text-blue-600 hover:text-blue-800 font-medium">
-                    Manage ICPs →
+                    Manage Products →
                   </Link>
                 </div>
               </CardContent>
@@ -137,15 +137,15 @@ export function Dashboard() {
               <CardContent className="p-6">
                 <div className="flex items-center justify-between">
                   <div>
-                    <p className="text-sm font-medium text-slate-600">Avg Confidence</p>
-                    <p className="text-3xl font-bold text-slate-900">{avgConfidence}%</p>
+                    <p className="text-sm font-medium text-slate-600">Avg Lead Quality</p>
+                    <p className="text-3xl font-bold text-slate-900">{avgLeadQuality}%</p>
                   </div>
                   <div className="h-12 w-12 bg-amber-100 rounded-lg flex items-center justify-center">
                     <TrendingUp className="h-6 w-6 text-amber-600" />
                   </div>
                 </div>
                 <div className="mt-4 flex text-sm text-slate-600">
-                  <span>High: {highConfidenceLeads} • Med: {mediumConfidenceLeads}</span>
+                  <span>High: {highQualityLeads} • Med: {mediumQualityLeads}</span>
                 </div>
               </CardContent>
             </Card>
@@ -155,14 +155,14 @@ export function Dashboard() {
                 <div className="flex items-center justify-between">
                   <div>
                     <p className="text-sm font-medium text-slate-600">Low Quality</p>
-                    <p className="text-3xl font-bold text-slate-900">{lowConfidenceLeads}</p>
+                    <p className="text-3xl font-bold text-slate-900">{lowQualityLeads}</p>
                   </div>
                   <div className="h-12 w-12 bg-red-100 rounded-lg flex items-center justify-center">
                     <Activity className="h-6 w-6 text-red-600" />
                   </div>
                 </div>
                 <div className="mt-4 flex text-sm text-slate-600">
-                  <span>&lt; 60% confidence</span>
+                  <span>&lt; 60% quality</span>
                 </div>
               </CardContent>
             </Card>
@@ -181,23 +181,23 @@ export function Dashboard() {
                   <div className="flex items-center justify-between">
                     <div className="flex items-center gap-3">
                       <div className="w-3 h-3 bg-emerald-500 rounded-full"></div>
-                      <span className="text-sm font-medium text-slate-700">High Confidence (80%+)</span>
+                      <span className="text-sm font-medium text-slate-700">High Quality (80%+)</span>
                     </div>
-                    <span className="text-lg font-bold text-slate-900">{highConfidenceLeads}</span>
+                    <span className="text-lg font-bold text-slate-900">{highQualityLeads}</span>
                   </div>
                   <div className="flex items-center justify-between">
                     <div className="flex items-center gap-3">
                       <div className="w-3 h-3 bg-amber-500 rounded-full"></div>
-                      <span className="text-sm font-medium text-slate-700">Medium Confidence (60-79%)</span>
+                      <span className="text-sm font-medium text-slate-700">Medium Quality (60-79%)</span>
                     </div>
-                    <span className="text-lg font-bold text-slate-900">{mediumConfidenceLeads}</span>
+                    <span className="text-lg font-bold text-slate-900">{mediumQualityLeads}</span>
                   </div>
                   <div className="flex items-center justify-between">
                     <div className="flex items-center gap-3">
                       <div className="w-3 h-3 bg-rose-500 rounded-full"></div>
-                      <span className="text-sm font-medium text-slate-700">Low Confidence (&lt;60%)</span>
+                      <span className="text-sm font-medium text-slate-700">Low Quality (&lt;60%)</span>
                     </div>
-                    <span className="text-lg font-bold text-slate-900">{lowConfidenceLeads}</span>
+                    <span className="text-lg font-bold text-slate-900">{lowQualityLeads}</span>
                   </div>
                 </div>
               </CardContent>
@@ -215,12 +215,12 @@ export function Dashboard() {
                   <div className="text-center py-8">
                     <MessageSquare className="h-12 w-12 text-slate-300 mx-auto mb-4" />
                     <p className="text-slate-500 font-medium">No leads yet</p>
-                    <p className="text-slate-400 text-sm mt-1">Get started by creating your first ICP</p>
+                    <p className="text-slate-400 text-sm mt-1">Get started by creating your first product</p>
                     <Link 
                       href="/leads" 
                       className="inline-block mt-4 px-4 py-2 bg-slate-900 text-white text-sm rounded-md hover:bg-slate-800 transition-colors"
                     >
-                      Create ICP
+                      Create Product
                     </Link>
                   </div>
                 ) : (
@@ -233,7 +233,7 @@ export function Dashboard() {
                           <div className="flex items-center gap-2 mt-1">
                             <span className="text-xs text-slate-500">r/{post.subreddit}</span>
                             <span className="text-xs text-slate-400">•</span>
-                            <span className="text-xs text-slate-500">{post.confidence}% confidence</span>
+                            <span className="text-xs text-slate-500">{post.leadQuality}% quality</span>
                           </div>
                         </div>
                       </div>
@@ -257,7 +257,7 @@ export function Dashboard() {
               <div className="flex items-center justify-between">
                 <div>
                   <h3 className="text-xl font-semibold text-slate-900 mb-2">Ready to analyze your leads?</h3>
-                  <p className="text-slate-600 mb-4">View detailed AI analysis, manage your ICPs, and explore all discovered leads.</p>
+                  <p className="text-slate-600 mb-4">View detailed AI analysis, manage your products, and explore all discovered leads.</p>
                   <Link 
                     href="/leads" 
                     className="inline-flex items-center px-6 py-3 bg-slate-900 text-white font-medium rounded-lg hover:bg-slate-800 transition-colors"

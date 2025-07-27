@@ -58,25 +58,6 @@ export function useSignupForm() {
             if (error) throw error
         } catch (error: any) {
             setServerError(error.message || "Failed to sign up with Google. Please try again.")
-            console.log(error)
-            setLoading(false)
-        }
-    }
-
-    const handleRedditLogin = async () => {
-        setLoading(true)
-        setServerError("")
-        try {
-            const { error } = await supabaseBrowserClient.auth.signInWithOAuth({
-                provider: 'google',
-                options: {
-                    redirectTo: googleRedirectTo
-                }
-            })
-            if (error) throw error
-        } catch (error: any) {
-            setServerError(error.message || "Failed to sign up. Please try again.")
-            console.log(error)
             setLoading(false)
         }
     }
@@ -87,7 +68,6 @@ export function useSignupForm() {
         serverError,
         handleSignUp,
         handleGoogleLogin,
-        handleRedditLogin,
         successMessage
     }
 }

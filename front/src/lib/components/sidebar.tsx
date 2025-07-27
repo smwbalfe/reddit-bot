@@ -16,7 +16,7 @@ const navigationItems = [
     icon: MessageSquare
   },
   {
-    name: 'ICPs',
+    name: 'Products',
     href: '/icps',
     icon: Target
   }

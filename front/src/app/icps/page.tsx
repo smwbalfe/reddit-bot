@@ -16,7 +16,7 @@ export default function IcpsPage() {
       const data = await getUserConfigs()
       setIcps(data)
     } catch (error) {
-      console.error('Error fetching ICPs:', error)
+      console.error('Error fetching products:', error)
     } finally {
       setIsLoading(false)
     }
@@ -49,41 +49,41 @@ export default function IcpsPage() {
         <div className="max-w-4xl mx-auto">
           <div className="mb-8">
             <h1 className="text-3xl font-bold text-gray-900 mb-4">
-              Ideal Customer Profiles
+              Products
             </h1>
             <p className="text-gray-600">
-              Manage your ideal customer profiles to better target your content.
+              Manage your products and their ideal customer profiles to better target your content.
             </p>
           </div>
 
           <div className="mb-6 flex justify-between items-center">
-            <h2 className="text-xl font-semibold text-gray-800">Your ICPs</h2>
+            <h2 className="text-xl font-semibold text-gray-800">Your Products</h2>
             <button
               onClick={() => setShowCreateForm(!showCreateForm)}
               className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
             >
-              {showCreateForm ? 'Cancel' : 'Create New ICP'}
+              {showCreateForm ? 'Cancel' : 'Create New Product'}
             </button>
           </div>
 
           {showCreateForm && (
             <div className="bg-white rounded-lg shadow-md p-6 mb-6">
-              <h3 className="text-lg font-medium text-gray-900 mb-4">Create New ICP</h3>
+              <h3 className="text-lg font-medium text-gray-900 mb-4">Create New Product</h3>
               <CreateIcpForm onSuccess={handleCreateSuccess} />
             </div>
           )}
 
           {icps.length === 0 ? (
             <div className="bg-white rounded-lg shadow-md p-8 text-center">
-              <h3 className="text-lg font-medium text-gray-900 mb-2">No ICPs yet</h3>
+              <h3 className="text-lg font-medium text-gray-900 mb-2">No products yet</h3>
               <p className="text-gray-600 mb-4">
-                Create your first ideal customer profile to get started.
+                Create your first product to get started.
               </p>
               <button
                 onClick={() => setShowCreateForm(true)}
                 className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
               >
-                Create Your First ICP
+                Create Your First Product
               </button>
             </div>
           ) : (

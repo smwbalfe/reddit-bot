@@ -23,15 +23,15 @@ class DatabaseManager:
     
     def insert_reddit_post(self, subreddit: str, title: str, content: str, 
                           category: str, url: str, icp_id: int, 
-                          confidence: float, justification: str = None) -> Optional[List[Dict[str, Any]]]:
+                          lead_quality: float, justification: str = None) -> Optional[List[Dict[str, Any]]]:
         try:
             with self._get_connection() as conn:
                 with conn.cursor() as cur:
                     cur.execute(
                         '''INSERT INTO "RedditPost" 
-                           (subreddit, title, content, category, url, "icpId", confidence, justification, "createdAt", "updatedAt") 
+                           (subreddit, title, content, category, url, "icpId", "leadQuality", justification, "createdAt", "updatedAt") 
                            VALUES (%s, %s, %s, %s, %s, %s, %s, %s, NOW(), NOW())''',
-                        (subreddit, title, content, category, url, icp_id, confidence, justification)
+                        (subreddit, title, content, category, url, icp_id, lead_quality, justification)
                     )
                     conn.commit()
         except Exception as e:

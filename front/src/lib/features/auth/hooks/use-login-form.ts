@@ -56,31 +56,12 @@ const useLoginForm = () => {
         }
     }
 
-    const handleRedditLogin = async () => {
-        setLoading(true)
-        setServerError("")
-        try {
-            const { error } = await supabaseBrowserClient.auth.signInWithOAuth({
-                provider: 'google',
-                options: {
-                    redirectTo: `${env.NEXT_PUBLIC_APP_URL}/api/auth/callback`
-                }
-            })
-            if (error) throw error
-        } catch (error: any) {
-            setServerError(error.message || "Failed to sign in. Please try again.")
-            console.log(error)
-            setLoading(false)
-        }
-    }
-
     return {
         form,
         loading,
         serverError,
         handleEmailLogin,
-        handleGoogleLogin,
-        handleRedditLogin
+        handleGoogleLogin
     }
 }
 

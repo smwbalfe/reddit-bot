@@ -22,7 +22,7 @@ export default function CreateIcpForm({ onSuccess }: CreateIcpFormProps) {
         if (Array.isArray(result.error)) {
           setSubmitError(result.error.map(e => e.message).join(', '))
         } else {
-          setSubmitError(result.error || 'Failed to create ICP')
+          setSubmitError(result.error || 'Failed to create product')
         }
         return
       }
@@ -47,7 +47,7 @@ export default function CreateIcpForm({ onSuccess }: CreateIcpFormProps) {
           id="name"
           required
           className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-          placeholder="Enter ICP name"
+          placeholder="Enter product name"
         />
       </div>
 
@@ -74,7 +74,7 @@ export default function CreateIcpForm({ onSuccess }: CreateIcpFormProps) {
           rows={4}
           required
           className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent resize-vertical"
-          placeholder="Describe your ideal customer profile..."
+          placeholder="Describe the ideal customer profile for this product..."
         />
       </div>
 
@@ -90,7 +90,7 @@ export default function CreateIcpForm({ onSuccess }: CreateIcpFormProps) {
           disabled={isSubmitting}
           className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed"
         >
-          {isSubmitting ? 'Creating...' : 'Create ICP'}
+          {isSubmitting ? 'Creating...' : 'Create Product'}
         </button>
       </div>
     </form>

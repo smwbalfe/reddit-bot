@@ -5,8 +5,8 @@ import ThemeWrapper from '@/src/lib/components/theme-wrapper'
 import { Navbar } from '../lib/components/navbar'
 
 export const metadata: Metadata = {
-  title: 'SubLead',
-  description: 'SubLead - Reddit automation tool',
+  title: 'Sublead',
+  description: 'Sublead - Reddit automation tool',
   openGraph: {
     images: [
       {

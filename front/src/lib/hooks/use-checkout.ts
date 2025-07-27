@@ -15,6 +15,7 @@ export const useCheckout = (userId: string | undefined) => {
             alert('User ID is required')
             return
         }
+
         setIsLoading(true)
         try {
             const { data } = await supabaseBrowserClient.auth.getUser()
@@ -26,7 +27,7 @@ export const useCheckout = (userId: string | undefined) => {
                 email,
                 name,
                 line_item: {
-                    price: 'price_1R7iY4P74SCuSPeLfB4MSpuy', 
+                    price: env.NEXT_PUBLIC_STRIPE_PRICE_ID, 
                     quantity: 1
                 }
             })

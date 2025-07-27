@@ -26,7 +26,7 @@ export const redditPosts = pgTable('RedditPost', {
   content: text('content').notNull(),
   category: varchar('category').notNull(),
   url: text('url').notNull(),
-  confidence: integer('confidence'),
+  leadQuality: integer('leadQuality'),
   justification: text('justification'),
   createdAt: timestamp('createdAt').defaultNow().notNull(),
   updatedAt: timestamp('updatedAt').defaultNow().notNull(),

@@ -7,13 +7,13 @@ import { Button } from "@/src/lib/components/ui/button"
 import { Input } from "@/src/lib/components/ui/input"
 import { Label } from "@/src/lib/components/ui/label"
 import { Badge } from "@/src/lib/components/ui/badge"
-import { createConfig, getUserConfigs, deleteConfig, getUserPosts } from "@/src/lib/actions/create-config"
+import { createConfig, getUserConfigs, getUserPosts } from "@/src/lib/actions/create-config"
 import { ICP } from "@/src/lib/db/schema"
-import { Plus, ChevronRight, Trash2, MessageSquare, TrendingUp, Activity } from "lucide-react"
+import { Plus, ChevronRight, MessageSquare, TrendingUp, Activity } from "lucide-react"
 import DashboardLayout from '@/src/lib/components/dashboard-layout'
 
-function ConfidenceMeter({ confidence }: { confidence: number | null }) {
-  if (!confidence) return null
+function LeadQualityMeter({ leadQuality }: { leadQuality: number | null }) {
+  if (!leadQuality) return null
   
   const getColorClass = (score: number) => {
     if (score >= 80) return "bg-emerald-500"
@@ -31,15 +31,15 @@ function ConfidenceMeter({ confidence }: { confidence: number | null }) {
     <div className="flex items-center gap-3">
       <div className="flex items-center gap-2">
         <Activity className="w-3 h-3 text-slate-500" />
-        <span className="text-xs text-slate-600 font-medium">Confidence</span>
+        <span className="text-xs text-slate-600 font-medium">Lead Quality</span>
       </div>
       <div className="flex-1 bg-slate-100 rounded-full h-1.5 max-w-20">
         <div
-          className={`h-1.5 rounded-full transition-all duration-300 ${getColorClass(confidence)}`}
-          style={{ width: `${confidence}%` }}
+          className={`h-1.5 rounded-full transition-all duration-300 ${getColorClass(leadQuality)}`}
+          style={{ width: `${leadQuality}%` }}
         />
       </div>
-      <span className={`text-xs font-semibold tabular-nums ${getTextColor(confidence)}`}>{confidence}%</span>
+      <span className={`text-xs font-semibold tabular-nums ${getTextColor(leadQuality)}`}>{leadQuality}%</span>
     </div>
   )
 }
@@ -52,7 +52,7 @@ type PostWithConfigId = {
   content: string
   category: string
   url: string
-  confidence: number | null
+  leadQuality: number | null
   justification: string | null
   createdAt: Date
   updatedAt: Date
@@ -64,7 +64,6 @@ export default function LeadsPage() {
   const [posts, setPosts] = useState<PostWithConfigId[]>([])
   const [loading, setLoading] = useState(true)
   const [showConfigForm, setShowConfigForm] = useState(false)
-  const [expandedConfigs, setExpandedConfigs] = useState<Set<number>>(new Set())
   const [newConfig, setNewConfig] = useState({
     name: "",
     website: "",
@@ -119,32 +118,7 @@ export default function LeadsPage() {
     }
   }
 
-  const handleDeleteConfig = async (id: number) => {
-    try {
-      await deleteConfig(id)
-      fetchConfigs()
-      fetchPosts()
-      setExpandedConfigs(prev => {
-        const newSet = new Set(prev)
-        newSet.delete(id)
-        return newSet
-      })
-    } catch (error) {
-      console.error('Error deleting config:', error)
-    }
-  }
 
-  const toggleConfigExpanded = (configId: number) => {
-    setExpandedConfigs(prev => {
-      const newSet = new Set(prev)
-      if (newSet.has(configId)) {
-        newSet.delete(configId)
-      } else {
-        newSet.add(configId)
-      }
-      return newSet
-    })
-  }
 
   if (!user) {
     return (
@@ -164,12 +138,12 @@ export default function LeadsPage() {
             <div className="flex justify-between items-start flex-wrap gap-4">
               <div className="space-y-3">
                 <CardTitle className="text-2xl font-semibold text-slate-900">Leads & AI Analysis</CardTitle>
-                <CardDescription className="text-base text-slate-600">View leads with detailed AI insights and manage your ICPs</CardDescription>
+                <CardDescription className="text-base text-slate-600">View leads with detailed AI insights and manage your products (ideal customer profiles)</CardDescription>
                 <div className="flex items-center gap-6">
                   <div className="flex items-center gap-2">
                     <TrendingUp className="w-5 h-5 text-slate-500" />
                     <span className="text-base font-medium text-slate-700">{configs.length}</span>
-                    <span className="text-base text-slate-500">active ICPs</span>
+                    <span className="text-base text-slate-500">active products</span>
                   </div>
                   <div className="flex items-center gap-2">
                     <MessageSquare className="w-5 h-5 text-slate-500" />
@@ -185,7 +159,7 @@ export default function LeadsPage() {
                 size="default"
               >
                 <Plus className="w-5 h-5" />
-                {showConfigForm ? "Cancel" : "Add ICP"}
+                {showConfigForm ? "Cancel" : "Add Product"}
               </Button>
             </div>
           </CardHeader>
@@ -194,7 +168,7 @@ export default function LeadsPage() {
             <CardContent className="border-t border-slate-100 pt-6">
               <div className="space-y-6">
                 <div className="space-y-3">
-                  <Label htmlFor="name" className="text-base font-medium text-slate-700">ICP Name</Label>
+                  <Label htmlFor="name" className="text-base font-medium text-slate-700">Product Name</Label>
                   <Input
                     id="name"
                     value={newConfig.name}
@@ -214,7 +188,7 @@ export default function LeadsPage() {
                   />
                 </div>
                 <div className="space-y-3">
-                  <Label htmlFor="description" className="text-base font-medium text-slate-700">Description</Label>
+                  <Label htmlFor="description" className="text-base font-medium text-slate-700">ICP Description</Label>
                   <Input
                     id="description"
                     value={newConfig.description}
@@ -228,7 +202,7 @@ export default function LeadsPage() {
                   className="w-full bg-slate-900 hover:bg-slate-800 text-white"
                   disabled={!newConfig.name || !newConfig.website || !newConfig.description}
                 >
-                  Create ICP
+                  Create Product
                 </Button>
               </div>
             </CardContent>
@@ -243,102 +217,88 @@ export default function LeadsPage() {
           <Card className="border-0 shadow-sm bg-white">
             <CardContent className="text-center py-20">
               <MessageSquare className="w-16 h-16 text-slate-300 mx-auto mb-6" />
-              <p className="text-slate-500 text-xl font-medium">No ICPs yet</p>
-              <p className="text-slate-400 text-base mt-3">Create your first ICP to get started</p>
+              <p className="text-slate-500 text-xl font-medium">No products yet</p>
+              <p className="text-slate-400 text-base mt-3">Create your first product to get started</p>
+            </CardContent>
+          </Card>
+        ) : posts.length === 0 ? (
+          <Card className="border-0 shadow-sm bg-white">
+            <CardContent className="text-center py-20">
+              <MessageSquare className="w-16 h-16 text-slate-300 mx-auto mb-6" />
+              <p className="text-slate-500 text-xl font-medium">No leads found yet</p>
+              <p className="text-slate-400 text-base mt-3">AI is monitoring for relevant posts</p>
             </CardContent>
           </Card>
         ) : (
-          <div className="space-y-4">
-            {configs.map((config) => {
-              const configPosts = posts.filter(post => post.configId === config.id)
-              const isExpanded = expandedConfigs.has(config.id)
-              
+          <div className="space-y-6">
+            {posts.map(post => {
+              const config = configs.find(c => c.id === post.configId)
               return (
-                <Card key={config.id} className="border-0 shadow-sm bg-white hover:shadow-md transition-all duration-200">
-                  <CardHeader 
-                    className="cursor-pointer hover:bg-slate-50 transition-colors duration-150 rounded-t-xl"
-                    onClick={() => toggleConfigExpanded(config.id)}
-                  >
-                    <div className="flex items-center justify-between gap-4">
-                      <div className="flex items-center gap-4 flex-1 min-w-0">
-                        <div className="flex items-center gap-3">
-                          <ChevronRight 
-                            className={`w-5 h-5 text-slate-400 transition-transform duration-200 ${isExpanded ? 'rotate-90' : ''}`}
-                          />
-                          <Badge variant="outline" className="bg-slate-50 border-slate-200 text-slate-700 font-semibold text-base px-4 py-2">
-                            {config.name}
+                <Card key={post.id} className="border-0 shadow-sm bg-white hover:shadow-md transition-all duration-200">
+                  <CardContent className="p-6">
+                    {/* Header with title and source info */}
+                    <div className="mb-4">
+                      <div className="flex items-start justify-between mb-3">
+                        <h3 className="font-semibold text-xl text-slate-900 leading-tight pr-4">{post.title}</h3>
+                        <LeadQualityMeter leadQuality={post.leadQuality} />
+                      </div>
+                      
+                      {/* Source and matching info */}
+                      <div className="flex items-center gap-4 text-sm">
+                        <div className="flex items-center gap-2">
+                          <span className="text-slate-500 font-medium">From:</span>
+                          <Badge variant="outline" className="bg-orange-50 border-orange-200 text-orange-700 font-medium">
+                            r/{post.subreddit}
                           </Badge>
                         </div>
-                        <div className="flex-1 min-w-0">
-                          <p className="text-base font-medium text-slate-900 truncate">{config.description}</p>
-                          <p className="text-sm text-slate-500 mt-2 flex items-center gap-2">
-                            <MessageSquare className="w-4 h-4" />
-                            {configPosts.length} {configPosts.length === 1 ? 'lead' : 'leads'}
-                          </p>
+                        <div className="flex items-center gap-2">
+                          <span className="text-slate-500 font-medium">Product match:</span>
+                          <Badge variant="outline" className="bg-blue-50 border-blue-200 text-blue-700 font-medium">
+                            {config?.name || 'Unknown Product'}
+                          </Badge>
                         </div>
+                        <Badge variant="outline" className="bg-slate-50 border-slate-200 text-slate-600">
+                          {post.category}
+                        </Badge>
                       </div>
-                      <Button
-                        onClick={(e) => {
-                          e.stopPropagation()
-                          handleDeleteConfig(config.id)
-                        }}
-                        variant="ghost"
-                        size="sm"
-                        className="text-slate-400 hover:text-rose-600 hover:bg-rose-50 shrink-0 transition-colors"
-                      >
-                        <Trash2 className="w-5 h-5" />
-                      </Button>
                     </div>
-                  </CardHeader>
-                  
-                  {isExpanded && (
-                    <CardContent className="border-t border-slate-100 pt-6">
-                      {configPosts.length === 0 ? (
-                        <div className="text-center py-16">
-                          <MessageSquare className="w-12 h-12 text-slate-300 mx-auto mb-4" />
-                          <p className="text-slate-500 text-base font-medium">No leads found yet</p>
-                          <p className="text-slate-400 text-sm mt-2">AI is monitoring for relevant posts</p>
-                        </div>
-                      ) : (
-                        <div className="space-y-4">
-                          {configPosts.map(post => (
-                            <div key={post.id} className="border border-slate-200 rounded-lg p-6 bg-slate-50 hover:bg-white hover:shadow-sm transition-all duration-200">
-                              <div className="flex justify-between items-start mb-4">
-                                <h5 className="font-semibold text-lg text-slate-900 leading-snug">{post.title}</h5>
-                                <Badge variant="outline" className="text-sm bg-white border-slate-200 text-slate-600 ml-4 shrink-0 px-3 py-1">
-                                  {post.category}
-                                </Badge>
-                              </div>
-                              <p className="text-slate-600 text-base mb-5 leading-relaxed">{post.content}</p>
-                              <div className="mb-5">
-                                <ConfidenceMeter confidence={post.confidence} />
-                              </div>
-                              {post.justification && (
-                                <div className="mb-5 p-4 bg-blue-50 border border-blue-200 rounded-lg">
-                                  <h6 className="text-sm font-medium text-blue-900 mb-2">AI Analysis</h6>
-                                  <p className="text-sm text-blue-800 leading-relaxed">{post.justification}</p>
-                                </div>
-                              )}
-                              <div className="flex justify-between items-center pt-3 border-t border-slate-200">
-                                <span className="text-sm text-slate-500 font-medium">
-                                  {new Date(post.createdAt).toLocaleDateString()}
-                                </span>
-                                <a 
-                                  href={post.url} 
-                                  target="_blank" 
-                                  rel="noopener noreferrer"
-                                  className="text-slate-900 hover:text-slate-700 text-base font-medium flex items-center gap-2 group"
-                                >
-                                  View Post
-                                  <ChevronRight className="w-4 h-4 group-hover:translate-x-0.5 transition-transform" />
-                                </a>
-                              </div>
-                            </div>
-                          ))}
-                        </div>
-                      )}
-                    </CardContent>
-                  )}
+
+                    {/* Content */}
+                    <div className="mb-5 p-4 bg-slate-50 rounded-lg max-h-32 overflow-y-auto">
+                      <p className="text-slate-700 text-base leading-relaxed">{post.content}</p>
+                    </div>
+
+                    {/* AI Analysis */}
+                    {post.justification && (
+                      <div className="mb-5 p-4 bg-blue-50 border border-blue-200 rounded-lg">
+                        <h6 className="text-sm font-medium text-blue-900 mb-2 flex items-center gap-2">
+                          <Activity className="w-4 h-4" />
+                          AI Analysis
+                        </h6>
+                        <p className="text-sm text-blue-800 leading-relaxed">{post.justification}</p>
+                      </div>
+                    )}
+
+                    {/* Footer */}
+                    <div className="flex justify-between items-center pt-4 border-t border-slate-200">
+                      <span className="text-sm text-slate-500 font-medium">
+                        {new Date(post.createdAt).toLocaleDateString('en-US', { 
+                          year: 'numeric', 
+                          month: 'short', 
+                          day: 'numeric' 
+                        })}
+                      </span>
+                      <a 
+                        href={post.url} 
+                        target="_blank" 
+                        rel="noopener noreferrer"
+                        className="text-slate-900 hover:text-slate-700 text-sm font-medium flex items-center gap-2 group px-4 py-2 rounded-lg hover:bg-slate-50 transition-colors"
+                      >
+                        View on Reddit
+                        <ChevronRight className="w-4 h-4 group-hover:translate-x-0.5 transition-transform" />
+                      </a>
+                    </div>
+                  </CardContent>
                 </Card>
               )
             })}
