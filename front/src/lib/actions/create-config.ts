@@ -1,6 +1,6 @@
 'use server'
 import { db } from "@/src/lib/db"
-import { icps, redditPosts, NewICP } from "@/src/lib/db/schema"
+import { icps, redditPosts } from "@/src/lib/db/schema"
 import { eq } from "drizzle-orm"
 import { makeServerClient } from '@/src/lib/supabase/server'
 import { z } from 'zod'
@@ -9,6 +9,7 @@ const createIcpSchema = z.object({
   name: z.string().min(1, 'Name is required'),
   website: z.string().url('Must be a valid URL'),
   description: z.string().min(1, 'Description is required'),
+  keywords: z.array(z.string()).default([]),
 })
 
 export async function createConfig(formData: FormData) {
@@ -24,6 +25,7 @@ export async function createConfig(formData: FormData) {
       name: formData.get('name') as string,
       website: formData.get('website') as string,
       description: formData.get('description') as string,
+      keywords: JSON.parse(formData.get('keywords') as string || '[]'),
     }
 
     const validatedData = createIcpSchema.parse(rawData)
@@ -33,6 +35,7 @@ export async function createConfig(formData: FormData) {
       name: validatedData.name,
       website: validatedData.website,
       description: validatedData.description,
+      keywords: validatedData.keywords,
     }).returning()
 
     return { success: true, data: config }
@@ -98,12 +101,60 @@ export async function getUserPosts() {
   }
 }
 
+export async function updateConfig(id: number, formData: FormData) {
+  try {
+    const supabase = await makeServerClient()
+    const { data: { user } } = await supabase.auth.getUser()
+
+    if (!user) {
+      throw new Error('Unauthorized')
+    }
+
+    const rawData = {
+      name: formData.get('name') as string,
+      website: formData.get('website') as string,
+      description: formData.get('description') as string,
+      keywords: JSON.parse(formData.get('keywords') as string || '[]'),
+    }
+
+    const validatedData = createIcpSchema.parse(rawData)
+
+    const [config] = await db.update(icps)
+      .set({
+        name: validatedData.name,
+        website: validatedData.website,
+        description: validatedData.description,
+        keywords: validatedData.keywords,
+        updatedAt: new Date(),
+      })
+      .where(eq(icps.id, id))
+      .returning()
+
+    return { success: true, data: config }
+  } catch (error) {
+    if (error instanceof z.ZodError) {
+      return { success: false, error: error.errors }
+    }
+    console.error('Error updating config:', error)
+    return { success: false, error: 'Failed to update config' }
+  }
+}
+
 export async function deleteConfig(id: number) {
   try {
+    const supabase = await makeServerClient()
+    const { data: { user } } = await supabase.auth.getUser()
+
+    if (!user) {
+      throw new Error('Unauthorized')
+    }
+
     await db.delete(redditPosts).where(eq(redditPosts.icpId, id))
     await db.delete(icps).where(eq(icps.id, id))
+    
+    return { success: true }
   } catch (error) {
     console.error('Error deleting config:', error)
-    throw new Error('Failed to delete config')
+    return { success: false, error: 'Failed to delete config' }
   }
 } 

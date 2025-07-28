@@ -29,6 +29,13 @@
       "when": 1753651489204,
       "tag": "0003_plain_blob",
       "breakpoints": true
+    },
+    {
+      "idx": 4,
+      "version": "7",
+      "when": 1753728593174,
+      "tag": "0004_milky_talkback",
+      "breakpoints": true
     }
   ]
 }

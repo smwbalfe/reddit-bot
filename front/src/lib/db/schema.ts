@@ -14,6 +14,7 @@ export const icps = pgTable('ICP', {
   name: varchar('name').notNull(),
   website: varchar('website').notNull(),
   description: text('description').notNull(),
+  keywords: text('keywords').array().notNull().default([]),
   createdAt: timestamp('createdAt').defaultNow().notNull(),
   updatedAt: timestamp('updatedAt').defaultNow().notNull(),
 })

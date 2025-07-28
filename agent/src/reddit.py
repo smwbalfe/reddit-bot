@@ -1,5 +1,6 @@
 import asyncio
 import logging
+import json
 from src.rclient.client import RedditClient
 from src.db import DatabaseManager
 from src.agent.tools import score_lead_intent
@@ -12,6 +13,27 @@ ACCEPTED_SUBREDDITS = [
 ]
 SLEEP_INTERVAL = 1
 
+def get_icps_as_json():
+    """Fetch all ICPs with their keywords and return as JSON"""
+    db_manager = DatabaseManager()
+    icps = db_manager.get_icps()
+    
+    # Convert to a more readable format
+    icps_data = []
+    for icp in icps:
+        icp_dict = {
+            'id': icp['id'],
+            'name': icp['name'],
+            'website': icp['website'],
+            'description': icp['description'],
+            'keywords': icp['keywords']
+        }
+        icps_data.append(icp_dict)
+    
+    json_output = json.dumps(icps_data, indent=2)
+    print(json_output)
+    return json_output
+
 async def process_post(post, db_manager, icps):
     """Process a Reddit post by scoring it against all ICPs and storing results"""
     subreddit_name = post.subreddit.display_name
@@ -22,18 +44,18 @@ async def process_post(post, db_manager, icps):
     if hasattr(post, 'selftext') and post.selftext:
         post_content = post.selftext
     
-    # Score the post against each ICP
     for icp in icps:
         try:
-            # Score lead intent using the agent
+      
             result = await score_lead_intent(
                 post_title=post.title,
                 post_content=post_content,
                 icp_description=icp['description']
             )
             
-            # Only store posts with medium to high lead quality (>30.0)
-            if result.lead_quality > 1.0:
+
+            if result.lead_quality > 30.0:
+
                 db_manager.insert_reddit_post(
                     subreddit=subreddit_name,
                     title=post.title,
@@ -53,9 +75,9 @@ async def process_post(post, db_manager, icps):
 async def monitor_all_subreddits(reddit_client, db_manager):
     """Monitor discrete list of subreddits"""
     logger.info("Starting monitoring for discrete subreddits")
-    
-    # Get ICPs from database
+
     icps = db_manager.get_icps()
+    
     if not icps:
         logger.error("No ICPs found in database")
         return
@@ -64,9 +86,8 @@ async def monitor_all_subreddits(reddit_client, db_manager):
 
     try:
         subreddit_string = "+".join(ACCEPTED_SUBREDDITS)
-        subreddit = await reddit_client.get_subreddit(subreddit_string)
+        subreddit = await reddit_client.get_subreddit("all")
         async for post in subreddit.stream.submissions(skip_existing=True):
-            print(post)
             await process_post(post, db_manager, icps)
             await asyncio.sleep(SLEEP_INTERVAL)
 
@@ -79,12 +100,16 @@ async def main():
     
     reddit_client = RedditClient()
     db_manager = DatabaseManager()
-    
-    # Monitor discrete list of subreddits
+
     await monitor_all_subreddits(reddit_client, db_manager)
 
 if __name__ == "__main__":
-    try:
-        asyncio.run(main())
-    except KeyboardInterrupt:
-        logger.info("Shutting down Reddit Bot")
+    # Check if we should just output ICPs as JSON
+    import sys
+    if len(sys.argv) > 1 and sys.argv[1] == "--json":
+        get_icps_as_json()
+    else:
+        try:
+            asyncio.run(main())
+        except KeyboardInterrupt:
+            logger.info("Shutting down Reddit Bot")
