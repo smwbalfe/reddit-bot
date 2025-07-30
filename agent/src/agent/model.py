@@ -1,9 +1,11 @@
 from __future__ import annotations
 import os
 import logfire
+from pydantic import BaseModel
 from pydantic_ai.models.openai import OpenAIModel
 from pydantic_ai.providers.openrouter import OpenRouterProvider
 from dotenv import load_dotenv
+from typing import List
 
 load_dotenv()
 
@@ -20,6 +22,27 @@ model = OpenAIModel(
     provider=OpenRouterProvider(api_key=openrouter_api_key),
 )
 
+gemini_pro_model = OpenAIModel(
+    "google/gemini-2.5-flash",
+    provider=OpenRouterProvider(api_key=openrouter_api_key),
+)
 
 
+class LeadIntentResponse(BaseModel):
+    buying_intent_category: str
+    justification: str
+    lead_quality: int
+    pain_points: str
+    suggested_engagement: str
 
+
+class KeywordResponse(BaseModel):
+    keywords: List[str]
+
+
+class SubredditResponse(BaseModel):
+    subreddits: List[str]
+
+
+class ICPResponse(BaseModel):
+    icp_description: str

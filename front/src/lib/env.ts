@@ -10,6 +10,7 @@ const env = {
     SUPABASE_SERVICE_ROLE_KEY: process.env.SUPABASE_SERVICE_ROLE_KEY!,
 
     OPENROUTER_API_KEY: process.env.OPENROUTER_API_KEY!,
+    OPEN_API_KEY: process.env.OPEN_API_KEY!,
     
     STRIPE_SECRET_KEY: process.env.STRIPE_SECRET_KEY!,
     NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY: process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY!,
@@ -46,6 +47,7 @@ console.log('Environment Variables:', {
     RESEND_FROM: env.RESEND_FROM,
     NEXT_PUBLIC_STRIPE_PRICE_ID: env.NEXT_PUBLIC_STRIPE_PRICE_ID,
     OPENROUTER_API_KEY: env.OPENROUTER_API_KEY ? '[REDACTED]' : undefined,
+    OPEN_API_KEY: env.OPEN_API_KEY ? '[REDACTED]' : undefined,
 })
 
 export default env;

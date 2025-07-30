@@ -10,6 +10,7 @@ const createIcpSchema = z.object({
   website: z.string().url('Must be a valid URL'),
   description: z.string().min(1, 'Description is required'),
   keywords: z.array(z.string()).default([]),
+  subreddits: z.array(z.string()).default([]),
 })
 
 export async function createConfig(formData: FormData) {
@@ -26,6 +27,7 @@ export async function createConfig(formData: FormData) {
       website: formData.get('website') as string,
       description: formData.get('description') as string,
       keywords: JSON.parse(formData.get('keywords') as string || '[]'),
+      subreddits: JSON.parse(formData.get('subreddits') as string || '[]'),
     }
 
     const validatedData = createIcpSchema.parse(rawData)
@@ -36,12 +38,13 @@ export async function createConfig(formData: FormData) {
       website: validatedData.website,
       description: validatedData.description,
       keywords: validatedData.keywords,
+      subreddits: validatedData.subreddits,
     }).returning()
 
     return { success: true, data: config }
   } catch (error) {
     if (error instanceof z.ZodError) {
-      return { success: false, error: error.errors }
+      return { success: false, error: error.issues }
     }
     console.error('Error creating config:', error)
     return { success: false, error: 'Failed to create config' }
@@ -83,10 +86,12 @@ export async function getUserPosts() {
       subreddit: redditPosts.subreddit,
       title: redditPosts.title,
       content: redditPosts.content,
-      category: redditPosts.category,
       url: redditPosts.url,
       leadQuality: redditPosts.leadQuality,
+      leadCategory: redditPosts.leadCategory,
       justification: redditPosts.justification,
+      painPoints: redditPosts.painPoints,
+      suggestedEngagement: redditPosts.suggestedEngagement,
       createdAt: redditPosts.createdAt,
       updatedAt: redditPosts.updatedAt,
     })
@@ -115,6 +120,7 @@ export async function updateConfig(id: number, formData: FormData) {
       website: formData.get('website') as string,
       description: formData.get('description') as string,
       keywords: JSON.parse(formData.get('keywords') as string || '[]'),
+      subreddits: JSON.parse(formData.get('subreddits') as string || '[]'),
     }
 
     const validatedData = createIcpSchema.parse(rawData)
@@ -125,6 +131,7 @@ export async function updateConfig(id: number, formData: FormData) {
         website: validatedData.website,
         description: validatedData.description,
         keywords: validatedData.keywords,
+        subreddits: validatedData.subreddits,
         updatedAt: new Date(),
       })
       .where(eq(icps.id, id))
@@ -133,7 +140,7 @@ export async function updateConfig(id: number, formData: FormData) {
     return { success: true, data: config }
   } catch (error) {
     if (error instanceof z.ZodError) {
-      return { success: false, error: error.errors }
+      return { success: false, error: error.issues }
     }
     console.error('Error updating config:', error)
     return { success: false, error: 'Failed to update config' }

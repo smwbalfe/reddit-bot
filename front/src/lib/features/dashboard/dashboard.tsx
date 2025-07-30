@@ -14,7 +14,6 @@ type PostWithConfigId = {
   subreddit: string
   title: string
   content: string
-  category: string
   url: string
   leadQuality: number | null
   justification: string | null

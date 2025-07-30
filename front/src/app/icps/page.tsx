@@ -140,6 +140,22 @@ export default function IcpsPage() {
                     </div>
                   </div>
                   <p className="text-gray-600 mb-4">{icp.description}</p>
+                  
+                  {icp.keywords && icp.keywords.length > 0 && (
+                    <div className="mb-4">
+                      <h4 className="text-sm font-medium text-gray-700 mb-2">Keywords:</h4>
+                      <div className="flex flex-wrap gap-2">
+                        {icp.keywords.map((keyword, index) => (
+                          <span
+                            key={index}
+                            className="px-2 py-1 bg-blue-100 text-blue-800 text-xs rounded-full"
+                          >
+                            {keyword}
+                          </span>
+                        ))}
+                      </div>
+                    </div>
+                  )}
 
                   <div className="flex justify-between items-center">
                     <div className="text-sm text-gray-500">

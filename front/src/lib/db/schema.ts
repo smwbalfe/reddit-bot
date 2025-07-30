@@ -15,6 +15,7 @@ export const icps = pgTable('ICP', {
   website: varchar('website').notNull(),
   description: text('description').notNull(),
   keywords: text('keywords').array().notNull().default([]),
+  subreddits: text('subreddits').array().notNull().default([]),
   createdAt: timestamp('createdAt').defaultNow().notNull(),
   updatedAt: timestamp('updatedAt').defaultNow().notNull(),
 })
@@ -25,10 +26,12 @@ export const redditPosts = pgTable('RedditPost', {
   subreddit: varchar('subreddit').notNull(),
   title: text('title').notNull(),
   content: text('content').notNull(),
-  category: varchar('category').notNull(),
   url: text('url').notNull(),
   leadQuality: integer('leadQuality'),
+  leadCategory: varchar('leadCategory'),
   justification: text('justification'),
+  painPoints: text('painPoints'),
+  suggestedEngagement: text('suggestedEngagement'),
   createdAt: timestamp('createdAt').defaultNow().notNull(),
   updatedAt: timestamp('updatedAt').defaultNow().notNull(),
 }, (table) => ({

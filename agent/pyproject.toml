@@ -11,7 +11,12 @@ dependencies = [
     "python-dotenv",
     "logfire",
     "psycopg2-binary",
-    "asyncpraw"
+    "asyncpraw",
+    "fastapi",
+    "uvicorn",
+    "aiohttp",
+    "beautifulsoup4",
+    "lxml"
 ]
 
 requires-python = ">=3.10"
