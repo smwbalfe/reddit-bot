@@ -1,0 +1,66 @@
+#!/usr/bin/env python3
+from fastapi import FastAPI, HTTPException
+from fastapi.middleware.cors import CORSMiddleware
+from pydantic import BaseModel
+from src.agent.services import extract_keywords, find_relevant_subreddits, generate_icp_description
+import aiohttp
+from bs4 import BeautifulSoup
+import re
+from urllib.parse import  urlparse
+import asyncio
+from contextlib import asynccontextmanager
+from src.dtos.server_dtos import KeywordRequest, KeywordFromUrlRequest, KeywordResponse, SubredditRequest, SubredditResponse, AnalyzeUrlRequest, AnalyzeUrlResponse
+from src.parse_page import fetch_html, parse_html_content
+from src.reddit.reddit_scraper import reddit_main
+import asyncio
+
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    task = asyncio.create_task(reddit_main())
+    yield
+    task.cancel()
+    try:
+        await task
+    except asyncio.CancelledError:
+        pass
+
+app = FastAPI(title="Keyword Generation API", version="1.0.0", lifespan=lifespan)
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["http://localhost:3000", "http://127.0.0.1:3000"],
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
+
+@app.post("/api/analyze-url", response_model=AnalyzeUrlResponse)
+async def analyze_url_endpoint(request: AnalyzeUrlRequest):
+    try:
+
+        html_content = await fetch_html(request.url)
+        parsed_content = parse_html_content(html_content)
+        
+        keywords_task = extract_keywords(parsed_content)
+        icp_task = generate_icp_description(parsed_content)
+        subreddits_task = find_relevant_subreddits(parsed_content, request.subreddit_count)
+        
+        keywords, icp_description, subreddits = await asyncio.gather(
+            keywords_task, icp_task, subreddits_task
+        )
+        
+        return AnalyzeUrlResponse(
+            keywords=keywords[:request.keyword_count],
+            subreddits=subreddits[:request.subreddit_count],
+            icp_description=icp_description
+        )
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Failed to analyze URL: {str(e)}")
+
+@app.get("/health")
+async def health_check():
+    return {"status": "healthy"}
+
+if __name__ == "__main__":
+    import uvicorn
+    uvicorn.run(app, host="0.0.0.0", port=8000)
