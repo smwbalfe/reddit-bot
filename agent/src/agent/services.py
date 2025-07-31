@@ -2,7 +2,7 @@ import asyncio
 import json
 import logging
 from typing import List
-from .agents import agent, keyword_agent, subreddit_agent, icp_agent, lead_reviewer_agent
+from .agents import agent, keyword_agent, subreddit_agent, icp_agent, lead_reviewer_agent, reply_generation_agent
 from ..dtos.server_dtos import LeadIntentResponse, KeywordResponse, SubredditResponse, ICPResponse
 
 logger = logging.getLogger(__name__)
@@ -31,7 +31,6 @@ async def score_lead_intent(post_title: str, post_content: str, icp_description:
                 justification="Agent run timed out after 10 seconds on both attempts, unable to score properly.",
                 lead_quality=1,
                 pain_points="Unable to identify due to timeout",
-                suggested_engagement="Unable to suggest due to timeout"
             )
         except Exception as e:
             if attempt == 0:
@@ -43,7 +42,6 @@ async def score_lead_intent(post_title: str, post_content: str, icp_description:
                 justification=f"Error occurred during scoring on both attempts: {str(e)[:100]}",
                 lead_quality=1,
                 pain_points="Unable to identify due to error",
-                suggested_engagement="Unable to suggest due to error"
             )
 
 async def extract_keywords(page_content: str, count: int = 30) -> List[str]:
@@ -102,7 +100,6 @@ async def review_lead_quality(post_title: str, post_content: str, icp_descriptio
         "initial_category": initial_result.buying_intent_category,
         "justification": initial_result.justification,
         "pain_points": initial_result.pain_points,
-        "suggested_engagement": initial_result.suggested_engagement
     }
     
     prompt = json.dumps(review_data)
@@ -117,3 +114,27 @@ async def review_lead_quality(post_title: str, post_content: str, icp_descriptio
     except Exception as e:
         logger.error(f"Error during lead review for post '{post_title[:50]}...': {e}")
         return False  # Reject if review fails
+
+async def generate_reply(post_title: str, post_content: str, subreddit: str, product_name: str, product_description: str, product_website: str) -> str:
+    """Generate a personalized Reddit reply using the reply generation agent"""
+    prompt_data = {
+        "post_title": post_title,
+        "post_content": post_content,
+        "subreddit": subreddit,
+        "product_name": product_name,
+        "product_description": product_description,
+        "product_website": product_website
+    }
+    
+    prompt = json.dumps(prompt_data)
+    
+    try:
+        result = await asyncio.wait_for(reply_generation_agent.run(prompt), timeout=15.0)
+        logger.info(f"Generated reply for post: {post_title[:50]}...")
+        return result.output.reply
+    except asyncio.TimeoutError:
+        logger.error(f"Reply generation timed out after 15 seconds for post: {post_title[:50]}...")
+        return "Unable to generate reply due to timeout. Please try again."
+    except Exception as e:
+        logger.error(f"Error during reply generation for post '{post_title[:50]}...': {e}")
+        return f"Unable to generate reply due to error: {str(e)}"

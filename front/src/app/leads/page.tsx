@@ -5,124 +5,120 @@ import { useState, useEffect } from "react"
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/src/lib/components/ui/card"
 import { Button } from "@/src/lib/components/ui/button"
 import { Badge } from "@/src/lib/components/ui/badge"
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/src/lib/components/ui/table"
 import { getUserConfigs, getUserPosts } from "@/src/lib/actions/create-config"
 import { ICP } from "@/src/lib/db/schema"
-import { ChevronRight, MessageSquare, TrendingUp, Activity, ExternalLink, ChevronDown, Hash, Package } from "lucide-react"
+import { MessageSquare, TrendingUp, ExternalLink, Package } from "lucide-react"
 import DashboardLayout from '@/src/lib/components/dashboard-layout'
 import Link from 'next/link'
 
-function LeadQualityMeter({ leadQuality }: { leadQuality: number | null }) {
-  if (!leadQuality) return null
+
+function FuelGauge({ percentage, color }: { percentage: number; color: string }) {
+  // Convert percentage (0-100) to angle (180 to 0 degrees)
+  // 0% should be at 180° (left/red), 50% at 90° (top), 100% at 0° (right/green)  
+  const angle = 180 - (percentage / 100) * 180
   
-  const getColorClass = (score: number) => {
-    if (score >= 80) return "bg-emerald-500"
-    if (score >= 60) return "bg-amber-500"
-    return "bg-rose-500"
-  }
-
-  const getTextColor = (score: number) => {
-    if (score >= 80) return "text-emerald-700"
-    if (score >= 60) return "text-amber-700"
-    return "text-rose-700"
-  }
-
   return (
-    <div className="flex flex-col items-end">
-      <div className="flex items-center gap-2">
-        <Activity className="w-3 h-3 text-slate-500" />
-        <span className={`text-sm font-bold tabular-nums ${getTextColor(leadQuality)}`}>{leadQuality}%</span>
-      </div>
-      <div className="flex items-center gap-1">
-        <span className="text-xs text-slate-500">Quality</span>
-        <div className="bg-slate-200 rounded-full h-1.5 w-12">
-          <div
-            className={`h-1.5 rounded-full transition-all duration-300 ${getColorClass(leadQuality)}`}
-            style={{ width: `${leadQuality}%` }}
-          />
-        </div>
-      </div>
+    <div className="relative w-12 h-6">
+      <svg width="48" height="24" viewBox="0 0 48 24" className="overflow-visible">
+        {/* Background arc segments */}
+        {Array.from({ length: 20 }, (_, i) => {
+          const segmentAngle = 180 - (i * 9) // 20 segments, 9 degrees each (180/20=9)
+          const x1 = 24 + 18 * Math.cos((segmentAngle * Math.PI) / 180)
+          const y1 = 24 - 18 * Math.sin((segmentAngle * Math.PI) / 180)
+          const x2 = 24 + 14 * Math.cos((segmentAngle * Math.PI) / 180)
+          const y2 = 24 - 14 * Math.sin((segmentAngle * Math.PI) / 180)
+          
+          // Color based on position - red on left, green on right
+          let segmentColor = '#e2e8f0'
+          if (i <= 6) segmentColor = '#f87171' // Red zone (left side - low values)
+          else if (i <= 13) segmentColor = '#fb923c' // Orange/yellow zone (middle)
+          else segmentColor = '#4ade80' // Green zone (right side - high values)
+          
+          return (
+            <line
+              key={i}
+              x1={x1}
+              y1={y1}
+              x2={x2}
+              y2={y2}
+              stroke={segmentColor}
+              strokeWidth="2"
+              strokeLinecap="round"
+            />
+          )
+        })}
+        
+        {/* Needle */}
+        <line
+          x1="24"
+          y1="24"
+          x2={24 + 16 * Math.cos((angle * Math.PI) / 180)}
+          y2={24 - 16 * Math.sin((angle * Math.PI) / 180)}
+          stroke={color}
+          strokeWidth="2.5"
+          strokeLinecap="round"
+          markerEnd="url(#arrowhead)"
+        />
+        
+        {/* Center dot */}
+        <circle
+          cx="24"
+          cy="24"
+          r="2"
+          fill={color}
+        />
+        
+        <defs>
+          <marker
+            id="arrowhead"
+            markerWidth="6"
+            markerHeight="4"
+            refX="6"
+            refY="2"
+            orient="auto"
+          >
+            <polygon points="0 0, 6 2, 0 4" fill={color} />
+          </marker>
+        </defs>
+      </svg>
     </div>
   )
 }
 
-function InterestDial({ category }: { category: string | null }) {
+function InterestLabel({ category, leadQuality }: { category: string | null; leadQuality: number | null }) {
   if (!category) return null
   
-  const categoryMap: Record<string, { label: string; position: number; color: string }> = {
-    'absolutely_never': { label: 'Never', position: 0, color: '#dc2626' },
-    'never_interested': { label: 'Not Interested', position: 1, color: '#dc2626' },
-    'minimal_interest': { label: 'Minimal', position: 2, color: '#ea580c' },
-    'slight_interest': { label: 'Slight', position: 3, color: '#ea580c' },
-    'moderate_interest': { label: 'Moderate', position: 4, color: '#d97706' },
-    'genuine_interest': { label: 'Genuine', position: 5, color: '#d97706' },
-    'strong_interest': { label: 'Strong', position: 6, color: '#ca8a04' },
-    'very_interested': { label: 'Very High', position: 7, color: '#65a30d' },
-    'ready_to_purchase': { label: 'Ready', position: 8, color: '#16a34a' },
-    'guaranteed_buyer': { label: 'Guaranteed', position: 9, color: '#15803d' },
+  const categoryMap: Record<string, { label: string; position: number; color: string; bgColor: string }> = {
+    'absolutely_never': { label: 'Never', position: 0, color: '#dc2626', bgColor: 'bg-red-100' },
+    'never_interested': { label: 'Not Interested', position: 1, color: '#dc2626', bgColor: 'bg-red-100' },
+    'minimal_interest': { label: 'Minimal', position: 2, color: '#ea580c', bgColor: 'bg-orange-100' },
+    'slight_interest': { label: 'Slight', position: 3, color: '#ea580c', bgColor: 'bg-orange-100' },
+    'moderate_interest': { label: 'Moderate', position: 4, color: '#d97706', bgColor: 'bg-amber-100' },
+    'genuine_interest': { label: 'Genuine', position: 5, color: '#d97706', bgColor: 'bg-amber-100' },
+    'strong_interest': { label: 'Strong', position: 6, color: '#ca8a04', bgColor: 'bg-yellow-100' },
+    'very_interested': { label: 'Very High', position: 7, color: '#65a30d', bgColor: 'bg-lime-100' },
+    'ready_to_purchase': { label: 'Ready', position: 8, color: '#16a34a', bgColor: 'bg-green-100' },
+    'guaranteed_buyer': { label: 'Guaranteed', position: 9, color: '#15803d', bgColor: 'bg-emerald-100' },
   }
   
   const categoryData = categoryMap[category]
   if (!categoryData) return null
   
-  const { label, position, color } = categoryData
-  const angle = (position * 18) - 81
+  const { label, position, color, bgColor } = categoryData
+  const percentage = leadQuality || Math.round(((position + 1) / 10) * 100)
   
   return (
-    <div className="flex items-center gap-3">
-      <div className="relative w-12 h-6">
-        <svg width="48" height="24" viewBox="0 0 48 24" className="overflow-visible">
-          {Array.from({ length: 10 }, (_, i) => {
-            const segmentAngle = (i * 18) - 81
-            const x1 = 24 + 18 * Math.cos((segmentAngle * Math.PI) / 180)
-            const y1 = 24 + 18 * Math.sin((segmentAngle * Math.PI) / 180)
-            const x2 = 24 + 12 * Math.cos((segmentAngle * Math.PI) / 180)
-            const y2 = 24 + 12 * Math.sin((segmentAngle * Math.PI) / 180)
-            
-            let segmentColor = '#e2e8f0'
-            if (i < 3) segmentColor = '#f87171'
-            else if (i < 7) segmentColor = '#fb923c' 
-            else segmentColor = '#4ade80'
-            
-            return (
-              <line
-                key={i}
-                x1={x1}
-                y1={y1}
-                x2={x2}
-                y2={y2}
-                stroke={segmentColor}
-                strokeWidth="3"
-                strokeLinecap="round"
-              />
-            )
-          })}
-          <line
-            x1="24"
-            y1="24"
-            x2={24 + 15 * Math.cos((angle * Math.PI) / 180)}
-            y2={24 + 15 * Math.sin((angle * Math.PI) / 180)}
-            stroke={color}
-            strokeWidth="2.5"
-            strokeLinecap="round"
-            markerEnd="url(#arrowhead)"
-          />
-          <defs>
-            <marker
-              id="arrowhead"
-              markerWidth="6"
-              markerHeight="4"
-              refX="6"
-              refY="2"
-              orient="auto"
-            >
-              <polygon points="0 0, 6 2, 0 4" fill={color} />
-            </marker>
-          </defs>
-        </svg>
-      </div>
-      <div className="flex flex-col">
-        <span className="text-xs font-semibold text-slate-900">{label}</span>
-        <span className="text-xs text-slate-500">Interest Level</span>
+    <div className="flex flex-col items-center gap-2">
+      <FuelGauge percentage={percentage} color={color} />
+      <div className="flex flex-col items-center gap-1">
+        <span className="text-xs font-bold" style={{ color }}>{percentage}%</span>
+        <span 
+          className={`text-xs font-semibold px-2 py-1 rounded-full ${bgColor}`}
+          style={{ color }}
+        >
+          {label}
+        </span>
       </div>
     </div>
   )
@@ -149,7 +145,6 @@ export default function LeadsPage() {
   const [configs, setConfigs] = useState<ICP[]>([])
   const [posts, setPosts] = useState<PostWithConfigId[]>([])
   const [loading, setLoading] = useState(true)
-  const [expandedPosts, setExpandedPosts] = useState<Set<number>>(new Set())
 
   useEffect(() => {
     if (user?.id) {
@@ -185,19 +180,6 @@ export default function LeadsPage() {
     }
   }
 
-  const togglePostExpansion = (postId: number) => {
-    setExpandedPosts(prev => {
-      const newSet = new Set(prev)
-      if (newSet.has(postId)) {
-        newSet.delete(postId)
-      } else {
-        newSet.add(postId)
-      }
-      return newSet
-    })
-  }
-
-
 
 
   if (!user) {
@@ -212,7 +194,7 @@ export default function LeadsPage() {
 
   return (
     <DashboardLayout>
-      <div className="max-w-5xl mx-auto p-6 space-y-8">
+      <div className="max-w-7xl mx-auto p-6 space-y-8">
         <Card className="border-0 shadow-sm bg-white">
           <CardHeader className="pb-4">
             <div className="flex justify-between items-start flex-wrap gap-4">
@@ -268,137 +250,77 @@ export default function LeadsPage() {
             </CardContent>
           </Card>
         ) : (
-          <div className="space-y-3">
-            {posts.map(post => {
-              const config = configs.find(c => c.id === post.configId)
-              const isExpanded = expandedPosts.has(post.id)
-              
-              return (
-                <Card key={post.id} className="border border-slate-200 shadow-sm bg-white hover:shadow-md hover:border-slate-300 transition-all duration-200 rounded-xl overflow-hidden">
-                  <CardContent className="p-0">
-                    {/* Collapsed Header - Always Visible */}
-                    <div 
-                      className="p-5 cursor-pointer hover:bg-slate-50 transition-colors"
-                      onClick={() => togglePostExpansion(post.id)}
-                    >
-                      <div className="flex items-start justify-between gap-4">
-                        <div className="flex-1 min-w-0 space-y-4">
-                          <div className="flex items-start justify-between gap-3">
-                            <h3 className="font-semibold text-lg text-slate-900 leading-tight line-clamp-2 flex-1">{post.title}</h3>
-                            <ChevronDown 
-                              className={`w-5 h-5 text-slate-400 transition-transform duration-200 flex-shrink-0 mt-1 ${
-                                isExpanded ? 'rotate-180' : ''
-                              }`}
-                            />
-                          </div>
-                          
-                          <div className="flex items-center gap-3">
-                            <Badge variant="secondary" className="text-xs font-medium bg-slate-100 text-slate-700 hover:bg-slate-200 flex items-center gap-1">
-          
-                              r/{post.subreddit}
-                            </Badge>
-                            <Badge variant="secondary" className="text-xs font-medium bg-blue-100 text-blue-700 hover:bg-blue-200 flex items-center gap-1">
-                              <Package className="w-3 h-3" />
-                              {config?.name || 'Unknown Product'}
-                            </Badge>
-                          </div>
-                          
-                          <div className="flex items-center justify-between">
-                            {post.leadCategory && (
-                              <InterestDial category={post.leadCategory} />
-                            )}
-                            <LeadQualityMeter leadQuality={post.leadQuality} />
-                          </div>
-                        </div>
-                      </div>
-                    </div>
-
-                    {/* Expanded Content */}
-                    {isExpanded && (
-                      <div className="border-t border-slate-100 p-4 pt-5 space-y-4">
-                        {/* Content */}
-                        <div className="p-4 bg-slate-50 rounded-lg">
-                          <p className="text-slate-700 text-sm leading-relaxed">{post.content}</p>
-                        </div>
-
-                        {/* Pain Points */}
-                        {post.painPoints && (
-                          <div className="space-y-2">
-                            <h6 className="text-base font-bold text-red-600 flex items-center gap-2">
-                              <Activity className="w-4 h-4 text-red-600" />
-                              Pain Points Identified
-                            </h6>
-                            <div className="space-y-2">
-                              {post.painPoints.split('\n\n').map((section, index) => {
-                                const lines = section.trim().split('\n');
-                                if (lines.length > 1 && lines[0].endsWith(':')) {
-                                  return (
-                                    <div key={index} className="space-y-1">
-                                      <div className="text-sm font-bold text-slate-800">{lines[0]}</div>
-                                      <p className="text-sm text-slate-700 leading-relaxed pl-2">{lines.slice(1).join(' ')}</p>
-                                    </div>
-                                  );
-                                }
-                                return (
-                                  <p key={index} className="text-sm text-slate-700 leading-relaxed">{section}</p>
-                                );
-                              })}
+          <Card className="border border-slate-200 shadow-sm bg-white">
+            <CardContent className="p-0">
+              <Table className="border-separate border-spacing-0">
+                <TableHeader>
+                  <TableRow className="bg-slate-50/50">
+                    <TableHead className="font-semibold border-b border-slate-200 py-4 px-6">Subreddit</TableHead>
+                    <TableHead className="font-semibold border-b border-slate-200 py-4 px-6">Product</TableHead>
+                    <TableHead className="font-semibold border-b border-slate-200 py-4 px-6">Buying Interest</TableHead>
+                    <TableHead className="font-semibold border-b border-slate-200 py-4 px-6">Post Title</TableHead>
+                    <TableHead className="font-semibold border-b border-slate-200 py-4 px-6">Date</TableHead>
+                    <TableHead className="font-semibold text-right border-b border-slate-200 py-4 px-6">Actions</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {posts.map(post => {
+                    const config = configs.find(c => c.id === post.configId)
+                    
+                    return (
+                      <TableRow key={post.id} className="hover:bg-slate-50/50 border-b border-slate-100">
+                        <TableCell className="py-4 px-6">
+                          <Badge variant="secondary" className="text-xs font-medium bg-slate-100 text-slate-700 hover:bg-slate-200">
+                            r/{post.subreddit}
+                          </Badge>
+                        </TableCell>
+                        <TableCell className="py-4 px-6">
+                          <Badge variant="secondary" className="text-xs font-medium bg-blue-100 text-blue-700 hover:bg-blue-200 flex items-center gap-1 w-fit">
+                            <Package className="w-3 h-3" />
+                            {config?.name || 'Unknown Product'}
+                          </Badge>
+                        </TableCell>
+                        <TableCell className="py-4 px-6">
+                          {post.leadCategory && <InterestLabel category={post.leadCategory} leadQuality={post.leadQuality} />}
+                        </TableCell>
+                        <TableCell className="max-w-md py-4 px-6">
+                          <Link href={`/leads/${post.id}`}>
+                            <div className="truncate font-medium text-slate-900 hover:text-slate-700 cursor-pointer transition-colors" title={post.title}>
+                              {post.title}
                             </div>
+                          </Link>
+                        </TableCell>
+                        <TableCell className="text-slate-500 text-sm py-4 px-6">
+                          {new Date(post.createdAt).toLocaleDateString('en-US', { 
+                            month: 'short', 
+                            day: 'numeric' 
+                          })}
+                        </TableCell>
+                        <TableCell className="text-right py-4 px-6">
+                          <div className="flex items-center justify-end gap-2">
+                            <Link href={`/leads/${post.id}`}>
+                              <Button variant="ghost" size="sm" className="text-slate-900 hover:text-slate-700 hover:bg-slate-100">
+                                Details
+                              </Button>
+                            </Link>
+                            <a 
+                              href={post.url} 
+                              target="_blank" 
+                              rel="noopener noreferrer"
+                            >
+                              <Button variant="ghost" size="sm" className="text-slate-900 hover:text-slate-700 hover:bg-slate-100">
+                                <ExternalLink className="w-3 h-3" />
+                              </Button>
+                            </a>
                           </div>
-                        )}
-
-                        {/* Suggested Engagement */}
-                        {post.suggestedEngagement && (
-                          <div className="space-y-2">
-                            <h6 className="text-base font-bold text-green-600 flex items-center gap-2">
-                              <MessageSquare className="w-4 h-4 text-green-600" />
-                              Suggested Engagement
-                            </h6>
-                            <div className="space-y-2">
-                              {post.suggestedEngagement.split('\n\n').map((section, index) => {
-                                const lines = section.trim().split('\n');
-                                if (lines.length > 1 && lines[0].endsWith(':')) {
-                                  return (
-                                    <div key={index} className="space-y-1">
-                                      <div className="text-sm font-bold text-slate-800">{lines[0]}</div>
-                                      <p className="text-sm text-slate-700 leading-relaxed pl-2">{lines.slice(1).join(' ')}</p>
-                                    </div>
-                                  );
-                                }
-                                return (
-                                  <p key={index} className="text-sm text-slate-700 leading-relaxed">{section}</p>
-                                );
-                              })}
-                            </div>
-                          </div>
-                        )}
-
-                        {/* Footer */}
-                        <div className="flex justify-between items-center">
-                          <span className="text-sm text-slate-500 font-medium">
-                            {new Date(post.createdAt).toLocaleDateString('en-US', { 
-                              year: 'numeric', 
-                              month: 'short', 
-                              day: 'numeric' 
-                            })}
-                          </span>
-                          <a 
-                            href={post.url} 
-                            target="_blank" 
-                            rel="noopener noreferrer"
-                            className="text-slate-900 hover:text-slate-700 text-sm font-medium flex items-center gap-2 group px-3 py-2 rounded-lg hover:bg-slate-100 transition-colors"
-                          >
-                            View on Reddit
-                            <ChevronRight className="w-4 h-4 group-hover:translate-x-0.5 transition-transform" />
-                          </a>
-                        </div>
-                      </div>
-                    )}
-                  </CardContent>
-                </Card>
-              )
-            })}
-          </div>
+                        </TableCell>
+                      </TableRow>
+                    )
+                  })}
+                </TableBody>
+              </Table>
+            </CardContent>
+          </Card>
         )}
       </div>
     </DashboardLayout>

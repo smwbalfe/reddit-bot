@@ -2,14 +2,14 @@
 from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
-from src.agent.services import extract_keywords, find_relevant_subreddits, generate_icp_description
+from src.agent.services import extract_keywords, find_relevant_subreddits, generate_icp_description, generate_reply
 import aiohttp
 from bs4 import BeautifulSoup
 import re
 from urllib.parse import  urlparse
 import asyncio
 from contextlib import asynccontextmanager
-from src.dtos.server_dtos import KeywordRequest, KeywordFromUrlRequest, KeywordResponse, SubredditRequest, SubredditResponse, AnalyzeUrlRequest, AnalyzeUrlResponse
+from src.dtos.server_dtos import KeywordRequest, KeywordFromUrlRequest, KeywordResponse, SubredditRequest, SubredditResponse, AnalyzeUrlRequest, AnalyzeUrlResponse, GenerateReplyRequest, GenerateReplyResponse
 from src.parse_page import fetch_html, parse_html_content
 from src.reddit.reddit_scraper import reddit_main
 import asyncio
@@ -56,6 +56,22 @@ async def analyze_url_endpoint(request: AnalyzeUrlRequest):
         )
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Failed to analyze URL: {str(e)}")
+
+@app.post("/generate-reply", response_model=GenerateReplyResponse)
+async def generate_reply_endpoint(request: GenerateReplyRequest):
+    try:
+        reply = await generate_reply(
+            post_title=request.post_title,
+            post_content=request.post_content,
+            subreddit=request.subreddit,
+            product_name=request.product_name,
+            product_description=request.product_description,
+            product_website=request.product_website
+        )
+        
+        return GenerateReplyResponse(reply=reply)
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Failed to generate reply: {str(e)}")
 
 @app.get("/health")
 async def health_check():

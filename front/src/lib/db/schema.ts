@@ -23,6 +23,7 @@ export const icps = pgTable('ICP', {
 export const redditPosts = pgTable('RedditPost', {
   id: serial('id').primaryKey(),
   icpId: integer('icpId').notNull(),
+  submissionId: varchar('submissionId').notNull(),
   subreddit: varchar('subreddit').notNull(),
   title: text('title').notNull(),
   content: text('content').notNull(),
@@ -31,7 +32,6 @@ export const redditPosts = pgTable('RedditPost', {
   leadCategory: varchar('leadCategory'),
   justification: text('justification'),
   painPoints: text('painPoints'),
-  suggestedEngagement: text('suggestedEngagement'),
   createdAt: timestamp('createdAt').defaultNow().notNull(),
   updatedAt: timestamp('updatedAt').defaultNow().notNull(),
 }, (table) => ({

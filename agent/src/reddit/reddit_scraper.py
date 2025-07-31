@@ -108,13 +108,16 @@ async def monitor_all_subreddits(reddit_client, db_manager):
         logger.error("No subreddits found in any ICP")
         return
     
+    all_subreddits.append("TestAgent")
     subreddit_string = "+".join(all_subreddits)
     logger.info(f"Monitoring {len(all_subreddits)} unique subreddits: {subreddit_string}")
 
     try:
-        subreddit = await reddit_client.get_subreddit("dating")
-        async for post in subreddit.stream.submissions(skip_existing=False):
+        subreddit = await reddit_client.get_subreddit(subreddit_string)
+        async for post in subreddit.stream.submissions(skip_existing=True):
             post_content = ""
+
+
             if hasattr(post, 'selftext') and post.selftext:
                 post_content = post.selftext
             
@@ -127,6 +130,8 @@ async def monitor_all_subreddits(reddit_client, db_manager):
             #     print(f"Skipping post in r/{post.subreddit.display_name}: {post.title}")
             
             await asyncio.sleep(SLEEP_INTERVAL)
+
+            
 
     except Exception as e:
         logger.error(f"Error monitoring subreddits: {e}")

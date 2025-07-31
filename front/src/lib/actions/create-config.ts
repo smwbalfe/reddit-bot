@@ -91,7 +91,6 @@ export async function getUserPosts() {
       leadCategory: redditPosts.leadCategory,
       justification: redditPosts.justification,
       painPoints: redditPosts.painPoints,
-      suggestedEngagement: redditPosts.suggestedEngagement,
       createdAt: redditPosts.createdAt,
       updatedAt: redditPosts.updatedAt,
     })

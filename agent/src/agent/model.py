@@ -27,13 +27,18 @@ gemini_pro_model = OpenAIModel(
     provider=OpenRouterProvider(api_key=openrouter_api_key),
 )
 
+reply_model = OpenAIModel(
+    "google/gemini-2.5-flash",
+    provider=OpenRouterProvider(api_key=openrouter_api_key),
+)
+
+
 
 class LeadIntentResponse(BaseModel):
     buying_intent_category: str
     justification: str
     lead_quality: int
     pain_points: str
-    suggested_engagement: str
 
 
 class KeywordResponse(BaseModel):

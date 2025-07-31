@@ -38,3 +38,14 @@ class SubredditResponse(BaseModel):
 
 class ICPResponse(BaseModel):
     icp_description: str
+
+class GenerateReplyRequest(BaseModel):
+    post_title: str
+    post_content: str
+    subreddit: str
+    product_name: str
+    product_description: str
+    product_website: str
+
+class GenerateReplyResponse(BaseModel):
+    reply: str

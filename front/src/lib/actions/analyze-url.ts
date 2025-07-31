@@ -6,7 +6,7 @@ export interface AnalyzeUrlResponse {
   icp_description: string
 }
 
-export async function analyzeUrl(url: string, keywordCount: number = 15, subredditCount: number = 20): Promise<AnalyzeUrlResponse> {
+export async function analyzeUrl(url: string, keywordCount: number = 15, subredditCount: number = 40): Promise<AnalyzeUrlResponse> {
   console.log(`[analyzeUrl] Called with url=${url}, keywordCount=${keywordCount}, subredditCount=${subredditCount}`)
   try {
     const response = await fetch('http://localhost:8000/api/analyze-url', {
