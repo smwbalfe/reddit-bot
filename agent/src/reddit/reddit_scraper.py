@@ -26,7 +26,7 @@ def contains_icp_keywords(text, icps):
     return False
 
 async def process_post(post, db_manager, icps):
-    """Process a Reddit post by scoring it against all ICPs and storing results"""
+
     subreddit_name = post.subreddit.display_name
     
     logger.info(f"Processing post in r/{subreddit_name}: {post.title}")
@@ -65,10 +65,10 @@ async def process_post(post, db_manager, icps):
                         url=post.url,
                         icp_id=icp['id'],
                         lead_quality=result.lead_quality,
+                        submission_id=post.id,
                         lead_category=result.buying_intent_category,
                         justification=result.justification,
-                        pain_points=result.pain_points,
-                        suggested_engagement=result.suggested_engagement
+                        pain_points=result.pain_points
                     )
                     
                     logger.info(f"Stored post for ICP {icp['name']} with lead quality {result.lead_quality} - Review approved")
@@ -114,7 +114,7 @@ async def monitor_all_subreddits(reddit_client, db_manager):
 
     try:
         subreddit = await reddit_client.get_subreddit(subreddit_string)
-        async for post in subreddit.stream.submissions(skip_existing=True):
+        async for post in subreddit.stream.submissions(skip_existing=False):
             post_content = ""
 
 
@@ -122,8 +122,9 @@ async def monitor_all_subreddits(reddit_client, db_manager):
                 post_content = post.selftext
             
             full_text = f"{post.title} {post_content}"
-            
+
             await process_post(post, db_manager, icps)
+            
             # if contains_icp_keywords(full_text, icps):
             #     await process_post(post, db_manager, icps)
             # else:
