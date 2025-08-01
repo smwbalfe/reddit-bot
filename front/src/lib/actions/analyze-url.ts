@@ -1,4 +1,5 @@
 'use server'
+import env from '@/src/lib/env'
 
 export interface AnalyzeUrlResponse {
   keywords: string[]
@@ -9,7 +10,7 @@ export interface AnalyzeUrlResponse {
 export async function analyzeUrl(url: string, keywordCount: number = 15, subredditCount: number = 40): Promise<AnalyzeUrlResponse> {
   console.log(`[analyzeUrl] Called with url=${url}, keywordCount=${keywordCount}, subredditCount=${subredditCount}`)
   try {
-    const response = await fetch('http://localhost:8000/api/analyze-url', {
+    const response = await fetch(`${env.FASTAPI_SERVER_URL}/api/analyze-url`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',

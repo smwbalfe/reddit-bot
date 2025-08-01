@@ -1,8 +1,9 @@
 'use server'
+import env from '@/src/lib/env'
 
 export async function generateKeywords(prompt: string): Promise<string[]> {
   try {
-    const response = await fetch('http://localhost:8000/api/keywords', {
+    const response = await fetch(`${env.FASTAPI_SERVER_URL}/api/keywords`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -27,7 +28,7 @@ export async function generateKeywords(prompt: string): Promise<string[]> {
 
 export async function generateKeywordsFromUrl(url: string): Promise<string[]> {
   try {
-    const response = await fetch('http://localhost:8000/api/keywords/from-url', {
+    const response = await fetch(`${env.FASTAPI_SERVER_URL}/api/keywords/from-url`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',

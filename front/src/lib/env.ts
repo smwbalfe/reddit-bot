@@ -5,6 +5,10 @@ const env = {
         ? 'http://localhost:3000' 
         : 'https://dash.shrillecho.app',
     
+    FASTAPI_SERVER_URL: process.env.NODE_ENV === 'development'
+        ? 'http://localhost:8000'
+        : 'https://api.sublead.app',
+    
     NEXT_PUBLIC_SUPABASE_URL: process.env.NEXT_PUBLIC_SUPABASE_URL!,
     NEXT_PUBLIC_SUPABASE_KEY: process.env.NEXT_PUBLIC_SUPABASE_KEY!,
     SUPABASE_SERVICE_ROLE_KEY: process.env.SUPABASE_SERVICE_ROLE_KEY!,
@@ -32,6 +36,7 @@ const env = {
 console.log('Environment Variables:', {
     NODE_ENV: env.NODE_ENV,
     NEXT_PUBLIC_APP_URL: env.NEXT_PUBLIC_APP_URL,
+    FASTAPI_SERVER_URL: env.FASTAPI_SERVER_URL,
     NEXT_PUBLIC_SUPABASE_URL: env.NEXT_PUBLIC_SUPABASE_URL,
     NEXT_PUBLIC_SUPABASE_KEY: env.NEXT_PUBLIC_SUPABASE_KEY ? '[REDACTED]' : undefined,
     SUPABASE_SERVICE_ROLE_KEY: env.SUPABASE_SERVICE_ROLE_KEY ? '[REDACTED]' : undefined,

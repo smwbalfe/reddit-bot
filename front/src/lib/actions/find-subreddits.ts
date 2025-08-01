@@ -1,8 +1,9 @@
 'use server'
+import env from '@/src/lib/env'
 
 export async function findRelevantSubreddits(description: string): Promise<string[]> {
   try {
-    const response = await fetch('http://localhost:8000/api/subreddits', {
+    const response = await fetch(`${env.FASTAPI_SERVER_URL}/api/subreddits`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
