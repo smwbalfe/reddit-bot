@@ -247,7 +247,7 @@ function CompactScoreBreakdown({ post }: { post: PostWithConfigId }) {
       {/* Compact Score Grid */}
       <div className="grid grid-cols-5 gap-2">
         {factors.map((factor, index) => {
-          if (factor.score === null) return null;
+          if (factor.score == null) return null;
           
           let displayColor = factor.color
           let bgColor = 'bg-slate-50'
@@ -535,7 +535,7 @@ export default function LeadDetailPage() {
               </div>
               <div className="flex items-start gap-3">
                 {(post.leadQuality || post.leadCategory) && (
-                  <InterestLabel category={post.leadCategory} leadQuality={post.leadQuality} finalScore={post.finalScore} />
+                  <InterestLabel category={post.leadCategory ?? null} leadQuality={post.leadQuality} finalScore={post.finalScore} />
                 )}
                 <div className="flex flex-col gap-2">
                   <Button 

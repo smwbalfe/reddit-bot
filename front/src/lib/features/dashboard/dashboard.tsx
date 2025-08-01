@@ -16,7 +16,17 @@ type PostWithConfigId = {
   content: string
   url: string
   leadQuality: number | null
-  justification: string | null
+  painPoints: string | null
+  productFitScore: number | null
+  intentSignalsScore: number | null
+  urgencyIndicatorsScore: number | null
+  decisionAuthorityScore: number | null
+  engagementQualityScore: number | null
+  productFitJustification: string | null
+  intentSignalsJustification: string | null
+  urgencyIndicatorsJustification: string | null
+  decisionAuthorityJustification: string | null
+  engagementQualityJustification: string | null
   createdAt: Date
   updatedAt: Date
 }
