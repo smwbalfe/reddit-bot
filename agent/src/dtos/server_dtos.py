@@ -71,3 +71,12 @@ class GenerateReplyRequest(BaseModel):
 
 class GenerateReplyResponse(BaseModel):
     reply: str
+
+class ICPConfigChangeRequest(BaseModel):
+    action: str
+    icp_id: Optional[int] = None
+    user_id: str
+
+class ICPConfigChangeResponse(BaseModel):
+    success: bool
+    message: str

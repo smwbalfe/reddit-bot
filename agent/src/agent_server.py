@@ -8,11 +8,14 @@ from bs4 import BeautifulSoup
 import re
 from urllib.parse import  urlparse
 import asyncio
+import logging
 from contextlib import asynccontextmanager
-from src.dtos.server_dtos import KeywordRequest, KeywordFromUrlRequest, KeywordResponse, SubredditRequest, SubredditResponse, AnalyzeUrlRequest, AnalyzeUrlResponse, GenerateReplyRequest, GenerateReplyResponse
+from src.dtos.server_dtos import KeywordRequest, KeywordFromUrlRequest, KeywordResponse, SubredditRequest, SubredditResponse, AnalyzeUrlRequest, AnalyzeUrlResponse, GenerateReplyRequest, GenerateReplyResponse, ICPConfigChangeRequest, ICPConfigChangeResponse
 from src.parse_page import fetch_html, parse_html_content
-from src.reddit.reddit_scraper import reddit_main
+from src.reddit.reddit_scraper import reddit_main, config_manager
 import asyncio
+
+logger = logging.getLogger(__name__)
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
@@ -72,6 +75,30 @@ async def generate_reply_endpoint(request: GenerateReplyRequest):
         return GenerateReplyResponse(reply=reply)
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Failed to generate reply: {str(e)}")
+
+@app.post("/api/icp-config-change", response_model=ICPConfigChangeResponse)
+async def icp_config_change_endpoint(request: ICPConfigChangeRequest):
+    """
+    Endpoint triggered when ICP configurations are added, updated, or deleted.
+    This triggers the Reddit monitoring system to pull down new ICP configs.
+    """
+    try:
+        logger.info(f"ICP configuration change detected: {request.action} for user {request.user_id}")
+        
+        if request.icp_id:
+            logger.info(f"ICP ID affected: {request.icp_id}")
+        
+        # Trigger configuration refresh in the monitoring system
+        config_manager.trigger_refresh()
+        
+        return ICPConfigChangeResponse(
+            success=True,
+            message=f"ICP configuration refresh triggered for {request.action} action"
+        )
+        
+    except Exception as e:
+        logger.error(f"Error handling ICP config change: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Failed to handle ICP config change: {str(e)}")
 
 @app.get("/health")
 async def health_check():

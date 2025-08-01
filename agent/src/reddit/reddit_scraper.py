@@ -10,6 +10,28 @@ logger = logging.getLogger(__name__)
 
 SLEEP_INTERVAL = 1
 
+# Global state for configuration management
+class ConfigManager:
+    def __init__(self):
+        self.needs_refresh = False
+        self.current_icps = []
+        self.current_subreddits = []
+    
+    def trigger_refresh(self):
+        """Signal that ICPs need to be refreshed"""
+        self.needs_refresh = True
+        logger.info("ICP configuration refresh triggered")
+    
+    def refresh_complete(self, icps, subreddits):
+        """Mark refresh as complete with new data"""
+        self.needs_refresh = False
+        self.current_icps = icps
+        self.current_subreddits = subreddits
+        logger.info(f"ICP configuration refreshed: {len(icps)} ICPs, {len(subreddits)} subreddits")
+
+# Global config manager instance
+config_manager = ConfigManager()
+
 def contains_icp_keywords(text, icps):
     """Check if text contains any keywords from any ICP"""
     if not text:
@@ -88,52 +110,89 @@ def get_all_subreddits_from_icps(icps):
     all_subreddits.add("TestAgent")
     return list(all_subreddits)
 
-async def monitor_all_subreddits(reddit_client, db_manager):
-    """Monitor subreddits collated from all ICPs"""
-    logger.info("Starting monitoring for ICP subreddits")
-
-    icps = db_manager.get_icps()
+async def refresh_monitoring_config(db_manager):
+    """Refresh ICP configuration and restart monitoring if needed"""
+    logger.info("Refreshing ICP configuration...")
+    
+    # Get fresh ICPs from database
+    icps = db_manager.refresh_icps_cache()
     
     if not icps:
-        logger.error("No ICPs found in database")
-        return
-
-    logger.info(f"Found {len(icps)} ICPs to score against")
-
+        logger.info("No ICPs found in database - entering idle mode")
+        config_manager.refresh_complete([], [])
+        return [], []
+    
     all_subreddits = get_all_subreddits_from_icps(icps)
     
     if not all_subreddits:
-        logger.error("No subreddits found in any ICP")
-        return
-
+        logger.info("No subreddits found in any ICP - entering idle mode")
+        config_manager.refresh_complete(icps, [])
+        return icps, []
+    
     all_subreddits.append("TestAgent")
     all_subreddits = [s.replace("r/", "") for s in all_subreddits]
-    subreddit_string = "+".join(all_subreddits)
-    logger.info(f"Monitoring {len(all_subreddits)} unique subreddits: {subreddit_string}")
+    
+    # Update global config
+    config_manager.refresh_complete(icps, all_subreddits)
+    
+    return icps, all_subreddits
 
-    try:
-        subreddit = await reddit_client.get_subreddit(subreddit_string)
-        async for post in subreddit.stream.submissions(skip_existing=False):
-            post_content = ""
+async def monitor_all_subreddits(reddit_client, db_manager):
+    """Monitor subreddits collated from all ICPs with dynamic config refresh"""
+    logger.info("Starting monitoring for ICP subreddits")
 
+    while True:
+        # Initial configuration load
+        icps, all_subreddits = await refresh_monitoring_config(db_manager)
+        
+        # If no configurations, enter idle mode
+        if not icps or not all_subreddits:
+            logger.info("No active configurations - entering idle mode, waiting for config changes...")
+            while not config_manager.needs_refresh:
+                await asyncio.sleep(0.1)  # Much shorter sleep for instant response
+            continue
 
-            if hasattr(post, 'selftext') and post.selftext:
-                post_content = post.selftext
+        subreddit_string = "+".join(all_subreddits)
+        logger.info(f"Monitoring {len(all_subreddits)} unique subreddits: {subreddit_string}")
 
-            await process_post(post, db_manager, icps)
+        current_subreddit = None
+        
+        try:
+            current_subreddit = await reddit_client.get_subreddit(subreddit_string)
             
-            # if contains_icp_keywords(full_text, icps):
-            #     await process_post(post, db_manager, icps)
-            # else:
-            #     print(f"Skipping post in r/{post.subreddit.display_name}: {post.title}")
-            
-            await asyncio.sleep(SLEEP_INTERVAL)
+            async for post in current_subreddit.stream.submissions(skip_existing=False):
+                # Check if configuration needs refresh
+                if config_manager.needs_refresh:
+                    logger.info("Configuration change detected, refreshing...")
+                    
+                    new_icps, new_subreddits = await refresh_monitoring_config(db_manager)
+                    
+                    # If configs were removed, break out to idle mode
+                    if not new_icps or not new_subreddits:
+                        logger.info("All configurations removed, switching to idle mode")
+                        break
+                    
+                    icps = new_icps
+                    all_subreddits = new_subreddits
+                    
+                    # Check if subreddit list changed
+                    new_subreddit_string = "+".join(all_subreddits)
+                    if new_subreddit_string != subreddit_string:
+                        logger.info(f"Subreddit list changed, restarting stream with: {new_subreddit_string}")
+                        subreddit_string = new_subreddit_string
+                        current_subreddit = await reddit_client.get_subreddit(subreddit_string)
+                        # Break to restart the stream with new subreddits
+                        break
+                
+                await process_post(post, db_manager, icps)
+                
+                # Use shorter sleep to be more responsive to config changes
+                await asyncio.sleep(0.1)
 
-            
-
-    except Exception as e:
-        logger.error(f"Error monitoring subreddits: {e}")
-        await asyncio.sleep(5)
+        except Exception as e:
+            logger.error(f"Error monitoring subreddits: {e}")
+            await asyncio.sleep(5)
+            # Continue to retry
 
 async def reddit_main():
     logger.info("Starting Reddit Bot")

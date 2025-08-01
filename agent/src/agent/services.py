@@ -246,7 +246,6 @@ async def extract_keywords(page_content: str, count: int = 30) -> List[str]:
         return []
 
 async def find_relevant_subreddits(description: str, count: int = 20) -> List[str]:
-    """Find relevant subreddits for a product description using Gemini 2.5pro"""
     try:
         prompt = f"Product description: {description}\nFind {count} relevant subreddits."
         result = await asyncio.wait_for(subreddit_agent.run(prompt), timeout=15.0)

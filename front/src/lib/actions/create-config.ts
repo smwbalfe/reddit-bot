@@ -4,6 +4,7 @@ import { icps, redditPosts } from "@/src/lib/db/schema"
 import { eq } from "drizzle-orm"
 import { makeServerClient } from '@/src/lib/supabase/server'
 import { z } from 'zod'
+import { notifyConfigChange } from './notify-config-change'
 
 const createIcpSchema = z.object({
   name: z.string().min(1, 'Name is required'),
@@ -40,6 +41,12 @@ export async function createConfig(formData: FormData) {
       keywords: validatedData.keywords,
       subreddits: validatedData.subreddits,
     }).returning()
+
+    // Notify backend about config creation
+    const notifyResult = await notifyConfigChange('create', config.id)
+    if (!notifyResult.success) {
+      console.warn('Failed to notify backend about config creation:', notifyResult.error)
+    }
 
     return { success: true, data: config }
   } catch (error) {
@@ -144,6 +151,12 @@ export async function updateConfig(id: number, formData: FormData) {
       .where(eq(icps.id, id))
       .returning()
 
+    // Notify backend about config update
+    const notifyResult = await notifyConfigChange('update', config.id)
+    if (!notifyResult.success) {
+      console.warn('Failed to notify backend about config update:', notifyResult.error)
+    }
+
     return { success: true, data: config }
   } catch (error) {
     if (error instanceof z.ZodError) {
@@ -165,6 +178,12 @@ export async function deleteConfig(id: number) {
 
     await db.delete(redditPosts).where(eq(redditPosts.icpId, id))
     await db.delete(icps).where(eq(icps.id, id))
+    
+    // Notify backend about config deletion
+    const notifyResult = await notifyConfigChange('delete', id)
+    if (!notifyResult.success) {
+      console.warn('Failed to notify backend about config deletion:', notifyResult.error)
+    }
     
     return { success: true }
   } catch (error) {

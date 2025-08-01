@@ -51,5 +51,9 @@ class DatabaseManager:
             print("Fetching all ICPs as fallback...")
             return self.get_icps()
         return None
+    
+    def refresh_icps_cache(self) -> List[Dict[str, Any]]:
+        """Force refresh of ICPs from database"""
+        return self.get_icps()
 
  
