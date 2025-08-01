@@ -3,7 +3,7 @@ const env = {
     
     NEXT_PUBLIC_APP_URL: process.env.NODE_ENV === 'development' 
         ? 'http://localhost:3000' 
-        : 'https://dash.shrillecho.app',
+        : 'https://dash.sublead.app',
     
     FASTAPI_SERVER_URL: process.env.NODE_ENV === 'development'
         ? 'http://localhost:8000'
