@@ -23,12 +23,34 @@ class AnalyzeUrlResponse(BaseModel):
     subreddits: List[str]
     icp_description: str
 
+class FactorScores(BaseModel):
+    product_fit: int
+    intent_signals: int
+    urgency_indicators: int
+    decision_authority: int
+    engagement_quality: int
+
+class FactorJustifications(BaseModel):
+    product_fit: str
+    intent_signals: str
+    urgency_indicators: str
+    decision_authority: str
+    engagement_quality: str
+
 class LeadIntentResponse(BaseModel):
+    # Legacy fields for backward compatibility
     buying_intent_category: str
     justification: str
     lead_quality: int
     pain_points: str
     suggested_engagement: str
+    
+    # New detailed scoring fields
+    category: str
+    final_score: int
+    factor_scores: FactorScores
+    factor_justifications: FactorJustifications
+    overall_assessment: str
 
 class KeywordResponse(BaseModel):
     keywords: List[str]

@@ -86,33 +86,43 @@ function FuelGauge({ percentage, color }: { percentage: number; color: string })
   )
 }
 
-function InterestLabel({ category, leadQuality }: { category: string | null; leadQuality: number | null }) {
-  if (!category) return null
+function InterestLabel({ leadQuality }: { leadQuality: number | null }) {
+  if (!leadQuality) return null
   
-  const categoryMap: Record<string, { label: string; position: number; color: string; bgColor: string }> = {
-    'absolutely_never': { label: 'Never', position: 0, color: '#dc2626', bgColor: 'bg-red-100' },
-    'never_interested': { label: 'Not Interested', position: 1, color: '#dc2626', bgColor: 'bg-red-100' },
-    'minimal_interest': { label: 'Minimal', position: 2, color: '#ea580c', bgColor: 'bg-orange-100' },
-    'slight_interest': { label: 'Slight', position: 3, color: '#ea580c', bgColor: 'bg-orange-100' },
-    'moderate_interest': { label: 'Moderate', position: 4, color: '#d97706', bgColor: 'bg-amber-100' },
-    'genuine_interest': { label: 'Genuine', position: 5, color: '#d97706', bgColor: 'bg-amber-100' },
-    'strong_interest': { label: 'Strong', position: 6, color: '#ca8a04', bgColor: 'bg-yellow-100' },
-    'very_interested': { label: 'Very High', position: 7, color: '#65a30d', bgColor: 'bg-lime-100' },
-    'ready_to_purchase': { label: 'Ready', position: 8, color: '#16a34a', bgColor: 'bg-green-100' },
-    'guaranteed_buyer': { label: 'Guaranteed', position: 9, color: '#15803d', bgColor: 'bg-emerald-100' },
+  // Convert leadQuality (0-100) to color and label
+  let color, bgColor, label
+  
+  if (leadQuality <= 10) {
+    color = '#dc2626'
+    bgColor = 'bg-red-100'
+    label = 'Never'
+  } else if (leadQuality <= 20) {
+    color = '#ea580c'
+    bgColor = 'bg-orange-100'
+    label = 'Minimal'
+  } else if (leadQuality <= 40) {
+    color = '#d97706'
+    bgColor = 'bg-amber-100'
+    label = 'Moderate'
+  } else if (leadQuality <= 60) {
+    color = '#ca8a04'
+    bgColor = 'bg-yellow-100'
+    label = 'Genuine'
+  } else if (leadQuality <= 80) {
+    color = '#65a30d'
+    bgColor = 'bg-lime-100'
+    label = 'Strong'
+  } else {
+    color = '#16a34a'
+    bgColor = 'bg-green-100'
+    label = 'Ready'
   }
-  
-  const categoryData = categoryMap[category]
-  if (!categoryData) return null
-  
-  const { label, position, color, bgColor } = categoryData
-  const percentage = leadQuality || Math.round(((position + 1) / 10) * 100)
   
   return (
     <div className="flex flex-col items-center gap-2">
-      <FuelGauge percentage={percentage} color={color} />
+      <FuelGauge percentage={leadQuality} color={color} />
       <div className="flex flex-col items-center gap-1">
-        <span className="text-xs font-bold" style={{ color }}>{percentage}%</span>
+        <span className="text-xs font-bold" style={{ color }}>{leadQuality}%</span>
         <span 
           className={`text-xs font-semibold px-2 py-1 rounded-full ${bgColor}`}
           style={{ color }}
@@ -132,10 +142,17 @@ type PostWithConfigId = {
   content: string
   url: string
   leadQuality: number | null
-  leadCategory: string | null
-  justification: string | null
   painPoints: string | null
-  suggestedEngagement: string | null
+  productFitScore: number | null
+  intentSignalsScore: number | null
+  urgencyIndicatorsScore: number | null
+  decisionAuthorityScore: number | null
+  engagementQualityScore: number | null
+  productFitJustification: string | null
+  intentSignalsJustification: string | null
+  urgencyIndicatorsJustification: string | null
+  decisionAuthorityJustification: string | null
+  engagementQualityJustification: string | null
   createdAt: Date
   updatedAt: Date
 }
@@ -169,14 +186,20 @@ export default function LeadsPage() {
     if (!user?.id) return
     try {
       const data = await getUserPosts()
+      // Add null/undefined check before calling sort
+      if (!data || !Array.isArray(data)) {
+        setPosts([])
+        return
+      }
       const sortedData = data.sort((a, b) => {
-        const qualityA = a.leadQuality || 0
-        const qualityB = b.leadQuality || 0
-        return qualityB - qualityA
+        const scoreA = a.leadQuality ?? 0
+        const scoreB = b.leadQuality ?? 0
+        return scoreB - scoreA
       })
       setPosts(sortedData)
     } catch (error) {
       console.error('Error fetching posts:', error)
+      setPosts([]) // Set empty array on error
     }
   }
 
@@ -281,7 +304,7 @@ export default function LeadsPage() {
                           </Badge>
                         </TableCell>
                         <TableCell className="py-4 px-6">
-                          {post.leadCategory && <InterestLabel category={post.leadCategory} leadQuality={post.leadQuality} />}
+                          <InterestLabel leadQuality={post.leadQuality} />
                         </TableCell>
                         <TableCell className="max-w-md py-4 px-6">
                           <Link href={`/leads/${post.id}`}>

@@ -7,7 +7,7 @@ from ..dtos.server_dtos import LeadIntentResponse, KeywordResponse, SubredditRes
 
 logger = logging.getLogger(__name__)
 
-async def score_lead_intent(post_title: str, post_content: str, icp_description: str) -> LeadIntentResponse:
+async def score_lead_intent_initial(post_title: str, post_content: str, icp_description: str) -> LeadIntentResponse:
     prompt_data = {
         "icp_description": icp_description,
         "reddit_post_title": post_title,
@@ -19,30 +19,212 @@ async def score_lead_intent(post_title: str, post_content: str, icp_description:
     for attempt in range(2):
         try:
             result = await asyncio.wait_for(agent.run(prompt), timeout=10.0)
-            logger.info(f"Post title: {post_title} | Post content: {post_content} | Classified as: {result.output.buying_intent_category}")
-            return result.output
+            logger.info(f"Post title: {post_title} | Post content: {post_content} | Classified as: {result.output.category}")
+            
+            # Convert new detailed response to extended DTO format
+            from ..dtos.server_dtos import FactorScores, FactorJustifications
+            return LeadIntentResponse(
+                buying_intent_category=result.output.category,
+                justification=result.output.overall_assessment,
+                lead_quality=result.output.final_score,
+                pain_points=result.output.pain_points,
+                suggested_engagement="", 
+                category=result.output.category,
+                final_score=result.output.final_score,
+                factor_scores=FactorScores(
+                    product_fit=result.output.factor_scores.product_fit,
+                    intent_signals=result.output.factor_scores.intent_signals,
+                    urgency_indicators=result.output.factor_scores.urgency_indicators,
+                    decision_authority=result.output.factor_scores.decision_authority,
+                    engagement_quality=result.output.factor_scores.engagement_quality
+                ),
+                factor_justifications=FactorJustifications(
+                    product_fit=result.output.factor_justifications.product_fit,
+                    intent_signals=result.output.factor_justifications.intent_signals,
+                    urgency_indicators=result.output.factor_justifications.urgency_indicators,
+                    decision_authority=result.output.factor_justifications.decision_authority,
+                    engagement_quality=result.output.factor_justifications.engagement_quality
+                ),
+                overall_assessment=result.output.overall_assessment
+            )
         except asyncio.TimeoutError:
             if attempt == 0:
                 logger.warning(f"Agent run timed out after 10 seconds for post: {post_title[:50]}... (attempt {attempt + 1}/2)")
                 continue
             logger.error(f"Agent run timed out after 10 seconds for post: {post_title[:50]}... (final attempt)")
+            from ..dtos.server_dtos import FactorScores, FactorJustifications
             return LeadIntentResponse(
                 buying_intent_category="never_interested",
                 justification="Agent run timed out after 10 seconds on both attempts, unable to score properly.",
                 lead_quality=1,
                 pain_points="Unable to identify due to timeout",
+                suggested_engagement="No engagement recommended due to timeout",
+                category="never_interested",
+                final_score=1,
+                factor_scores=FactorScores(
+                    product_fit=0,
+                    intent_signals=0,
+                    urgency_indicators=0,
+                    decision_authority=0,
+                    engagement_quality=0
+                ),
+                factor_justifications=FactorJustifications(
+                    product_fit="Unable to assess due to timeout",
+                    intent_signals="Unable to assess due to timeout",
+                    urgency_indicators="Unable to assess due to timeout",
+                    decision_authority="Unable to assess due to timeout",
+                    engagement_quality="Unable to assess due to timeout"
+                ),
+                overall_assessment="Agent run timed out, unable to properly assess lead quality"
             )
         except Exception as e:
             if attempt == 0:
                 logger.warning(f"Error during agent run for post '{post_title[:50]}...': {e} (attempt {attempt + 1}/2)")
                 continue
             logger.error(f"Error during agent run for post '{post_title[:50]}...': {e} (final attempt)")
+            from ..dtos.server_dtos import FactorScores, FactorJustifications
             return LeadIntentResponse(
                 buying_intent_category="never_interested",
                 justification=f"Error occurred during scoring on both attempts: {str(e)[:100]}",
                 lead_quality=1,
                 pain_points="Unable to identify due to error",
+                suggested_engagement="No engagement recommended due to error",
+                category="never_interested",
+                final_score=1,
+                factor_scores=FactorScores(
+                    product_fit=0,
+                    intent_signals=0,
+                    urgency_indicators=0,
+                    decision_authority=0,
+                    engagement_quality=0
+                ),
+                factor_justifications=FactorJustifications(
+                    product_fit="Unable to assess due to error",
+                    intent_signals="Unable to assess due to error",
+                    urgency_indicators="Unable to assess due to error",
+                    decision_authority="Unable to assess due to error",
+                    engagement_quality="Unable to assess due to error"
+                ),
+                overall_assessment=f"Error occurred during scoring: {str(e)[:100]}"
             )
+
+async def score_lead_intent_detailed(post_title: str, post_content: str, icp_description: str) -> LeadIntentResponse:
+    """Use the better model for detailed scoring of promising leads"""
+    prompt_data = {
+        "icp_description": icp_description,
+        "reddit_post_title": post_title,
+        "reddit_post_content": post_content,
+    }
+
+    prompt = json.dumps(prompt_data)
+
+    for attempt in range(2):
+        try:
+            result = await asyncio.wait_for(lead_reviewer_agent.run(prompt), timeout=10.0)
+            logger.info(f"Detailed scoring - Post title: {post_title} | Post content: {post_content} | Classified as: {result.output.category}")
+            
+            # Convert new detailed response to extended DTO format
+            from ..dtos.server_dtos import FactorScores, FactorJustifications
+            return LeadIntentResponse(
+                buying_intent_category=result.output.category,
+                justification=result.output.overall_assessment,
+                lead_quality=result.output.final_score,
+                pain_points=result.output.pain_points,
+                suggested_engagement="", 
+                category=result.output.category,
+                final_score=result.output.final_score,
+                factor_scores=FactorScores(
+                    product_fit=result.output.factor_scores.product_fit,
+                    intent_signals=result.output.factor_scores.intent_signals,
+                    urgency_indicators=result.output.factor_scores.urgency_indicators,
+                    decision_authority=result.output.factor_scores.decision_authority,
+                    engagement_quality=result.output.factor_scores.engagement_quality
+                ),
+                factor_justifications=FactorJustifications(
+                    product_fit=result.output.factor_justifications.product_fit,
+                    intent_signals=result.output.factor_justifications.intent_signals,
+                    urgency_indicators=result.output.factor_justifications.urgency_indicators,
+                    decision_authority=result.output.factor_justifications.decision_authority,
+                    engagement_quality=result.output.factor_justifications.engagement_quality
+                ),
+                overall_assessment=result.output.overall_assessment
+            )
+        except asyncio.TimeoutError:
+            if attempt == 0:
+                logger.warning(f"Detailed scoring timed out after 10 seconds for post: {post_title[:50]}... (attempt {attempt + 1}/2)")
+                continue
+            logger.error(f"Detailed scoring timed out after 10 seconds for post: {post_title[:50]}... (final attempt)")
+            from ..dtos.server_dtos import FactorScores, FactorJustifications
+            return LeadIntentResponse(
+                buying_intent_category="never_interested",
+                justification="Detailed scoring timed out after 10 seconds on both attempts, unable to score properly.",
+                lead_quality=1,
+                pain_points="Unable to identify due to timeout",
+                suggested_engagement="No engagement recommended due to timeout",
+                category="never_interested",
+                final_score=1,
+                factor_scores=FactorScores(
+                    product_fit=0,
+                    intent_signals=0,
+                    urgency_indicators=0,
+                    decision_authority=0,
+                    engagement_quality=0
+                ),
+                factor_justifications=FactorJustifications(
+                    product_fit="Unable to assess due to timeout",
+                    intent_signals="Unable to assess due to timeout",
+                    urgency_indicators="Unable to assess due to timeout",
+                    decision_authority="Unable to assess due to timeout",
+                    engagement_quality="Unable to assess due to timeout"
+                ),
+                overall_assessment="Detailed scoring timed out, unable to properly assess lead quality"
+            )
+        except Exception as e:
+            if attempt == 0:
+                logger.warning(f"Error during detailed scoring for post '{post_title[:50]}...': {e} (attempt {attempt + 1}/2)")
+                continue
+            logger.error(f"Error during detailed scoring for post '{post_title[:50]}...': {e} (final attempt)")
+            from ..dtos.server_dtos import FactorScores, FactorJustifications
+            return LeadIntentResponse(
+                buying_intent_category="never_interested",
+                justification=f"Error occurred during detailed scoring on both attempts: {str(e)[:100]}",
+                lead_quality=1,
+                pain_points="Unable to identify due to error",
+                suggested_engagement="No engagement recommended due to error",
+                category="never_interested",
+                final_score=1,
+                factor_scores=FactorScores(
+                    product_fit=0,
+                    intent_signals=0,
+                    urgency_indicators=0,
+                    decision_authority=0,
+                    engagement_quality=0
+                ),
+                factor_justifications=FactorJustifications(
+                    product_fit="Unable to assess due to error",
+                    intent_signals="Unable to assess due to error",
+                    urgency_indicators="Unable to assess due to error",
+                    decision_authority="Unable to assess due to error",
+                    engagement_quality="Unable to assess due to error"
+                ),
+                overall_assessment=f"Error occurred during detailed scoring: {str(e)[:100]}"
+            )
+
+async def score_lead_intent_two_stage(post_title: str, post_content: str, icp_description: str) -> LeadIntentResponse:
+    """Two-stage lead scoring: fast model for initial filtering, better model for detailed scoring"""
+    
+    # Stage 1: Initial scoring with fast model
+    initial_result = await score_lead_intent_initial(post_title, post_content, icp_description)
+    logger.info(f"Two-stage scoring - Initial: {initial_result.final_score} for '{post_title[:50]}'")
+    
+    # Stage 2: Only use better model if initial score > 30
+    if initial_result.final_score > 30:
+        detailed_result = await score_lead_intent_detailed(post_title, post_content, icp_description)
+        logger.info(f"Two-stage scoring - Detailed: {detailed_result.final_score} for '{post_title[:50]}'")
+        return detailed_result
+    else:
+        logger.info(f"Two-stage scoring - Skipping detailed scoring for '{post_title[:50]}' (initial score: {initial_result.final_score})")
+        return initial_result
 
 async def extract_keywords(page_content: str, count: int = 30) -> List[str]:
     prompt_data = {
@@ -90,30 +272,6 @@ async def generate_icp_description(html_content: str) -> str:
         logger.error(f"Error during ICP description generation for content '{html_content[:50]}...': {e}")
         return f"Unable to generate ICP description due to error: {str(e)}"
 
-async def review_lead_quality(post_title: str, post_content: str, icp_description: str, initial_result: LeadIntentResponse) -> bool:
-    """Use Gemini Pro to perform final review of lead quality before storing"""
-    review_data = {
-        "post_title": post_title,
-        "post_content": post_content,
-        "icp_description": icp_description,
-        "initial_score": initial_result.lead_quality,
-        "initial_category": initial_result.buying_intent_category,
-        "justification": initial_result.justification,
-        "pain_points": initial_result.pain_points,
-    }
-    
-    prompt = json.dumps(review_data)
-    
-    try:
-        result = await asyncio.wait_for(lead_reviewer_agent.run(prompt), timeout=10.0)
-        logger.info(f"Lead review for '{post_title[:50]}': {'APPROVED' if result.output else 'REJECTED'}")
-        return result.output
-    except asyncio.TimeoutError:
-        logger.error(f"Lead review timed out after 10 seconds for post: {post_title[:50]}...")
-        return False  # Reject if review fails
-    except Exception as e:
-        logger.error(f"Error during lead review for post '{post_title[:50]}...': {e}")
-        return False  # Reject if review fails
 
 async def generate_reply(post_title: str, post_content: str, subreddit: str, product_name: str, product_description: str, product_website: str) -> str:
     """Generate a personalized Reddit reply using the reply generation agent"""

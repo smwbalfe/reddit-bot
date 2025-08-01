@@ -21,17 +21,25 @@ export const icps = pgTable('ICP', {
 })
 
 export const redditPosts = pgTable('RedditPost', {
-  id: serial('id').primaryKey(),
-  icpId: integer('icpId').notNull(),
-  submissionId: varchar('submissionId').notNull(),
-  subreddit: varchar('subreddit').notNull(),
-  title: text('title').notNull(),
-  content: text('content').notNull(),
-  url: text('url').notNull(),
-  leadQuality: integer('leadQuality'),
-  leadCategory: varchar('leadCategory'),
-  justification: text('justification'),
+  id: serial('id').primaryKey(), // ID of the lead
+  icpId: integer('icpId').notNull(), // ID of the product the lead is for
+  submissionId: varchar('submissionId').notNull(), // ID of the reddit submission
+  subreddit: varchar('subreddit').notNull(), // name of the subreddit the lead is from
+  title: text('title').notNull(), // title of the reddit submission
+  content: text('content').notNull(), // content of the reddit submission
+  url: text('url').notNull(), // url to the reddit submission
+  leadQuality: integer('leadQuality'), // final quality score of the lead
   painPoints: text('painPoints'),
+  productFitScore: integer('productFitScore'),
+  intentSignalsScore: integer('intentSignalsScore'),
+  urgencyIndicatorsScore: integer('urgencyIndicatorsScore'),
+  decisionAuthorityScore: integer('decisionAuthorityScore'),
+  engagementQualityScore: integer('engagementQualityScore'),
+  productFitJustification: text('productFitJustification'),
+  intentSignalsJustification: text('intentSignalsJustification'),
+  urgencyIndicatorsJustification: text('urgencyIndicatorsJustification'),
+  decisionAuthorityJustification: text('decisionAuthorityJustification'),
+  engagementQualityJustification: text('engagementQualityJustification'),
   createdAt: timestamp('createdAt').defaultNow().notNull(),
   updatedAt: timestamp('updatedAt').defaultNow().notNull(),
 }, (table) => ({
