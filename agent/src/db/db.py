@@ -22,16 +22,28 @@ class DatabaseManager:
                 return cur.fetchall()
     
     def insert_reddit_post(self, subreddit: str, title: str, content: str, url: str, icp_id: int, 
-                          lead_quality: float, lead_category: str = None, justification: str = None,
-                          pain_points: str = None) -> Optional[List[Dict[str, Any]]]:
+                          lead_quality: int, submission_id: str, pain_points: str = None,
+                          product_fit_score: int = None, intent_signals_score: int = None, 
+                          urgency_indicators_score: int = None, decision_authority_score: int = None,
+                          engagement_quality_score: int = None, product_fit_justification: str = None, 
+                          intent_signals_justification: str = None, urgency_indicators_justification: str = None,
+                          decision_authority_justification: str = None, engagement_quality_justification: str = None) -> Optional[List[Dict[str, Any]]]:
         try:
             with self._get_connection() as conn:
                 with conn.cursor() as cur:
                     cur.execute(
                         '''INSERT INTO "RedditPost" 
-                           (subreddit, title, content, url, "icpId", "leadQuality", "leadCategory", justification, "painPoints", "createdAt", "updatedAt") 
-                           VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, NOW(), NOW())''',
-                        (subreddit, title, content, url, icp_id, lead_quality, lead_category, justification, pain_points)
+                           ("icpId", "submissionId", subreddit, title, content, url, "leadQuality", 
+                            "painPoints", "productFitScore", "intentSignalsScore", "urgencyIndicatorsScore", 
+                            "decisionAuthorityScore", "engagementQualityScore", "productFitJustification", 
+                            "intentSignalsJustification", "urgencyIndicatorsJustification", 
+                            "decisionAuthorityJustification", "engagementQualityJustification") 
+                           VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)''',
+                        (icp_id, submission_id, subreddit, title, content, url, lead_quality, 
+                         pain_points, product_fit_score, intent_signals_score, urgency_indicators_score,
+                         decision_authority_score, engagement_quality_score, product_fit_justification,
+                         intent_signals_justification, urgency_indicators_justification,
+                         decision_authority_justification, engagement_quality_justification)
                     )
                     conn.commit()
         except Exception as e:

@@ -1,0 +1,35 @@
+{
+  "task": "You will receive a JSON object with 'count' and 'page_content' fields. Generate exactly the requested number of keywords and phrases to monitor from Reddit for finding potential customers.",
+  "keyword_distribution": {
+    "single_words": "40%",
+    "multi_word_phrases": "60%"
+  },
+  "requirements": [
+    "Single words should be highly specific product/industry terms",
+    "Phrases should be 2-4 words capturing common customer problems or needs",
+    "Focus on keywords that indicate buying intent or pain points",
+    "Avoid generic terms - be specific to this product/service"
+  ],
+  "examples": {
+    "single_words": ["automation", "productivity", "scheduling", "workflow"],
+    "multi_word_phrases": ["time management", "project planning", "team collaboration", "workflow automation", "productivity tools", "team", "work", "projects"]
+  },
+  "output_example": {
+    "description": "For 10 keywords requested, output should contain 4 single words (40%) and 6 multi-word phrases (60%)",
+    "sample_output": {
+      "keywords": [
+        "automation",
+        "productivity", 
+        "scheduling",
+        "workflow",
+        "time management",
+        "project planning", 
+        "team collaboration",
+        "workflow automation",
+        "productivity tools",
+        "task management"
+      ]
+    }
+  },
+  "goal": "The keywords should help identify Reddit users who are likely to buy this product based on their posts and comments."
+}
