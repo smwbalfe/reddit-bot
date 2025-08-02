@@ -1,13 +1,13 @@
 #!/usr/bin/env python3
 from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
-from src.agent.services import extract_keywords, find_relevant_subreddits, generate_icp_description, generate_reply
+from src.agent.services import extract_keywords, find_relevant_subreddits, generate_icp_description
 import asyncio
 import logging
 from contextlib import asynccontextmanager
-from src.dtos.server_dtos import AnalyzeUrlRequest, AnalyzeUrlResponse, GenerateReplyRequest, GenerateReplyResponse
+from src.models import AnalyzeUrlRequest, AnalyzeUrlResponse, ICPConfigChangeRequest, ICPConfigChangeResponse
 from src.parse_page import fetch_html, parse_html_content
-from src.reddit.reddit_scraper import reddit_main
+from src.reddit.reddit_scraper import reddit_main, config_manager
 
 logger = logging.getLogger(__name__)
 
@@ -53,22 +53,6 @@ async def analyze_url_endpoint(request: AnalyzeUrlRequest):
         )
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Failed to analyze URL: {str(e)}")
-
-@app.post("/generate-reply", response_model=GenerateReplyResponse)
-async def generate_reply_endpoint(request: GenerateReplyRequest):
-    try:
-        reply = await generate_reply(
-            post_title=request.post_title,
-            post_content=request.post_content,
-            subreddit=request.subreddit,
-            product_name=request.product_name,
-            product_description=request.product_description,
-            product_website=request.product_website
-        )
-        
-        return GenerateReplyResponse(reply=reply)
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Failed to generate reply: {str(e)}")
 
 @app.post("/api/icp-config-change", response_model=ICPConfigChangeResponse)
 async def icp_config_change_endpoint(request: ICPConfigChangeRequest):

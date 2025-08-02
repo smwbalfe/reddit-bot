@@ -387,8 +387,6 @@ export default function LeadDetailPage() {
   const [configs, setConfigs] = useState<ICP[]>([])
   const [post, setPost] = useState<PostWithConfigId | null>(null)
   const [loading, setLoading] = useState(true)
-  const [generatingReply, setGeneratingReply] = useState(false)
-  const [generatedReply, setGeneratedReply] = useState<string | null>(null)
 
   useEffect(() => {
     if (user?.id && leadId) {
@@ -413,41 +411,6 @@ export default function LeadDetailPage() {
     }
   }
 
-  const handleGenerateReply = async () => {
-    if (!post || !user?.id) return
-    
-    setGeneratingReply(true)
-    try {
-      const config = configs.find(c => c.id === post.configId)
-      const response = await fetch('/api/generate-reply', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          postId: post.id,
-          postTitle: post.title,
-          postContent: post.content,
-          subreddit: post.subreddit,
-          productName: config?.name,
-          productDescription: config?.description,
-          productWebsite: config?.website,
-        }),
-      })
-      
-      if (response.ok) {
-        const data = await response.json()
-        setGeneratedReply(data.reply)
-      } else {
-        throw new Error('Failed to generate reply')
-      }
-    } catch (error) {
-      console.error('Error generating reply:', error)
-      alert('Failed to generate reply. Please try again.')
-    } finally {
-      setGeneratingReply(false)
-    }
-  }
 
   if (!user) {
     return (
@@ -538,15 +501,6 @@ export default function LeadDetailPage() {
                   <InterestLabel category={post.leadCategory ?? null} leadQuality={post.leadQuality} finalScore={post.finalScore} />
                 )}
                 <div className="flex flex-col gap-2">
-                  <Button 
-                    onClick={handleGenerateReply}
-                    disabled={generatingReply}
-                    size="sm"
-                    className="bg-green-600 hover:bg-green-700 text-white disabled:opacity-50"
-                  >
-                    <MessageSquare className="w-3 h-3 mr-1" />
-                    {generatingReply ? 'Generating...' : 'Reply'}
-                  </Button>
                   <a 
                     href={post.url} 
                     target="_blank" 
@@ -589,40 +543,6 @@ export default function LeadDetailPage() {
           </CardContent>
         </Card>
 
-        {/* Generated Reply Display */}
-        {generatedReply && (
-          <Card className="border-0 shadow-sm bg-white">
-            <CardHeader className="pb-2">
-              <CardTitle className="text-lg font-semibold text-slate-900 flex items-center gap-2">
-                <MessageSquare className="w-5 h-5 text-green-600" />
-                Generated Reply
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="p-4 bg-green-50 border border-green-200 rounded-lg">
-                <p className="text-slate-700 leading-relaxed text-sm mb-3">{generatedReply}</p>
-                <div className="flex gap-2">
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={() => navigator.clipboard.writeText(generatedReply)}
-                    className="text-green-700 border-green-300 hover:bg-green-100"
-                  >
-                    Copy Reply
-                  </Button>
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={() => setGeneratedReply(null)}
-                    className="text-slate-600 border-slate-300 hover:bg-slate-100"
-                  >
-                    Clear
-                  </Button>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-        )}
 
         {post.justification && (
           <CollapsibleSection 

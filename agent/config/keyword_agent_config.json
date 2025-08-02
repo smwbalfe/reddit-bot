@@ -1,5 +1,9 @@
 {
   "task": "You will receive a JSON object with 'count' and 'page_content' fields. Generate exactly the requested number of keywords and phrases to monitor from Reddit for finding potential customers.",
+  "input_format": {
+    "count": "Number of keywords to generate (integer, required)",
+    "page_content": "Text content of the product or service page (string, required)"
+  },
   "keyword_distribution": {
     "single_words": "40%",
     "multi_word_phrases": "60%"
