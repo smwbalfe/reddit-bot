@@ -24,33 +24,25 @@ class AnalyzeUrlResponse(BaseModel):
     icp_description: str
 
 class FactorScores(BaseModel):
-    product_fit: int
-    intent_signals: int
-    urgency_indicators: int
-    decision_authority: int
-    engagement_quality: int
+    product_fit: Optional[int] = None
+    intent_signals: Optional[int] = None
+    urgency_indicators: Optional[int] = None
+    decision_authority: Optional[int] = None
+    engagement_quality: Optional[int] = None
 
 class FactorJustifications(BaseModel):
-    product_fit: str
-    intent_signals: str
-    urgency_indicators: str
-    decision_authority: str
-    engagement_quality: str
+    product_fit: Optional[str] = None
+    intent_signals: Optional[str] = None
+    urgency_indicators: Optional[str] = None
+    decision_authority: Optional[str] = None
+    engagement_quality: Optional[str] = None
 
 class LeadIntentResponse(BaseModel):
-    # Legacy fields for backward compatibility
-    buying_intent_category: str
-    justification: str
-    lead_quality: int
-    pain_points: str
-    suggested_engagement: str
-    
-    # New detailed scoring fields
-    category: str
-    final_score: int
-    factor_scores: FactorScores
-    factor_justifications: FactorJustifications
-    overall_assessment: str
+    lead_quality: Optional[int] = None
+    pain_points: Optional[str] = None
+    factor_scores: Optional[FactorScores] = None
+    factor_justifications: Optional[FactorJustifications] = None
+
 
 class KeywordResponse(BaseModel):
     keywords: List[str]

@@ -1,19 +1,13 @@
 #!/usr/bin/env python3
 from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
-from pydantic import BaseModel
 from src.agent.services import extract_keywords, find_relevant_subreddits, generate_icp_description, generate_reply
-import aiohttp
-from bs4 import BeautifulSoup
-import re
-from urllib.parse import  urlparse
 import asyncio
 import logging
 from contextlib import asynccontextmanager
-from src.dtos.server_dtos import KeywordRequest, KeywordFromUrlRequest, KeywordResponse, SubredditRequest, SubredditResponse, AnalyzeUrlRequest, AnalyzeUrlResponse, GenerateReplyRequest, GenerateReplyResponse, ICPConfigChangeRequest, ICPConfigChangeResponse
+from src.dtos.server_dtos import AnalyzeUrlRequest, AnalyzeUrlResponse, GenerateReplyRequest, GenerateReplyResponse
 from src.parse_page import fetch_html, parse_html_content
-from src.reddit.reddit_scraper import reddit_main, config_manager
-import asyncio
+from src.reddit.reddit_scraper import reddit_main
 
 logger = logging.getLogger(__name__)
 
@@ -78,17 +72,13 @@ async def generate_reply_endpoint(request: GenerateReplyRequest):
 
 @app.post("/api/icp-config-change", response_model=ICPConfigChangeResponse)
 async def icp_config_change_endpoint(request: ICPConfigChangeRequest):
-    """
-    Endpoint triggered when ICP configurations are added, updated, or deleted.
-    This triggers the Reddit monitoring system to pull down new ICP configs.
-    """
+  
     try:
         logger.info(f"ICP configuration change detected: {request.action} for user {request.user_id}")
         
         if request.icp_id:
             logger.info(f"ICP ID affected: {request.icp_id}")
-        
-        # Trigger configuration refresh in the monitoring system
+    
         config_manager.trigger_refresh()
         
         return ICPConfigChangeResponse(
