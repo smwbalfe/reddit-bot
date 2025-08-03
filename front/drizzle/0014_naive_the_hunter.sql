@@ -1,0 +1,1 @@
+ALTER TABLE "RedditPost" DROP COLUMN "redditEditedAt";
