@@ -106,6 +106,8 @@ export async function getUserPosts() {
       urgencyIndicatorsJustification: redditPosts.urgencyIndicatorsJustification,
       decisionAuthorityJustification: redditPosts.decisionAuthorityJustification,
       engagementQualityJustification: redditPosts.engagementQualityJustification,
+      redditCreatedAt: redditPosts.redditCreatedAt,
+      redditEditedAt: redditPosts.redditEditedAt,
       createdAt: redditPosts.createdAt,
       updatedAt: redditPosts.updatedAt,
     })

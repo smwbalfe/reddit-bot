@@ -40,6 +40,8 @@ export const redditPosts = pgTable('RedditPost', {
   urgencyIndicatorsJustification: text('urgencyIndicatorsJustification'),
   decisionAuthorityJustification: text('decisionAuthorityJustification'),
   engagementQualityJustification: text('engagementQualityJustification'),
+  redditCreatedAt: timestamp('redditCreatedAt'), // when the Reddit post was originally created
+  redditEditedAt: timestamp('redditEditedAt'), // when the Reddit post was last edited (if applicable)
   createdAt: timestamp('createdAt').defaultNow().notNull(),
   updatedAt: timestamp('updatedAt').defaultNow().notNull(),
 }, (table) => ({

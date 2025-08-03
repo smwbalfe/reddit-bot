@@ -153,6 +153,8 @@ type PostWithConfigId = {
   urgencyIndicatorsJustification: string | null
   decisionAuthorityJustification: string | null
   engagementQualityJustification: string | null
+  redditCreatedAt: Date | null
+  redditEditedAt: Date | null
   createdAt: Date
   updatedAt: Date
 }
@@ -314,10 +316,28 @@ export default function LeadsPage() {
                           </Link>
                         </TableCell>
                         <TableCell className="text-slate-500 text-sm py-4 px-6">
-                          {new Date(post.createdAt).toLocaleDateString('en-US', { 
-                            month: 'short', 
-                            day: 'numeric' 
-                          })}
+                          <div className="space-y-1">
+                            <div>
+                              {post.redditCreatedAt 
+                                ? new Date(post.redditCreatedAt).toLocaleDateString('en-US', { 
+                                    month: 'short', 
+                                    day: 'numeric' 
+                                  })
+                                : new Date(post.createdAt).toLocaleDateString('en-US', { 
+                                    month: 'short', 
+                                    day: 'numeric' 
+                                  })
+                              }
+                            </div>
+                            {post.redditCreatedAt && (
+                              <div className="text-xs text-slate-400">
+                                Found {new Date(post.createdAt).toLocaleDateString('en-US', { 
+                                  month: 'short', 
+                                  day: 'numeric' 
+                                })}
+                              </div>
+                            )}
+                          </div>
                         </TableCell>
                         <TableCell className="text-right py-4 px-6">
                           <div className="flex items-center justify-end gap-2">

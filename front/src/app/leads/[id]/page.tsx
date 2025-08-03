@@ -375,6 +375,8 @@ type PostWithConfigId = {
   decisionAuthorityJustification?: string | null
   engagementQualityJustification?: string | null
   overallAssessment?: string | null
+  redditCreatedAt: Date | null
+  redditEditedAt: Date | null
   createdAt: Date
   updatedAt: Date
 }
@@ -486,14 +488,44 @@ export default function LeadDetailPage() {
                     {config?.name || 'Unknown Product'}
                   </Badge>
                 </div>
-                <div className="text-sm text-slate-500">
-                  Posted on {new Date(post.createdAt).toLocaleDateString('en-US', { 
-                    year: 'numeric', 
-                    month: 'long', 
-                    day: 'numeric',
-                    hour: '2-digit',
-                    minute: '2-digit'
-                  })}
+                <div className="text-sm text-slate-500 space-y-1">
+                  {post.redditCreatedAt ? (
+                    <div>
+                      Originally posted on Reddit: {new Date(post.redditCreatedAt).toLocaleDateString('en-US', { 
+                        year: 'numeric', 
+                        month: 'long', 
+                        day: 'numeric',
+                        hour: '2-digit',
+                        minute: '2-digit'
+                      })}
+                      {post.redditEditedAt && (
+                        <span className="ml-2 text-slate-400">
+                          (edited {new Date(post.redditEditedAt).toLocaleDateString('en-US', { 
+                            month: 'short', 
+                            day: 'numeric'
+                          })})
+                        </span>
+                      )}
+                    </div>
+                  ) : (
+                    <div>
+                      Posted on {new Date(post.createdAt).toLocaleDateString('en-US', { 
+                        year: 'numeric', 
+                        month: 'long', 
+                        day: 'numeric',
+                        hour: '2-digit',
+                        minute: '2-digit'
+                      })}
+                    </div>
+                  )}
+                  <div className="text-xs text-slate-400">
+                    Discovered: {new Date(post.createdAt).toLocaleDateString('en-US', { 
+                      month: 'short', 
+                      day: 'numeric',
+                      hour: '2-digit',
+                      minute: '2-digit'
+                    })}
+                  </div>
                 </div>
               </div>
               <div className="flex items-start gap-3">

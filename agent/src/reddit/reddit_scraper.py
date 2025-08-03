@@ -1,4 +1,5 @@
 import asyncio
+from datetime import datetime
 from src.reddit.client import RedditClient
 from src.db.db import DatabaseManager
 from src.agent.services import score_lead_intent_two_stage
@@ -38,6 +39,17 @@ async def process_post(post, db_manager, icps):
     post_content = ""
     if hasattr(post, 'selftext') and post.selftext:
         post_content = post.selftext
+    
+    # Extract Reddit timestamps
+    reddit_created_at = None
+    reddit_edited_at = None
+    
+    if hasattr(post, 'created_utc') and post.created_utc:
+        reddit_created_at = datetime.fromtimestamp(post.created_utc).isoformat()
+    
+    if hasattr(post, 'edited') and post.edited and post.edited != False:
+        reddit_edited_at = datetime.fromtimestamp(post.edited).isoformat()
+    
     for icp in icps:
         try:
             result = await score_lead_intent_two_stage(
@@ -64,7 +76,9 @@ async def process_post(post, db_manager, icps):
                     intent_signals_justification=result.factor_justifications.intent_signals,
                     urgency_indicators_justification=result.factor_justifications.urgency_indicators,
                     decision_authority_justification=result.factor_justifications.decision_authority,
-                    engagement_quality_justification=result.factor_justifications.engagement_quality
+                    engagement_quality_justification=result.factor_justifications.engagement_quality,
+                    reddit_created_at=reddit_created_at,
+                    reddit_edited_at=reddit_edited_at
                 )
         except Exception as e:
             pass

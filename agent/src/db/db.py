@@ -27,7 +27,8 @@ class DatabaseManager:
                           urgency_indicators_score: int = None, decision_authority_score: int = None,
                           engagement_quality_score: int = None, product_fit_justification: str = None, 
                           intent_signals_justification: str = None, urgency_indicators_justification: str = None,
-                          decision_authority_justification: str = None, engagement_quality_justification: str = None) -> Optional[List[Dict[str, Any]]]:
+                          decision_authority_justification: str = None, engagement_quality_justification: str = None,
+                          reddit_created_at: str = None, reddit_edited_at: str = None) -> Optional[List[Dict[str, Any]]]:
         try:
             with self._get_connection() as conn:
                 with conn.cursor() as cur:
@@ -37,13 +38,15 @@ class DatabaseManager:
                             "painPoints", "productFitScore", "intentSignalsScore", "urgencyIndicatorsScore", 
                             "decisionAuthorityScore", "engagementQualityScore", "productFitJustification", 
                             "intentSignalsJustification", "urgencyIndicatorsJustification", 
-                            "decisionAuthorityJustification", "engagementQualityJustification") 
-                           VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)''',
+                            "decisionAuthorityJustification", "engagementQualityJustification",
+                            "redditCreatedAt", "redditEditedAt") 
+                           VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)''',
                         (icp_id, submission_id, subreddit, title, content, url, lead_quality, 
                          pain_points, product_fit_score, intent_signals_score, urgency_indicators_score,
                          decision_authority_score, engagement_quality_score, product_fit_justification,
                          intent_signals_justification, urgency_indicators_justification,
-                         decision_authority_justification, engagement_quality_justification)
+                         decision_authority_justification, engagement_quality_justification,
+                         reddit_created_at, reddit_edited_at)
                     )
                     conn.commit()
         except Exception as e:
