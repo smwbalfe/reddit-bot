@@ -168,80 +168,132 @@ function CompactScoreBreakdown({ post }: { post: PostWithConfigId }) {
   }
 
   return (
-    <div className="space-y-4">
-      {/* Final Score Display - Compact */}
+    <div className="space-y-6">
+      {/* Final Score Display - Enhanced */}
       {post.leadQuality && (
-        <div className="flex items-center justify-center pb-3 border-b border-slate-100">
-          <div className="inline-flex items-center gap-3 p-3 bg-gradient-to-r from-blue-50 to-indigo-50 rounded-lg">
-            <div className="text-center">
-              <div className="text-2xl font-bold text-slate-900">{post.leadQuality}%</div>
-              <div className="text-xs text-slate-600 font-medium">Overall Score</div>
-            </div>
+        <div className="flex items-center justify-center pb-6">
+          <div className="relative">
+            {(() => {
+              let bgGradient = 'from-blue-50 to-indigo-50'
+              let textGradient = 'from-blue-600 to-indigo-600'
+              let glowGradient = 'from-blue-400 to-indigo-400'
+              let barGradient = 'from-blue-400 to-indigo-400'
+              
+              if (post.leadQuality <= 20) {
+                bgGradient = 'from-red-50 to-pink-50'
+                textGradient = 'from-red-600 to-red-700'
+                glowGradient = 'from-red-400 to-pink-400'
+                barGradient = 'from-red-400 to-pink-400'
+              } else if (post.leadQuality <= 40) {
+                bgGradient = 'from-orange-50 to-amber-50'
+                textGradient = 'from-orange-600 to-amber-600'
+                glowGradient = 'from-orange-400 to-amber-400'
+                barGradient = 'from-orange-400 to-amber-400'
+              } else if (post.leadQuality <= 60) {
+                bgGradient = 'from-amber-50 to-yellow-50'
+                textGradient = 'from-amber-600 to-yellow-600'
+                glowGradient = 'from-amber-400 to-yellow-400'
+                barGradient = 'from-amber-400 to-yellow-400'
+              } else if (post.leadQuality <= 80) {
+                bgGradient = 'from-lime-50 to-green-50'
+                textGradient = 'from-lime-600 to-green-600'
+                glowGradient = 'from-lime-400 to-green-400'
+                barGradient = 'from-lime-400 to-green-400'
+              } else {
+                bgGradient = 'from-green-50 to-emerald-50'
+                textGradient = 'from-green-600 to-emerald-600'
+                glowGradient = 'from-green-400 to-emerald-400'
+                barGradient = 'from-green-400 to-emerald-400'
+              }
+              
+              return (
+                <>
+                  <div className={`absolute inset-0 bg-gradient-to-r ${glowGradient} rounded-2xl blur opacity-20`}></div>
+                  <div className={`relative bg-gradient-to-r ${bgGradient} p-6 rounded-2xl`}>
+                    <div className="text-center">
+                      <div className={`text-3xl font-bold bg-gradient-to-r ${textGradient} bg-clip-text text-transparent mb-1`}>
+                        {post.leadQuality}%
+                      </div>
+                      <div className="text-sm text-slate-600 font-medium">Overall Lead Score</div>
+                      <div className={`mt-2 h-1 w-16 bg-gradient-to-r ${barGradient} rounded-full mx-auto`}></div>
+                    </div>
+                  </div>
+                </>
+              )
+            })()}
           </div>
         </div>
       )}
 
-      {/* Pain Points */}
+      {/* Pain Points - Enhanced */}
       {post.analysisData?.painPoints && (
-        <div className="mb-4 p-3 bg-red-50 border border-red-100 rounded-lg">
-          <div className="font-medium text-red-900 mb-2 flex items-center gap-2">
-            <div className="w-2 h-2 bg-red-500 rounded-full"></div>
+        <div className="p-4 bg-gradient-to-r from-red-50 to-pink-50 rounded-xl">
+          <div className="font-semibold text-red-900 mb-3 flex items-center gap-3">
+            <div className="p-1.5 bg-red-100 rounded-lg">
+              <div className="w-3 h-3 bg-red-500 rounded-full"></div>
+            </div>
             Pain Points Identified
           </div>
-          <p className="text-red-800 text-sm leading-relaxed">{post.analysisData.painPoints}</p>
+          <p className="text-red-800 text-sm leading-relaxed pl-8">{post.analysisData.painPoints}</p>
         </div>
       )}
       
-      {/* Compact Score Grid */}
-      <div className="grid grid-cols-5 gap-2">
+      {/* Score Grid - Enhanced Responsive */}
+      <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4">
         {factors.map((factor, index) => {
           if (factor.score == null) return null;
           
           let displayColor = factor.color
           let bgColor = 'bg-slate-50'
+          let ringColor = 'ring-slate-200'
           
           if (factor.score <= 20) {
             displayColor = '#dc2626'
             bgColor = 'bg-red-50'
+            ringColor = 'ring-red-200'
           } else if (factor.score <= 40) {
             displayColor = '#ea580c'
             bgColor = 'bg-orange-50'
+            ringColor = 'ring-orange-200'
           } else if (factor.score <= 60) {
             displayColor = '#d97706'
             bgColor = 'bg-amber-50'
+            ringColor = 'ring-amber-200'
           } else if (factor.score <= 80) {
             displayColor = '#65a30d'
             bgColor = 'bg-lime-50'
+            ringColor = 'ring-lime-200'
           } else {
             displayColor = '#16a34a'
             bgColor = 'bg-green-50'
+            ringColor = 'ring-green-200'
           }
           
           return (
             <div 
               key={index} 
-              className={`relative p-2 rounded-md border ${bgColor} border-opacity-20 group cursor-help transition-all hover:shadow-sm`}
+              className={`relative p-4 rounded-xl ${bgColor} ring-1 ${ringColor} group cursor-help transition-all duration-200 hover:shadow-md hover:scale-105 hover:ring-2`}
               title={factor.justification || ''}
             >
-              <div className="flex flex-col items-center gap-1">
-                <div className="p-1 rounded" style={{ color: displayColor }}>
+              <div className="flex flex-col items-center gap-2">
+                <div className="p-2 rounded-lg bg-white/60" style={{ color: displayColor }}>
                   {factor.icon}
                 </div>
-                <div className="text-lg font-bold" style={{ color: displayColor }}>
+                <div className="text-xl font-bold" style={{ color: displayColor }}>
                   {factor.score}%
                 </div>
-                <div className="text-xs font-medium text-slate-600 text-center leading-tight">
+                <div className="text-xs font-semibold text-slate-700 text-center leading-tight">
                   {factor.name}
                 </div>
               </div>
               
-              {/* Hover Tooltip */}
+              {/* Enhanced Tooltip */}
               {factor.justification && (
-                <div className="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 w-64 p-2 bg-white border border-slate-200 rounded-md shadow-lg opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 z-10">
+                <div className="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-3 w-72 p-3 bg-white rounded-lg shadow-xl ring-1 ring-slate-200 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-300 z-20">
                   <div className="text-xs text-slate-700 leading-relaxed">
-                    {factor.justification}
+                    <span className="font-semibold text-slate-900">{factor.name}:</span> {factor.justification}
                   </div>
-                  <div className="absolute top-full left-1/2 transform -translate-x-1/2 -mt-1 w-2 h-2 bg-white border-r border-b border-slate-200 transform rotate-45"></div>
+                  <div className="absolute top-full left-1/2 transform -translate-x-1/2 -mt-1 w-3 h-3 bg-white ring-1 ring-slate-200 transform rotate-45"></div>
                 </div>
               )}
             </div>
@@ -249,14 +301,16 @@ function CompactScoreBreakdown({ post }: { post: PostWithConfigId }) {
         })}
       </div>
       
-      {/* Overall Assessment - Compact */}
+      {/* Overall Assessment - Enhanced */}
       {post.overallAssessment && (
-        <div className="mt-3 p-3 bg-slate-50 rounded-lg border text-sm">
-          <div className="font-medium text-slate-900 mb-1 flex items-center gap-1">
-            <div className="w-1.5 h-1.5 bg-blue-500 rounded-full"></div>
-            Assessment
+        <div className="p-4 bg-gradient-to-r from-slate-50 to-blue-50 rounded-xl ring-1 ring-slate-200">
+          <div className="font-semibold text-slate-900 mb-3 flex items-center gap-3">
+            <div className="p-1.5 bg-blue-100 rounded-lg">
+              <div className="w-3 h-3 bg-blue-500 rounded-full"></div>
+            </div>
+            AI Assessment
           </div>
-          <p className="text-slate-700 leading-relaxed text-xs">{post.overallAssessment}</p>
+          <p className="text-slate-700 leading-relaxed text-sm pl-8">{post.overallAssessment}</p>
         </div>
       )}
     </div>
@@ -371,7 +425,7 @@ export default function LeadDetailPage() {
 
   return (
     <DashboardLayout>
-      <div className="max-w-4xl mx-auto p-6 space-y-4">
+      <div className="max-w-7xl mx-auto p-6 space-y-4">
         {/* Back Button */}
         <Link href="/leads">
           <Button variant="ghost" className="mb-4">
@@ -382,8 +436,8 @@ export default function LeadDetailPage() {
 
         {/* Header Card */}
         <Card className="border-0 shadow-sm bg-white">
-          <CardHeader className="pb-4">
-            <div className="flex justify-between items-start gap-6">
+          <CardHeader className="pb-6">
+            <div className="flex justify-between items-start gap-8">
               <div className="flex-1">
                 <CardTitle className="text-xl font-semibold text-slate-900 leading-tight mb-3">
                   {post.title}
@@ -452,27 +506,32 @@ export default function LeadDetailPage() {
           </CardHeader>
         </Card>
 
-        {/* Content Card with Scroll */}
+        {/* Content Card with Better Layout */}
         <Card className="border-0 shadow-sm bg-white">
-          <CardHeader className="pb-2">
+          <CardHeader className="pb-4">
             <CardTitle className="text-lg font-semibold text-slate-900">Original Post Content</CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="p-4 bg-slate-50 rounded-lg max-h-60 overflow-y-auto">
-              <p className="text-slate-700 leading-relaxed whitespace-pre-wrap">{post.content}</p>
+            <div className="p-6 bg-slate-50 rounded-xl max-h-80 overflow-y-auto">
+              <p className="text-slate-700 leading-relaxed whitespace-pre-wrap text-base">{post.content}</p>
             </div>
           </CardContent>
         </Card>
 
-        {/* Compact AI Scoring Analysis */}
-        <Card className="border-0 shadow-sm bg-white">
-          <CardHeader className="pb-2">
-            <CardTitle className="text-lg font-semibold text-slate-900 flex items-center gap-2">
-              <Activity className="w-5 h-5 text-blue-600" />
+        {/* AI Scoring Analysis - Enhanced */}
+        <Card className="shadow-sm bg-white border-0 overflow-hidden">
+          <CardHeader className="pb-4 bg-gradient-to-r from-blue-50/50 to-indigo-50/50 border-b border-slate-100/50">
+            <CardTitle className="text-lg font-semibold text-slate-900 flex items-center gap-3">
+              <div className="p-2 bg-blue-100 rounded-lg">
+                <Activity className="w-5 h-5 text-blue-600" />
+              </div>
               Lead Score Analysis
             </CardTitle>
+            <CardDescription className="text-slate-600 mt-1">
+              AI-powered scoring breakdown with detailed insights
+            </CardDescription>
           </CardHeader>
-          <CardContent className="pt-2">
+          <CardContent className="pt-8 px-8 pb-8">
             <CompactScoreBreakdown post={post} />
           </CardContent>
         </Card>

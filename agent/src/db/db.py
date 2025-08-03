@@ -55,5 +55,17 @@ class DatabaseManager:
         """Force refresh of ICPs from database"""
         print("Refreshing ICPs cache...")
         return self.get_icps()
+    
+    def post_exists(self, submission_id: str) -> bool:
+        """Check if a post with the given submission_id already exists in the database"""
+        try:
+            with self._get_connection() as conn:
+                with conn.cursor() as cur:
+                    cur.execute('SELECT COUNT(*) as count FROM "RedditPost" WHERE "submissionId" = %s', (submission_id,))
+                    result = cur.fetchone()
+                    return result['count'] > 0 if result else False
+        except Exception as e:
+            print(f"Error checking if post exists: {e}")
+            return False
 
  

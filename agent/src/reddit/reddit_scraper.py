@@ -9,6 +9,8 @@ from src.agent.services import score_lead_intent_two_stage
 from praw.models import Submission
 
 SLEEP_INTERVAL = 1
+POLLING_INTERVAL_MINUTES = 1
+POLLING_INTERVAL_SECONDS = POLLING_INTERVAL_MINUTES * 60
 
 @dataclass
 class StreamConfig:
@@ -101,17 +103,21 @@ class IsolatedStreamManager:
     async def _run_isolated_stream(self, stream_id: str, config: StreamConfig, 
                                  reddit_client: RedditClient, db_manager: DatabaseManager):
         subreddit_string = "+".join(config.subreddits)
-        print(f"Running isolated stream {stream_id} for ICP {config.icp.id} on subreddits: {subreddit_string}")
+        print(f"Running isolated polling stream {stream_id} for ICP {config.icp.id} on subreddits: {subreddit_string}")
+        print(f"Polling interval: {POLLING_INTERVAL_MINUTES} minutes ({POLLING_INTERVAL_SECONDS} seconds)")
+        
         while True:
             try:
                 if self.needs_refresh:
                     print(f"Stream {stream_id} (ICP {config.icp.id}) needs refresh, breaking loop.")
                     break
                 
+                print(f"ICP {config.icp.id} polling subreddit(s): {subreddit_string}")
                 current_subreddit = await reddit_client.get_subreddit(subreddit_string)
-                print(f"ICP {config.icp.id} listening to subreddit(s): {subreddit_string}")
                 
-                async for post in current_subreddit.stream.submissions(skip_existing=False):
+                # Get recent posts from the subreddit
+                processed_count = 0
+                async for post in current_subreddit.new(limit=50):
                     if self.needs_refresh:
                         print(f"Stream {stream_id} (ICP {config.icp.id}) needs refresh, breaking post loop.")
                         break
@@ -120,16 +126,30 @@ class IsolatedStreamManager:
                     if post_subreddit not in config.subreddits:
                         continue
 
+                    # Check if we've already processed this post
+                    if self._is_post_already_processed(post.id, db_manager):
+                        continue
+
                     print(f"Processing post: {post.title} in subreddit: {post_subreddit} for ICP {config.icp.id}")
                     await self._process_post_for_icp(post, db_manager, config.icp)
+                    processed_count += 1
                     await asyncio.sleep(0.1)
+                
+                print(f"Processed {processed_count} new posts for ICP {config.icp.id}. Next poll in {POLLING_INTERVAL_MINUTES} minutes.")
+                
+                # Wait for the polling interval
+                await asyncio.sleep(POLLING_INTERVAL_SECONDS)
                     
             except Exception as e:
                 print(f"Exception in stream {stream_id} (ICP {config.icp.id}): {e}")
                 if self.needs_refresh:
                     print(f"Stream {stream_id} (ICP {config.icp.id}) needs refresh, breaking after exception.")
                     break
-                await asyncio.sleep(5)
+                await asyncio.sleep(60)  # Wait 1 minute before retrying on error
+    
+    def _is_post_already_processed(self, submission_id: str, db_manager: DatabaseManager) -> bool:
+        """Check if a post has already been processed by checking the database"""
+        return db_manager.post_exists(submission_id)
     
     async def _process_post_for_icp(self, post: Submission, db_manager: DatabaseManager, icp: ICPModel):
         subreddit_name = post.subreddit.display_name

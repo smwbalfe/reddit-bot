@@ -76,10 +76,13 @@ export function Dashboard() {
     )
   }
 
-      const highQualityLeads = posts.filter(post => (post.leadQuality ?? 0) >= 80).length
-    const mediumQualityLeads = posts.filter(post => (post.leadQuality ?? 0) >= 60 && (post.leadQuality ?? 0) < 80).length
-    const lowQualityLeads = posts.filter(post => (post.leadQuality ?? 0) < 60).length
-    const avgLeadQuality = posts.length > 0 ? Math.round(posts.reduce((acc, post) => acc + (post.leadQuality ?? 0), 0) / posts.length) : 0
+  const neverLeads = posts.filter(post => (post.leadQuality ?? 0) <= 10).length
+  const minimalLeads = posts.filter(post => (post.leadQuality ?? 0) > 10 && (post.leadQuality ?? 0) <= 20).length
+  const moderateLeads = posts.filter(post => (post.leadQuality ?? 0) > 20 && (post.leadQuality ?? 0) <= 40).length
+  const genuineLeads = posts.filter(post => (post.leadQuality ?? 0) > 40 && (post.leadQuality ?? 0) <= 60).length
+  const strongLeads = posts.filter(post => (post.leadQuality ?? 0) > 60 && (post.leadQuality ?? 0) <= 80).length
+  const readyLeads = posts.filter(post => (post.leadQuality ?? 0) > 80).length
+  const avgLeadQuality = posts.length > 0 ? Math.round(posts.reduce((acc, post) => acc + (post.leadQuality ?? 0), 0) / posts.length) : 0
   
   const todayLeads = posts.filter(post => {
     const postDate = new Date(post.createdAt)
@@ -156,7 +159,7 @@ export function Dashboard() {
                   </div>
                 </div>
                 <div className="mt-4 flex text-sm text-slate-600">
-                  <span>High: {highQualityLeads} • Med: {mediumQualityLeads}</span>
+                  <span>Ready: {readyLeads} • Strong: {strongLeads}</span>
                 </div>
               </CardContent>
             </Card>
@@ -165,15 +168,15 @@ export function Dashboard() {
               <CardContent className="p-6">
                 <div className="flex items-center justify-between">
                   <div>
-                    <p className="text-sm font-medium text-slate-600">Low Quality</p>
-                    <p className="text-3xl font-bold text-slate-900">{lowQualityLeads}</p>
+                    <p className="text-sm font-medium text-slate-600">Never/Minimal</p>
+                    <p className="text-3xl font-bold text-slate-900">{neverLeads + minimalLeads}</p>
                   </div>
                   <div className="h-12 w-12 bg-red-100 rounded-lg flex items-center justify-center">
                     <Activity className="h-6 w-6 text-red-600" />
                   </div>
                 </div>
                 <div className="mt-4 flex text-sm text-slate-600">
-                  <span>&lt; 60% quality</span>
+                  <span>≤ 20% quality</span>
                 </div>
               </CardContent>
             </Card>
@@ -188,27 +191,48 @@ export function Dashboard() {
                 </CardTitle>
               </CardHeader>
               <CardContent>
-                <div className="space-y-4">
+                <div className="space-y-3">
                   <div className="flex items-center justify-between">
                     <div className="flex items-center gap-3">
-                      <div className="w-3 h-3 bg-emerald-500 rounded-full"></div>
-                      <span className="text-sm font-medium text-slate-700">High Quality (80%+)</span>
+                      <div className="w-3 h-3 bg-green-600 rounded-full"></div>
+                      <span className="text-sm font-medium text-slate-700">Ready (81-100%)</span>
                     </div>
-                    <span className="text-lg font-bold text-slate-900">{highQualityLeads}</span>
+                    <span className="text-lg font-bold text-slate-900">{readyLeads}</span>
+                  </div>
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-3">
+                      <div className="w-3 h-3 bg-lime-500 rounded-full"></div>
+                      <span className="text-sm font-medium text-slate-700">Strong (61-80%)</span>
+                    </div>
+                    <span className="text-lg font-bold text-slate-900">{strongLeads}</span>
+                  </div>
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-3">
+                      <div className="w-3 h-3 bg-yellow-500 rounded-full"></div>
+                      <span className="text-sm font-medium text-slate-700">Genuine (41-60%)</span>
+                    </div>
+                    <span className="text-lg font-bold text-slate-900">{genuineLeads}</span>
                   </div>
                   <div className="flex items-center justify-between">
                     <div className="flex items-center gap-3">
                       <div className="w-3 h-3 bg-amber-500 rounded-full"></div>
-                      <span className="text-sm font-medium text-slate-700">Medium Quality (60-79%)</span>
+                      <span className="text-sm font-medium text-slate-700">Moderate (21-40%)</span>
                     </div>
-                    <span className="text-lg font-bold text-slate-900">{mediumQualityLeads}</span>
+                    <span className="text-lg font-bold text-slate-900">{moderateLeads}</span>
                   </div>
                   <div className="flex items-center justify-between">
                     <div className="flex items-center gap-3">
-                      <div className="w-3 h-3 bg-rose-500 rounded-full"></div>
-                      <span className="text-sm font-medium text-slate-700">Low Quality (&lt;60%)</span>
+                      <div className="w-3 h-3 bg-orange-500 rounded-full"></div>
+                      <span className="text-sm font-medium text-slate-700">Minimal (11-20%)</span>
                     </div>
-                    <span className="text-lg font-bold text-slate-900">{lowQualityLeads}</span>
+                    <span className="text-lg font-bold text-slate-900">{minimalLeads}</span>
+                  </div>
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-3">
+                      <div className="w-3 h-3 bg-red-500 rounded-full"></div>
+                      <span className="text-sm font-medium text-slate-700">Never (0-10%)</span>
+                    </div>
+                    <span className="text-lg font-bold text-slate-900">{neverLeads}</span>
                   </div>
                 </div>
               </CardContent>

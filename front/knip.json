@@ -1,0 +1,8 @@
+{
+    "ignore": [
+        "build/**",
+        "dist/**",
+        "src/generated.ts",
+        "src/lib/components/ui/**"
+    ]
+}
