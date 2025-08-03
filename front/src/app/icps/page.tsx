@@ -139,18 +139,41 @@ export default function IcpsPage() {
                       </a>
                     </div>
                   </div>
-                  <p className="text-gray-600 mb-4">{icp.description}</p>
+                  <p className="text-gray-600 mb-4">{icp.data.description}</p>
                   
-                  {icp.keywords && icp.keywords.length > 0 && (
+                  {icp.data.painPoints && (
+                    <div className="mb-4">
+                      <h4 className="text-sm font-medium text-gray-700 mb-2">Pain Points:</h4>
+                      <p className="text-sm text-gray-600 bg-gray-50 p-3 rounded-md">{icp.data.painPoints}</p>
+                    </div>
+                  )}
+                  
+                  {icp.data.keywords && icp.data.keywords.length > 0 && (
                     <div className="mb-4">
                       <h4 className="text-sm font-medium text-gray-700 mb-2">Keywords:</h4>
                       <div className="flex flex-wrap gap-2">
-                        {icp.keywords.map((keyword, index) => (
+                        {icp.data.keywords.map((keyword, index) => (
                           <span
                             key={index}
                             className="px-2 py-1 bg-blue-100 text-blue-800 text-xs rounded-full"
                           >
                             {keyword}
+                          </span>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+
+                  {icp.data.subreddits && icp.data.subreddits.length > 0 && (
+                    <div className="mb-4">
+                      <h4 className="text-sm font-medium text-gray-700 mb-2">Subreddits Being Monitored:</h4>
+                      <div className="flex flex-wrap gap-2">
+                        {icp.data.subreddits.map((subreddit, index) => (
+                          <span
+                            key={index}
+                            className="px-2 py-1 bg-green-100 text-green-800 text-xs rounded-full"
+                          >
+                            r/{subreddit}
                           </span>
                         ))}
                       </div>

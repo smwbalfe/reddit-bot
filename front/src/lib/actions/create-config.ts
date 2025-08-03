@@ -12,6 +12,7 @@ const createIcpSchema = z.object({
   description: z.string().min(1, 'Description is required'),
   keywords: z.array(z.string()).default([]),
   subreddits: z.array(z.string()).default([]),
+  painPoints: z.string().default(''),
 })
 
 export async function createConfig(formData: FormData) {
@@ -29,6 +30,7 @@ export async function createConfig(formData: FormData) {
       description: formData.get('description') as string,
       keywords: JSON.parse(formData.get('keywords') as string || '[]'),
       subreddits: JSON.parse(formData.get('subreddits') as string || '[]'),
+      painPoints: formData.get('painPoints') as string || '',
     }
 
     const validatedData = createIcpSchema.parse(rawData)
@@ -37,9 +39,12 @@ export async function createConfig(formData: FormData) {
       userId: user.id,
       name: validatedData.name,
       website: validatedData.website,
-      description: validatedData.description,
-      keywords: validatedData.keywords,
-      subreddits: validatedData.subreddits,
+      data: {
+        keywords: validatedData.keywords,
+        subreddits: validatedData.subreddits,
+        painPoints: validatedData.painPoints,
+        description: validatedData.description,
+      },
     }).returning()
 
     // Notify backend about config creation
@@ -95,19 +100,9 @@ export async function getUserPosts() {
       content: redditPosts.content,
       url: redditPosts.url,
       leadQuality: redditPosts.leadQuality,
-      painPoints: redditPosts.painPoints,
-      productFitScore: redditPosts.productFitScore,
-      intentSignalsScore: redditPosts.intentSignalsScore,
-      urgencyIndicatorsScore: redditPosts.urgencyIndicatorsScore,
-      decisionAuthorityScore: redditPosts.decisionAuthorityScore,
-      engagementQualityScore: redditPosts.engagementQualityScore,
-      productFitJustification: redditPosts.productFitJustification,
-      intentSignalsJustification: redditPosts.intentSignalsJustification,
-      urgencyIndicatorsJustification: redditPosts.urgencyIndicatorsJustification,
-      decisionAuthorityJustification: redditPosts.decisionAuthorityJustification,
-      engagementQualityJustification: redditPosts.engagementQualityJustification,
+      analysisData: redditPosts.analysisData,
       redditCreatedAt: redditPosts.redditCreatedAt,
-      redditEditedAt: redditPosts.redditEditedAt,
+  
       createdAt: redditPosts.createdAt,
       updatedAt: redditPosts.updatedAt,
     })
@@ -137,6 +132,7 @@ export async function updateConfig(id: number, formData: FormData) {
       description: formData.get('description') as string,
       keywords: JSON.parse(formData.get('keywords') as string || '[]'),
       subreddits: JSON.parse(formData.get('subreddits') as string || '[]'),
+      painPoints: formData.get('painPoints') as string || '',
     }
 
     const validatedData = createIcpSchema.parse(rawData)
@@ -145,9 +141,12 @@ export async function updateConfig(id: number, formData: FormData) {
       .set({
         name: validatedData.name,
         website: validatedData.website,
-        description: validatedData.description,
-        keywords: validatedData.keywords,
-        subreddits: validatedData.subreddits,
+        data: {
+          keywords: validatedData.keywords,
+          subreddits: validatedData.subreddits,
+          painPoints: validatedData.painPoints,
+          description: validatedData.description,
+        },
         updatedAt: new Date(),
       })
       .where(eq(icps.id, id))

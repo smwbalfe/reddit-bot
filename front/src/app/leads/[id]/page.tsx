@@ -79,7 +79,7 @@ function FuelGauge({ percentage, color }: { percentage: number; color: string })
   )
 }
 
-function InterestLabel({ category, leadQuality, finalScore }: { category: string | null; leadQuality: number | null; finalScore?: number | null }) {
+function InterestLabel({ category, leadQuality }: { category: string | null; leadQuality: number | null }) {
   if (!category) return null
   
   const categoryMap: Record<string, { label: string; position: number; color: string; bgColor: string }> = {
@@ -99,7 +99,7 @@ function InterestLabel({ category, leadQuality, finalScore }: { category: string
   if (!categoryData) return null
   
   const { label, position, color, bgColor } = categoryData
-  const percentage = finalScore ?? leadQuality ?? Math.round(((position + 1) / 10) * 100)
+  const percentage = leadQuality ?? Math.round(((position + 1) / 10) * 100)
   
   return (
     <div className="flex flex-col items-center gap-2">
@@ -117,103 +117,40 @@ function InterestLabel({ category, leadQuality, finalScore }: { category: string
   )
 }
 
-function AIScoreCard({ score, justification, title, icon, color }: {
-  score: number | null
-  justification: string | null
-  title: string
-  icon: React.ReactNode
-  color: string
-}) {
-  if (score === null) return null
-  
-  // Get proper color based on score
-  let displayColor = color
-  let bgColor = 'bg-slate-50'
-  
-  if (score <= 20) {
-    displayColor = '#dc2626'
-    bgColor = 'bg-red-50'
-  } else if (score <= 40) {
-    displayColor = '#ea580c'
-    bgColor = 'bg-orange-50'
-  } else if (score <= 60) {
-    displayColor = '#d97706'
-    bgColor = 'bg-amber-50'
-  } else if (score <= 80) {
-    displayColor = '#65a30d'
-    bgColor = 'bg-lime-50'
-  } else {
-    displayColor = '#16a34a'
-    bgColor = 'bg-green-50'
-  }
-  
-  return (
-    <div className={`relative p-4 rounded-lg border ${bgColor} border-opacity-20 group cursor-help transition-all hover:shadow-md`}>
-      <div className="flex items-center gap-3">
-        {/* Icon and Gauge */}
-        <div className="flex items-center gap-2">
-          <div className="p-1.5 rounded-md" style={{ color: displayColor }}>
-            {icon}
-          </div>
-          <FuelGauge percentage={score} color={displayColor} />
-        </div>
-        
-        {/* Score and Title */}
-        <div className="flex-1">
-          <div className="text-2xl font-bold" style={{ color: displayColor }}>
-            {score}%
-          </div>
-          <div className="text-sm font-medium text-slate-700">{title}</div>
-        </div>
-      </div>
-      
-      {/* Hover Tooltip for Justification */}
-      {justification && (
-        <div className="absolute left-0 top-full mt-2 w-80 p-3 bg-white border border-slate-200 rounded-lg shadow-lg opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 z-10">
-          <div className="text-sm text-slate-700 leading-relaxed">
-            {justification}
-          </div>
-          <div className="absolute -top-1 left-4 w-2 h-2 bg-white border-l border-t border-slate-200 transform rotate-45"></div>
-        </div>
-      )}
-    </div>
-  )
-}
-
 function CompactScoreBreakdown({ post }: { post: PostWithConfigId }) {
   const factors = [
     {
       name: 'Product Fit',
-      score: post.productFitScore,
-      justification: post.productFitJustification,
+      score: post.analysisData?.productFitScore,
+      justification: post.analysisData?.productFitJustification,
       icon: <Target className="w-4 h-4" />,
       color: '#3b82f6'
     },
     {
       name: 'Intent',
-      score: post.intentSignalsScore,
-      justification: post.intentSignalsJustification,
+      score: post.analysisData?.intentSignalsScore,
+      justification: post.analysisData?.intentSignalsJustification,
       icon: <Zap className="w-4 h-4" />,
       color: '#10b981'
     },
     {
       name: 'Urgency',
-      score: post.urgencyIndicatorsScore,
-      justification: post.urgencyIndicatorsJustification,
+      score: post.analysisData?.urgencyIndicatorsScore,
+      justification: post.analysisData?.urgencyIndicatorsJustification,
       icon: <Clock className="w-4 h-4" />,
       color: '#f59e0b'
     },
     {
       name: 'Authority',
-      score: post.decisionAuthorityScore,
-      justification: post.decisionAuthorityJustification,
+      score: post.analysisData?.decisionAuthorityScore,
+      justification: post.analysisData?.decisionAuthorityJustification,
       icon: <UserCheck className="w-4 h-4" />,
       color: '#8b5cf6'
     },
     {
       name: 'Engagement',
-      score: post.engagementQualityScore,
-      justification: post.engagementQualityJustification,
+      score: post.analysisData?.engagementQualityScore,
+      justification: post.analysisData?.engagementQualityJustification,
       icon: <Star className="w-4 h-4" />,
       color: '#ef4444'
     }
@@ -241,6 +178,17 @@ function CompactScoreBreakdown({ post }: { post: PostWithConfigId }) {
               <div className="text-xs text-slate-600 font-medium">Overall Score</div>
             </div>
           </div>
+        </div>
+      )}
+
+      {/* Pain Points */}
+      {post.analysisData?.painPoints && (
+        <div className="mb-4 p-3 bg-red-50 border border-red-100 rounded-lg">
+          <div className="font-medium text-red-900 mb-2 flex items-center gap-2">
+            <div className="w-2 h-2 bg-red-500 rounded-full"></div>
+            Pain Points Identified
+          </div>
+          <p className="text-red-800 text-sm leading-relaxed">{post.analysisData.painPoints}</p>
         </div>
       )}
       
@@ -316,41 +264,6 @@ function CompactScoreBreakdown({ post }: { post: PostWithConfigId }) {
 }
 
 
-function CollapsibleSection({ title, children, icon, defaultOpen = false }: { 
-  title: string; 
-  children: React.ReactNode; 
-  icon: React.ReactNode;
-  defaultOpen?: boolean;
-}) {
-  const [isOpen, setIsOpen] = useState(defaultOpen)
-  
-  return (
-    <Card className="border-0 shadow-sm bg-white">
-      <button
-        onClick={() => setIsOpen(!isOpen)}
-        className="w-full text-left"
-      >
-        <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2 hover:bg-slate-50 transition-colors">
-          <CardTitle className="text-lg font-semibold text-slate-900 flex items-center gap-2">
-            {icon}
-            {title}
-          </CardTitle>
-          {isOpen ? (
-            <ChevronUp className="w-5 h-5 text-slate-500" />
-          ) : (
-            <ChevronDown className="w-5 h-5 text-slate-500" />
-          )}
-        </CardHeader>
-      </button>
-      {isOpen && (
-        <CardContent>
-          {children}
-        </CardContent>
-      )}
-    </Card>
-  )
-}
-
 type PostWithConfigId = {
   id: number
   configId: number
@@ -358,25 +271,22 @@ type PostWithConfigId = {
   title: string
   content: string
   url: string
-  leadQuality: number | null
-  leadCategory?: string | null
-  justification?: string | null
-  painPoints?: string | null
-  // New detailed scoring fields
-  finalScore?: number | null
-  productFitScore?: number | null
-  intentSignalsScore?: number | null
-  urgencyIndicatorsScore?: number | null
-  decisionAuthorityScore?: number | null
-  engagementQualityScore?: number | null
-  productFitJustification?: string | null
-  intentSignalsJustification?: string | null
-  urgencyIndicatorsJustification?: string | null
-  decisionAuthorityJustification?: string | null
-  engagementQualityJustification?: string | null
+  leadQuality?: number | null
+  analysisData: {
+    painPoints?: string;
+    productFitScore?: number;
+    intentSignalsScore?: number;
+    urgencyIndicatorsScore?: number;
+    decisionAuthorityScore?: number;
+    engagementQualityScore?: number;
+    productFitJustification?: string;
+    intentSignalsJustification?: string;
+    urgencyIndicatorsJustification?: string;
+    decisionAuthorityJustification?: string;
+    engagementQualityJustification?: string;
+  } | null
   overallAssessment?: string | null
   redditCreatedAt: Date | null
-  redditEditedAt: Date | null
   createdAt: Date
   updatedAt: Date
 }
@@ -480,7 +390,6 @@ export default function LeadDetailPage() {
                 </CardTitle>
                 <div className="flex items-center gap-3 mb-3">
                   <Badge variant="secondary" className="text-xs font-medium bg-slate-100 text-slate-700 hover:bg-slate-200 flex items-center gap-1">
-                    <Hash className="w-3 h-3" />
                     r/{post.subreddit}
                   </Badge>
                   <Badge variant="secondary" className="text-xs font-medium bg-blue-100 text-blue-700 hover:bg-blue-200 flex items-center gap-1">
@@ -498,14 +407,7 @@ export default function LeadDetailPage() {
                         hour: '2-digit',
                         minute: '2-digit'
                       })}
-                      {post.redditEditedAt && (
-                        <span className="ml-2 text-slate-400">
-                          (edited {new Date(post.redditEditedAt).toLocaleDateString('en-US', { 
-                            month: 'short', 
-                            day: 'numeric'
-                          })})
-                        </span>
-                      )}
+                     
                     </div>
                   ) : (
                     <div>
@@ -529,8 +431,8 @@ export default function LeadDetailPage() {
                 </div>
               </div>
               <div className="flex items-start gap-3">
-                {(post.leadQuality || post.leadCategory) && (
-                  <InterestLabel category={post.leadCategory ?? null} leadQuality={post.leadQuality} finalScore={post.finalScore} />
+                        {post.leadQuality && (
+          <InterestLabel category={null} leadQuality={post.leadQuality ?? null} />
                 )}
                 <div className="flex flex-col gap-2">
                   <a 
@@ -576,14 +478,7 @@ export default function LeadDetailPage() {
         </Card>
 
 
-        {post.justification && (
-          <CollapsibleSection 
-            title="AI Analysis Justification" 
-            icon={<Activity className="w-5 h-5 text-slate-600" />}
-          >
-            <p className="text-slate-700 leading-relaxed">{post.justification}</p>
-          </CollapsibleSection>
-        )}
+
       </div>
     </DashboardLayout>
   )

@@ -2,8 +2,9 @@ import asyncio
 import json
 import logging
 from typing import List, Callable, Any
-from .agents import lead_score_agent_strong, keyword_generation_agent, subreddit_generation_agent, icp_description_agent
+from .agents import lead_score_agent_strong, keyword_generation_agent, lead_score_agent_weak, subreddit_generation_agent, icp_description_agent, pain_points_agent, subreddit_relevance_agent
 from ..models import FactorScores, FactorJustifications, ServerLeadIntentResponse
+from ..reddit.client import RedditClient
 
 logger = logging.getLogger(__name__)
 
@@ -54,16 +55,18 @@ def _create_response_from_result(result) -> ServerLeadIntentResponse:
         )
     )
 
-async def score_lead_intent_initial(post_title: str, post_content: str, icp_description: str) -> ServerLeadIntentResponse:
+async def score_lead_intent_initial(post_title: str, post_content: str, icp_description: str, icp_pain_points: str) -> ServerLeadIntentResponse:
     prompt_data = {
         "icp_description": icp_description,
+        "icp_pain_points": icp_pain_points,
         "reddit_post_title": post_title,
         "reddit_post_content": post_content,
+        "icp_pain_points": icp_pain_points
     }
     prompt = json.dumps(prompt_data)
     
     try:
-        result = await _run_with_retry_and_timeout(lead_score_agent_strong.run, prompt, 10.0, "Agent run", post_title)
+        result = await _run_with_retry_and_timeout(lead_score_agent_weak.run, prompt, 10.0, "Agent run", post_title)
         logger.info(f"Post title: {post_title} | Post content: {post_content} | Classified as: {result.output.category}")
         return _create_response_from_result(result)
     except asyncio.TimeoutError:
@@ -88,8 +91,8 @@ async def score_lead_intent_detailed(post_title: str, post_content: str, icp_des
     except Exception:
         return _create_error_response("error")
 
-async def score_lead_intent_two_stage(post_title: str, post_content: str, icp_description: str) -> ServerLeadIntentResponse:
-    initial_result = await score_lead_intent_initial(post_title, post_content, icp_description)
+async def score_lead_intent_two_stage(post_title: str, post_content: str, icp_description: str, icp_pain_points: str) -> ServerLeadIntentResponse:
+    initial_result = await score_lead_intent_initial(post_title, post_content, icp_description, icp_pain_points)
     logger.info(f"Two-stage scoring - Initial: {initial_result.lead_quality} for '{post_title[:50]}'")
     
     if initial_result.lead_quality > 30:
@@ -117,18 +120,68 @@ async def extract_keywords(page_content: str, count: int = 30) -> List[str]:
         logger.error(f"Error during keyword extraction for content '{page_content[:50]}...': {e}")
         return []
 
-async def find_relevant_subreddits(description: str, count: int = 20) -> List[str]:
+async def find_relevant_subreddits_by_keywords(keywords: List[str], original_content: str, count: int = 20) -> List[str]:
     try:
-        prompt = f"Product description: {description}\nFind {count} relevant subreddits."
+        all_subreddits = set()
+        
+        for keyword in keywords[:10]:
+            subreddits = await search_subreddits_by_keyword(keyword, limit=20)
+            all_subreddits.update(subreddits)
+            
+            if len(all_subreddits) >= count * 3:
+                break
+        
+        logger.info(f"Found {len(all_subreddits)} total subreddits from {len(keywords)} keywords")
+        
+        prompt_data = {
+            "original_content": original_content,
+            "subreddit_candidates": list(all_subreddits)
+        }
+        prompt = json.dumps(prompt_data)
+        
+        result = await asyncio.wait_for(subreddit_relevance_agent.run(prompt), timeout=15.0)
+        relevant_subreddits = result.output.relevant_subreddits
+        
+        logger.info(f"AI filtered to {len(relevant_subreddits)} relevant subreddits")
+        return relevant_subreddits[:count]
+        
+    except asyncio.TimeoutError:
+        logger.error(f"Keyword-based subreddit discovery timed out after 15 seconds")
+        return []
+    except Exception as e:
+        logger.error(f"Error during keyword-based subreddit discovery: {e}")
+        return []
+
+async def find_relevant_subreddits(description: str, count: int = 20) -> List[str]:
+    reddit_client = None
+    try:
+        prompt = f"Product description: {description}\nFind {count * 2} relevant subreddits."
         result = await asyncio.wait_for(subreddit_generation_agent.run(prompt), timeout=15.0)
-        logger.info(f"Found {len(result.output.subreddits)} subreddits for description: {description[:100]}...")
-        return result.output.subreddits
+        generated_subreddits = [subreddit.replace("r/", "") for subreddit in result.output.subreddits]
+        logger.info(f"Generated {len(generated_subreddits)} subreddits for description: {description[:100]}...")
+        
+        reddit_client = RedditClient()
+        valid_subreddits = []
+        
+        for subreddit in generated_subreddits:
+            if await check_subreddit_exists(subreddit, reddit_client):
+                valid_subreddits.append(subreddit)
+                if len(valid_subreddits) >= count:
+                    break
+            else:
+                logger.info(f"Invalid subreddit filtered out: {subreddit}")
+        
+        logger.info(f"Validated {len(valid_subreddits)} out of {len(generated_subreddits)} generated subreddits")
+        return valid_subreddits[:count]
     except asyncio.TimeoutError:
         logger.error(f"Subreddit discovery timed out after 15 seconds for description: {description[:50]}...")
         return []
     except Exception as e:
         logger.error(f"Error during subreddit discovery for description '{description[:50]}...': {e}")
         return []
+    finally:
+        if reddit_client and hasattr(reddit_client, '_reddit') and reddit_client._reddit:
+            await reddit_client._reddit.close()
 
 async def generate_icp_description(html_content: str) -> str:
     try:
@@ -141,3 +194,43 @@ async def generate_icp_description(html_content: str) -> str:
     except Exception as e:
         logger.error(f"Error during ICP description generation for content '{html_content[:50]}...': {e}")
         return f"Unable to generate ICP description due to error: {str(e)}"
+
+async def extract_pain_points(html_content: str) -> str:
+    try:
+        result = await asyncio.wait_for(pain_points_agent.run(html_content), timeout=15.0)
+        logger.info(f"Extracted pain points from content: {html_content[:100]}...")
+        return result.output.pain_points
+    except asyncio.TimeoutError:
+        logger.error(f"Pain points extraction timed out after 15 seconds for content: {html_content[:50]}...")
+        return "Unable to extract pain points due to timeout"
+    except Exception as e:
+        logger.error(f"Error during pain points extraction for content '{html_content[:50]}...': {e}")
+        return f"Unable to extract pain points due to error: {str(e)}"
+
+async def search_subreddits_by_keyword(keyword: str, limit: int = 30) -> List[str]:
+    """Search Reddit for subreddits using a keyword and return list of subreddit names."""
+    reddit_client = RedditClient()
+    reddit = reddit_client.get_client()
+    
+    try:
+        subreddits = []
+        async for subreddit in reddit.subreddits.search(keyword, limit=limit):
+            subreddits.append(subreddit.display_name)
+        
+        return subreddits
+        
+    except Exception as e:
+        logger.error(f"Error searching subreddits for keyword '{keyword}': {e}")
+        return []
+    finally:
+        await reddit.close()
+
+async def check_subreddit_exists(subreddit_name: str, reddit_client) -> bool:
+    """Check if a subreddit exists using PRAW. Logs and returns False if it doesn't exist."""
+    try:
+        subreddit = await reddit_client.get_subreddit(subreddit_name)
+        await subreddit.load()
+        return True
+    except Exception:
+        logger.warning(f"Subreddit '{subreddit_name}' does not exist or is inaccessible")
+        return False

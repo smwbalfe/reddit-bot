@@ -1,13 +1,13 @@
 #!/usr/bin/env python3
 from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
-from src.agent.services import extract_keywords, find_relevant_subreddits, generate_icp_description
+from src.agent.services import extract_keywords, find_relevant_subreddits, generate_icp_description, extract_pain_points, find_relevant_subreddits_by_keywords
 import asyncio
 import logging
 from contextlib import asynccontextmanager
 from src.models import AnalyzeUrlRequest, AnalyzeUrlResponse, ICPConfigChangeRequest, ICPConfigChangeResponse
-from src.parse_page import fetch_html, parse_html_content
-from src.reddit.reddit_scraper import reddit_main, config_manager
+from src.utils.parse_page import fetch_html, parse_html_content
+from src.reddit.reddit_scraper import reddit_main, stream_manager
 
 logger = logging.getLogger(__name__)
 
@@ -40,16 +40,20 @@ async def analyze_url_endpoint(request: AnalyzeUrlRequest):
         
         keywords_task = extract_keywords(parsed_content)
         icp_task = generate_icp_description(parsed_content)
-        subreddits_task = find_relevant_subreddits(parsed_content, request.subreddit_count)
+        pain_points_task = extract_pain_points(parsed_content)
         
-        keywords, icp_description, subreddits = await asyncio.gather(
-            keywords_task, icp_task, subreddits_task
+        keywords, icp_description, pain_points = await asyncio.gather(
+            keywords_task, icp_task, pain_points_task
         )
         
+        subreddits = await find_relevant_subreddits_by_keywords(keywords, parsed_content, request.subreddit_count)
+        
+        print(pain_points)
         return AnalyzeUrlResponse(
             keywords=keywords[:request.keyword_count],
             subreddits=subreddits[:request.subreddit_count],
-            icp_description=icp_description
+            icp_description=icp_description,
+            pain_points=pain_points
         )
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Failed to analyze URL: {str(e)}")
@@ -63,7 +67,7 @@ async def icp_config_change_endpoint(request: ICPConfigChangeRequest):
         if request.icp_id:
             logger.info(f"ICP ID affected: {request.icp_id}")
     
-        config_manager.trigger_refresh()
+        stream_manager.trigger_refresh()
         
         return ICPConfigChangeResponse(
             success=True,

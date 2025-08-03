@@ -1,4 +1,4 @@
-import { pgTable, serial, varchar, timestamp, boolean, text, integer, foreignKey } from 'drizzle-orm/pg-core'
+import { pgTable, serial, varchar, timestamp, boolean, text, integer, foreignKey, jsonb } from 'drizzle-orm/pg-core'
 
 export const accounts = pgTable('Account', {
   id: serial('id').primaryKey(),
@@ -13,35 +13,39 @@ export const icps = pgTable('ICP', {
   userId: varchar('userId').notNull(),
   name: varchar('name').notNull(),
   website: varchar('website').notNull(),
-  description: text('description').notNull(),
-  keywords: text('keywords').array().notNull().default([]),
-  subreddits: text('subreddits').array().notNull().default([]),
+  data: jsonb('data').$type<{
+    keywords?: string[],
+    subreddits?: string[],
+    painPoints?: string,
+    description?: string,
+  }>().notNull().default({}),
   createdAt: timestamp('createdAt').defaultNow().notNull(),
   updatedAt: timestamp('updatedAt').defaultNow().notNull(),
 })
 
 export const redditPosts = pgTable('RedditPost', {
-  id: serial('id').primaryKey(), // ID of the lead
-  icpId: integer('icpId').notNull(), // ID of the product the lead is for
-  submissionId: varchar('submissionId').notNull(), // ID of the reddit submission
-  subreddit: varchar('subreddit').notNull(), // name of the subreddit the lead is from
-  title: text('title').notNull(), // title of the reddit submission
-  content: text('content').notNull(), // content of the reddit submission
-  url: text('url').notNull(), // url to the reddit submission
-  leadQuality: integer('leadQuality'), // final quality score of the lead
-  painPoints: text('painPoints'),
-  productFitScore: integer('productFitScore'),
-  intentSignalsScore: integer('intentSignalsScore'),
-  urgencyIndicatorsScore: integer('urgencyIndicatorsScore'),
-  decisionAuthorityScore: integer('decisionAuthorityScore'),
-  engagementQualityScore: integer('engagementQualityScore'),
-  productFitJustification: text('productFitJustification'),
-  intentSignalsJustification: text('intentSignalsJustification'),
-  urgencyIndicatorsJustification: text('urgencyIndicatorsJustification'),
-  decisionAuthorityJustification: text('decisionAuthorityJustification'),
-  engagementQualityJustification: text('engagementQualityJustification'),
-  redditCreatedAt: timestamp('redditCreatedAt'), // when the Reddit post was originally created
-  redditEditedAt: timestamp('redditEditedAt'), // when the Reddit post was last edited (if applicable)
+  id: serial('id').primaryKey(),
+  icpId: integer('icpId').notNull(),
+  submissionId: varchar('submissionId').notNull(),
+  subreddit: varchar('subreddit').notNull(),
+  title: text('title').notNull(),
+  content: text('content').notNull(),
+  url: text('url').notNull(),
+  leadQuality: integer('leadQuality'),
+  analysisData: jsonb('analysisData').$type<{
+    painPoints?: string;
+    productFitScore?: number;
+    intentSignalsScore?: number;
+    urgencyIndicatorsScore?: number;
+    decisionAuthorityScore?: number;
+    engagementQualityScore?: number;
+    productFitJustification?: string;
+    intentSignalsJustification?: string;
+    urgencyIndicatorsJustification?: string;
+    decisionAuthorityJustification?: string;
+    engagementQualityJustification?: string;
+  }>(),
+  redditCreatedAt: timestamp('redditCreatedAt'),
   createdAt: timestamp('createdAt').defaultNow().notNull(),
   updatedAt: timestamp('updatedAt').defaultNow().notNull(),
 }, (table) => ({

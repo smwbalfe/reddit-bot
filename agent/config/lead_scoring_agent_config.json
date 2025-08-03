@@ -4,7 +4,8 @@
   "input_format": {
     "icp_description": "This is the IDEAL CUSTOMER PROFILE - the target customer you are scoring against",
     "reddit_post_title": "This is the REDDIT POST TITLE - part of what you are scoring",
-    "reddit_post_content": "This is the REDDIT POST CONTENT - part of what you are scoring"
+    "reddit_post_content": "This is the REDDIT POST CONTENT - part of what you are scoring",
+    "icp_pain_points": "This is the ICP PAIN POINTS - part of what you are scoring"
   },
   "critical_instructions": [
     "YOU ARE SCORING THE REDDIT POST AUTHOR as a potential customer for the ICP's product/service",

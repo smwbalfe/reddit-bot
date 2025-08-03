@@ -3,6 +3,8 @@ import psycopg2
 from psycopg2.extras import RealDictCursor
 from dotenv import load_dotenv
 from typing import List, Dict, Any, Optional
+import json
+from src.models.db_models import ICPModel, ICPDataModel
 
 load_dotenv()
 
@@ -14,39 +16,33 @@ class DatabaseManager:
     
     def _get_connection(self):
         return psycopg2.connect(self.database_url, cursor_factory=RealDictCursor)
-    
-    def get_icps(self) -> List[Dict[str, Any]]:
+
+    def get_icps(self) -> List[ICPModel]:
         with self._get_connection() as conn:
             with conn.cursor() as cur:
                 cur.execute('SELECT * FROM "ICP"')
-                return cur.fetchall()
+                rows = cur.fetchall()
+                icps = []
+                for row in rows:
+                    row_dict = dict(row)
+                    if row_dict.get('data'):
+                        row_dict['data'] = ICPDataModel(**row_dict['data'])
+                    icps.append(ICPModel(**row_dict))
+                return icps
     
-    def insert_reddit_post(self, subreddit: str, title: str, content: str, url: str, icp_id: int, 
-                          lead_quality: int, submission_id: str, pain_points: str = None,
-                          product_fit_score: int = None, intent_signals_score: int = None, 
-                          urgency_indicators_score: int = None, decision_authority_score: int = None,
-                          engagement_quality_score: int = None, product_fit_justification: str = None, 
-                          intent_signals_justification: str = None, urgency_indicators_justification: str = None,
-                          decision_authority_justification: str = None, engagement_quality_justification: str = None,
-                          reddit_created_at: str = None, reddit_edited_at: str = None) -> Optional[List[Dict[str, Any]]]:
+    def insert_reddit_post(self, post_data: Dict[str, Any]) -> Optional[List[Dict[str, Any]]]:
         try:
             with self._get_connection() as conn:
                 with conn.cursor() as cur:
                     cur.execute(
                         '''INSERT INTO "RedditPost" 
-                           ("icpId", "submissionId", subreddit, title, content, url, "leadQuality", 
-                            "painPoints", "productFitScore", "intentSignalsScore", "urgencyIndicatorsScore", 
-                            "decisionAuthorityScore", "engagementQualityScore", "productFitJustification", 
-                            "intentSignalsJustification", "urgencyIndicatorsJustification", 
-                            "decisionAuthorityJustification", "engagementQualityJustification",
-                            "redditCreatedAt", "redditEditedAt") 
-                           VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)''',
-                        (icp_id, submission_id, subreddit, title, content, url, lead_quality, 
-                         pain_points, product_fit_score, intent_signals_score, urgency_indicators_score,
-                         decision_authority_score, engagement_quality_score, product_fit_justification,
-                         intent_signals_justification, urgency_indicators_justification,
-                         decision_authority_justification, engagement_quality_justification,
-                         reddit_created_at, reddit_edited_at)
+                           ("icpId", "submissionId", subreddit, title, content, url, "leadQuality", "analysisData",
+                            "redditCreatedAt") 
+                           VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s)''',
+                        (post_data["icp_id"], post_data["submission_id"], post_data["subreddit"], 
+                         post_data["title"], post_data["content"], post_data["url"], 
+                         post_data["lead_quality"], json.dumps(post_data["analysis_data"]),
+                         post_data["reddit_created_at"])
                     )
                     conn.commit()
         except Exception as e:
@@ -55,8 +51,9 @@ class DatabaseManager:
             return self.get_icps()
         return None
     
-    def refresh_icps_cache(self) -> List[Dict[str, Any]]:
+    def refresh_icps_cache(self) -> List[ICPModel]:
         """Force refresh of ICPs from database"""
+        print("Refreshing ICPs cache...")
         return self.get_icps()
 
  

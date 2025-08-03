@@ -28,6 +28,7 @@ class AnalyzeUrlResponse(BaseModel):
     keywords: List[str]
     subreddits: List[str]
     icp_description: str
+    pain_points: str
 
 
 

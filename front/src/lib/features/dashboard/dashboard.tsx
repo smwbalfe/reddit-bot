@@ -15,18 +15,20 @@ type PostWithConfigId = {
   title: string
   content: string
   url: string
-  leadQuality: number | null
-  painPoints: string | null
-  productFitScore: number | null
-  intentSignalsScore: number | null
-  urgencyIndicatorsScore: number | null
-  decisionAuthorityScore: number | null
-  engagementQualityScore: number | null
-  productFitJustification: string | null
-  intentSignalsJustification: string | null
-  urgencyIndicatorsJustification: string | null
-  decisionAuthorityJustification: string | null
-  engagementQualityJustification: string | null
+  leadQuality?: number | null
+  analysisData: {
+    painPoints?: string;
+    productFitScore?: number;
+    intentSignalsScore?: number;
+    urgencyIndicatorsScore?: number;
+    decisionAuthorityScore?: number;
+    engagementQualityScore?: number;
+    productFitJustification?: string;
+    intentSignalsJustification?: string;
+    urgencyIndicatorsJustification?: string;
+    decisionAuthorityJustification?: string;
+    engagementQualityJustification?: string;
+  } | null
   createdAt: Date
   updatedAt: Date
 }
@@ -74,10 +76,10 @@ export function Dashboard() {
     )
   }
 
-  const highQualityLeads = posts.filter(post => (post.leadQuality ?? 0) >= 80).length
-  const mediumQualityLeads = posts.filter(post => (post.leadQuality ?? 0) >= 60 && (post.leadQuality ?? 0) < 80).length
-  const lowQualityLeads = posts.filter(post => (post.leadQuality ?? 0) < 60).length
-  const avgLeadQuality = posts.length > 0 ? Math.round(posts.reduce((acc, post) => acc + (post.leadQuality ?? 0), 0) / posts.length) : 0
+      const highQualityLeads = posts.filter(post => (post.leadQuality ?? 0) >= 80).length
+    const mediumQualityLeads = posts.filter(post => (post.leadQuality ?? 0) >= 60 && (post.leadQuality ?? 0) < 80).length
+    const lowQualityLeads = posts.filter(post => (post.leadQuality ?? 0) < 60).length
+    const avgLeadQuality = posts.length > 0 ? Math.round(posts.reduce((acc, post) => acc + (post.leadQuality ?? 0), 0) / posts.length) : 0
   
   const todayLeads = posts.filter(post => {
     const postDate = new Date(post.createdAt)
@@ -242,7 +244,7 @@ export function Dashboard() {
                           <div className="flex items-center gap-2 mt-1">
                             <span className="text-xs text-slate-500">r/{post.subreddit}</span>
                             <span className="text-xs text-slate-400">•</span>
-                            <span className="text-xs text-slate-500">{post.leadQuality}% quality</span>
+                            <span className="text-xs text-slate-500">{post.leadQuality ?? 0}% quality</span>
                           </div>
                         </div>
                       </div>

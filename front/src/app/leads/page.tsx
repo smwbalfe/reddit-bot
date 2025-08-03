@@ -141,20 +141,21 @@ type PostWithConfigId = {
   title: string
   content: string
   url: string
-  leadQuality: number | null
-  painPoints: string | null
-  productFitScore: number | null
-  intentSignalsScore: number | null
-  urgencyIndicatorsScore: number | null
-  decisionAuthorityScore: number | null
-  engagementQualityScore: number | null
-  productFitJustification: string | null
-  intentSignalsJustification: string | null
-  urgencyIndicatorsJustification: string | null
-  decisionAuthorityJustification: string | null
-  engagementQualityJustification: string | null
+  leadQuality?: number | null
+  analysisData: {
+    painPoints?: string;
+    productFitScore?: number;
+    intentSignalsScore?: number;
+    urgencyIndicatorsScore?: number;
+    decisionAuthorityScore?: number;
+    engagementQualityScore?: number;
+    productFitJustification?: string;
+    intentSignalsJustification?: string;
+    urgencyIndicatorsJustification?: string;
+    decisionAuthorityJustification?: string;
+    engagementQualityJustification?: string;
+  } | null
   redditCreatedAt: Date | null
-  redditEditedAt: Date | null
   createdAt: Date
   updatedAt: Date
 }
@@ -204,7 +205,6 @@ export default function LeadsPage() {
       setPosts([]) // Set empty array on error
     }
   }
-
 
 
   if (!user) {
@@ -306,7 +306,7 @@ export default function LeadsPage() {
                           </Badge>
                         </TableCell>
                         <TableCell className="py-4 px-6">
-                          <InterestLabel leadQuality={post.leadQuality} />
+                          <InterestLabel leadQuality={post.leadQuality ?? null} />
                         </TableCell>
                         <TableCell className="max-w-md py-4 px-6">
                           <Link href={`/leads/${post.id}`}>

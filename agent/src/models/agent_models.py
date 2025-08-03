@@ -50,3 +50,11 @@ class ICPResponse(BaseModel):
     icp_description: str
 
 
+class PainPointsResponse(BaseModel):
+    pain_points: str
+
+
+class SubredditRelevanceResponse(BaseModel):
+    relevant_subreddits: List[str]
+
+
