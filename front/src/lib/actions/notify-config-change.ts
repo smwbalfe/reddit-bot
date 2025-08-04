@@ -1,6 +1,7 @@
 'use server'
 
 import { makeServerClient } from '@/src/lib/supabase/server'
+import env from '../env'
 
 interface ICPConfigChangeRequest {
   action: 'create' | 'update' | 'delete'
@@ -31,7 +32,7 @@ export async function notifyConfigChange(
       ...(icpId && { icp_id: icpId })
     }
 
-    const response = await fetch('http://localhost:8000/api/icp-config-change', {
+    const response = await fetch(`${env.FASTAPI_SERVER_URL}/api/analyze-url/api/icp-config-change`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
