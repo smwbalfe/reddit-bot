@@ -55,6 +55,15 @@ export const redditPosts = pgTable('RedditPost', {
   })
 }))
 
+export const systemFlags = pgTable('SystemFlag', {
+  id: serial('id').primaryKey(),
+  key: varchar('key').notNull().unique(),
+  value: boolean('value').notNull().default(false),
+  description: text('description'),
+  createdAt: timestamp('createdAt').defaultNow().notNull(),
+  updatedAt: timestamp('updatedAt').defaultNow().notNull(),
+})
+
 export type Account = typeof accounts.$inferSelect
 export type NewAccount = typeof accounts.$inferInsert
 
@@ -62,3 +71,5 @@ export type RedditPost = typeof redditPosts.$inferSelect
 export type NewRedditPost = typeof redditPosts.$inferInsert
 export type ICP = typeof icps.$inferSelect
 export type NewICP = typeof icps.$inferInsert
+export type SystemFlag = typeof systemFlags.$inferSelect
+export type NewSystemFlag = typeof systemFlags.$inferInsert

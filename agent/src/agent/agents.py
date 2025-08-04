@@ -1,5 +1,5 @@
 from pydantic_ai import Agent
-from .model import gemini_flash_lite_model, gemini_flash_model
+from .model import gemini_flash_lite_model, gemini_flash_model, gemini_pro_model
 from ..models.agent_models import LeadIntentResponse, KeywordResponse, SubredditResponse, ICPResponse, PainPointsResponse, SubredditRelevanceResponse
 import json
 import os

@@ -68,4 +68,46 @@ class DatabaseManager:
             print(f"Error checking if post exists: {e}")
             return False
 
+    def get_system_flag(self, key: str) -> bool:
+        """Get the value of a system flag"""
+        try:
+            with self._get_connection() as conn:
+                with conn.cursor() as cur:
+                    cur.execute('SELECT value FROM "SystemFlag" WHERE key = %s', (key,))
+                    result = cur.fetchone()
+                    return result['value'] if result else False
+        except Exception as e:
+            print(f"Error getting system flag {key}: {e}")
+            return False
+    
+    def set_system_flag(self, key: str, value: bool) -> bool:
+        """Set the value of a system flag"""
+        try:
+            with self._get_connection() as conn:
+                with conn.cursor() as cur:
+                    cur.execute(
+                        '''INSERT INTO "SystemFlag" (key, value, "updatedAt") 
+                           VALUES (%s, %s, NOW()) 
+                           ON CONFLICT (key) 
+                           DO UPDATE SET value = EXCLUDED.value, "updatedAt" = NOW()''',
+                        (key, value)
+                    )
+                    conn.commit()
+                    return True
+        except Exception as e:
+            print(f"Error setting system flag {key}: {e}")
+            return False
+    
+    def trigger_scraper_refresh(self) -> bool:
+        """Trigger a scraper refresh by setting the flag"""
+        return self.set_system_flag('scraper_refresh_needed', True)
+    
+    def check_scraper_refresh_needed(self) -> bool:
+        """Check if scraper refresh is needed"""
+        return self.get_system_flag('scraper_refresh_needed')
+    
+    def clear_scraper_refresh_flag(self) -> bool:
+        """Clear the scraper refresh flag"""
+        return self.set_system_flag('scraper_refresh_needed', False)
+
  

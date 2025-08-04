@@ -1,3 +1,9 @@
+#!/usr/bin/env python3
+"""
+Standalone Reddit scraper service that runs independently from the FastAPI server.
+Uses database flags for synchronization instead of in-memory triggers.
+"""
+
 import asyncio
 from datetime import datetime
 from typing import Dict, Set
@@ -11,6 +17,7 @@ from praw.models import Submission
 SLEEP_INTERVAL = 1
 POLLING_INTERVAL_MINUTES = 1
 POLLING_INTERVAL_SECONDS = POLLING_INTERVAL_MINUTES * 1
+CHECK_REFRESH_INTERVAL = 5
 
 @dataclass
 class StreamConfig:
@@ -18,20 +25,17 @@ class StreamConfig:
     icp: ICPModel
     stream_id: str
 
-class IsolatedStreamManager:
+class DatabaseStreamManager:
     def __init__(self):
         self.active_streams: Dict[str, asyncio.Task] = {}
         self.stream_configs: Dict[str, StreamConfig] = {}
-        self.needs_refresh = False
         self._lock = asyncio.Lock()
+        self.db_manager = DatabaseManager()
     
-    def trigger_refresh(self):
-        self.needs_refresh = True
-    
-    async def refresh_streams(self, db_manager: DatabaseManager):
+    async def refresh_streams(self):
         async with self._lock:
             print("Refreshing streams...")
-            icps = db_manager.get_icps()
+            icps = self.db_manager.get_icps()
             if not icps:
                 print("No ICPs found, stopping all streams.")
                 await self._stop_all_streams()
@@ -39,10 +43,10 @@ class IsolatedStreamManager:
             
             new_configs = self._build_stream_configs(icps)
             await self._stop_obsolete_streams(new_configs)
-            await self._start_or_restart_streams(new_configs, db_manager)
+            await self._start_or_restart_streams(new_configs)
             
             self.stream_configs = new_configs
-            self.needs_refresh = False
+            self.db_manager.clear_scraper_refresh_flag()
     
     def _build_stream_configs(self, icps) -> Dict[str, StreamConfig]:
         new_configs = {}
@@ -75,7 +79,7 @@ class IsolatedStreamManager:
             print(f"Stopping stream: {stream_id}")
             await self._stop_stream(stream_id)
     
-    async def _start_or_restart_streams(self, new_configs: Dict[str, StreamConfig], db_manager: DatabaseManager):
+    async def _start_or_restart_streams(self, new_configs: Dict[str, StreamConfig]):
         for stream_id, config in new_configs.items():
             if not self._stream_needs_restart(stream_id, config):
                 continue
@@ -85,7 +89,7 @@ class IsolatedStreamManager:
                 await self._stop_stream(stream_id)
             
             print(f"Starting stream: {stream_id} for ICP {config.icp.id} with subreddits: {config.subreddits}")
-            await self._start_stream(stream_id, config, db_manager)
+            await self._start_stream(stream_id, config)
     
     def _stream_needs_restart(self, stream_id: str, config: StreamConfig) -> bool:
         if stream_id not in self.stream_configs:
@@ -95,11 +99,10 @@ class IsolatedStreamManager:
         return (existing_config.subreddits != config.subreddits or 
                 existing_config.icp.id != config.icp.id)
     
-    
-    async def _start_stream(self, stream_id: str, config: StreamConfig, db_manager: DatabaseManager):
+    async def _start_stream(self, stream_id: str, config: StreamConfig):
         reddit_client = RedditClient()
         task = asyncio.create_task(
-            self._run_isolated_stream(stream_id, config, reddit_client, db_manager)
+            self._run_isolated_stream(stream_id, config, reddit_client)
         )
         self.active_streams[stream_id] = task
     
@@ -129,66 +132,63 @@ class IsolatedStreamManager:
         for stream_id in list(self.active_streams.keys()):
             await self._stop_stream(stream_id)
     
-    async def _run_isolated_stream(self, stream_id: str, config: StreamConfig, 
-                                 reddit_client: RedditClient, db_manager: DatabaseManager):
+    async def _run_isolated_stream(self, stream_id: str, config: StreamConfig, reddit_client: RedditClient):
         subreddit_string = "+".join(config.subreddits)
         print(f"Running isolated polling stream {stream_id} for ICP {config.icp.id} on subreddits: {subreddit_string}")
         print(f"Polling interval: {POLLING_INTERVAL_MINUTES} minutes ({POLLING_INTERVAL_SECONDS} seconds)")
         
         while True:
             try:
-                if self.needs_refresh:
+                if self.db_manager.check_scraper_refresh_needed():
                     print(f"Stream {stream_id} (ICP {config.icp.id}) needs refresh, breaking loop.")
                     break
                 
-                processed_count = await self._poll_subreddit_posts(stream_id, config, reddit_client, db_manager, subreddit_string)
+                processed_count = await self._poll_subreddit_posts(stream_id, config, reddit_client, subreddit_string)
                 print(f"Processed {processed_count} new posts for ICP {config.icp.id}. Next poll in {POLLING_INTERVAL_MINUTES} minutes.")
                 await asyncio.sleep(POLLING_INTERVAL_SECONDS)
                     
             except Exception as e:
                 print(f"Exception in stream {stream_id} (ICP {config.icp.id}): {e}")
-                if self.needs_refresh:
+                if self.db_manager.check_scraper_refresh_needed():
                     print(f"Stream {stream_id} (ICP {config.icp.id}) needs refresh, breaking after exception.")
                     break
                 await asyncio.sleep(60)
     
-    async def _poll_subreddit_posts(self, stream_id: str, config: StreamConfig, 
-                                  reddit_client: RedditClient, db_manager: DatabaseManager, 
-                                  subreddit_string: str) -> int:
+    async def _poll_subreddit_posts(self, stream_id: str, config: StreamConfig, reddit_client: RedditClient, subreddit_string: str) -> int:
         print(f"ICP {config.icp.id} polling subreddit(s): {subreddit_string}")
         current_subreddit = await reddit_client.get_subreddit(subreddit_string)
         
         processed_count = 0
         async for post in current_subreddit.new(limit=50):
-            if self.needs_refresh:
+            if self.db_manager.check_scraper_refresh_needed():
                 print(f"Stream {stream_id} (ICP {config.icp.id}) needs refresh, breaking post loop.")
                 break
             
-            if not self._should_process_post(post, config, db_manager):
+            if not self._should_process_post(post, config):
                 continue
 
             print(f"Processing post: {post.title} in subreddit: {post.subreddit.display_name} for ICP {config.icp.id}")
-            await self._process_post_for_icp(post, db_manager, config.icp)
+            await self._process_post_for_icp(post, config.icp)
             processed_count += 1
             await asyncio.sleep(0.1)
         
         return processed_count
     
-    def _should_process_post(self, post, config: StreamConfig, db_manager: DatabaseManager) -> bool:
+    def _should_process_post(self, post, config: StreamConfig) -> bool:
         post_subreddit = post.subreddit.display_name
         if post_subreddit not in config.subreddits:
             return False
         
-        if self._is_post_already_processed(post.id, db_manager):
+        if self._is_post_already_processed(post.id):
             return False
         
         return True
     
-    def _is_post_already_processed(self, submission_id: str, db_manager: DatabaseManager) -> bool:
+    def _is_post_already_processed(self, submission_id: str) -> bool:
         """Check if a post has already been processed by checking the database"""
-        return db_manager.post_exists(submission_id)
+        return self.db_manager.post_exists(submission_id)
     
-    async def _process_post_for_icp(self, post: Submission, db_manager: DatabaseManager, icp: ICPModel):
+    async def _process_post_for_icp(self, post: Submission, icp: ICPModel):
         try:
             result = await self._score_post(post, icp)
             print(f"Score: {result.lead_quality} | {post.title}")
@@ -198,7 +198,7 @@ class IsolatedStreamManager:
             
             print(f"Inserting post '{post.title}' with score {result.lead_quality} into database.")
             post_data = self._build_post_data(post, icp, result)
-            db_manager.insert_reddit_post(post_data)
+            self.db_manager.insert_reddit_post(post_data)
         except Exception as e:
             print(f"Error processing post '{post.title}' for ICP {icp.id}: {e}")
     
@@ -244,23 +244,27 @@ class IsolatedStreamManager:
             }
         }
 
-stream_manager = IsolatedStreamManager()
-
-async def reddit_main():
-    db_manager = DatabaseManager()
-
-    await stream_manager.refresh_streams(db_manager)
+async def main():
+    """Main function for the standalone scraper service"""
+    print("Starting standalone Reddit scraper service...")
+    stream_manager = DatabaseStreamManager()
+    
+    await stream_manager.refresh_streams()
+    
     while True:
         try:
-            await _check_and_refresh_streams(db_manager)
-            await asyncio.sleep(5)  
+            await _check_and_refresh_streams(stream_manager)
+            await asyncio.sleep(CHECK_REFRESH_INTERVAL)
         except Exception as e:
-            print(f"Exception in reddit_main: {e}")
+            print(f"Exception in scraper main: {e}")
             await asyncio.sleep(10)
 
-async def _check_and_refresh_streams(db_manager: DatabaseManager):
-    if not stream_manager.needs_refresh:
+async def _check_and_refresh_streams(stream_manager: DatabaseStreamManager):
+    if not stream_manager.db_manager.check_scraper_refresh_needed():
         return
     
     print("Detected refresh needed in main loop.")
-    await stream_manager.refresh_streams(db_manager) 
+    await stream_manager.refresh_streams()
+
+if __name__ == "__main__":
+    asyncio.run(main())

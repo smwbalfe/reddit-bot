@@ -8,8 +8,8 @@ export interface AnalyzeUrlResponse {
   pain_points: string
 }
 
-export async function analyzeUrl(url: string, keywordCount: number = 20, subredditCount: number = 5): Promise<AnalyzeUrlResponse> {
-  console.log(`[analyzeUrl] Called with url=${url}, keywordCount=${keywordCount}, subredditCount=${subredditCount}`)
+export async function analyzeUrl(url: string, keywordCount: number = 20, subredditCount: number = 25, useAlternativeSubredditGen: boolean = false): Promise<AnalyzeUrlResponse> {
+  console.log(`[analyzeUrl] Called with url=${url}, keywordCount=${keywordCount}, subredditCount=${subredditCount}, useAlternativeSubredditGen=${useAlternativeSubredditGen}`)
   try {
     const response = await fetch(`${env.FASTAPI_SERVER_URL}/api/analyze-url`, {
       method: 'POST',
@@ -19,7 +19,8 @@ export async function analyzeUrl(url: string, keywordCount: number = 20, subredd
       body: JSON.stringify({
         url: url,
         keyword_count: keywordCount,
-        subreddit_count: subredditCount
+        subreddit_count: subredditCount,
+        use_alternative_subreddit_gen: useAlternativeSubredditGen
       }),
     });
 

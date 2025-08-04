@@ -120,6 +120,13 @@
       "when": 1754232423113,
       "tag": "0016_milky_wild_child",
       "breakpoints": true
+    },
+    {
+      "idx": 17,
+      "version": "7",
+      "when": 1754337924547,
+      "tag": "0017_melted_ghost_rider",
+      "breakpoints": true
     }
   ]
 }

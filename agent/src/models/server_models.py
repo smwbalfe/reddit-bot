@@ -22,6 +22,7 @@ class AnalyzeUrlRequest(BaseModel):
     url: str
     keyword_count: Optional[int] = 15
     subreddit_count: Optional[int] = 20
+    use_alternative_subreddit_gen: Optional[bool] = False
 
 
 class AnalyzeUrlResponse(BaseModel):
