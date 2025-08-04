@@ -168,10 +168,10 @@ function CompactScoreBreakdown({ post }: { post: PostWithConfigId }) {
   }
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-4">
       {/* Final Score Display - Enhanced */}
       {post.leadQuality && (
-        <div className="flex items-center justify-center pb-6">
+        <div className="flex items-center justify-center pb-4">
           <div className="relative">
             {(() => {
               let bgGradient = 'from-blue-50 to-indigo-50'
@@ -208,8 +208,8 @@ function CompactScoreBreakdown({ post }: { post: PostWithConfigId }) {
               
               return (
                 <>
-                  <div className={`absolute inset-0 bg-gradient-to-r ${glowGradient} rounded-2xl blur opacity-20`}></div>
-                  <div className={`relative bg-gradient-to-r ${bgGradient} p-6 rounded-2xl`}>
+                  <div className={`absolute inset-0 bg-gradient-to-r ${glowGradient} rounded-xl blur opacity-20`}></div>
+                  <div className={`relative bg-gradient-to-r ${bgGradient} p-4 rounded-xl`}>
                     <div className="text-center">
                       <div className={`text-3xl font-bold bg-gradient-to-r ${textGradient} bg-clip-text text-transparent mb-1`}>
                         {post.leadQuality}%
@@ -227,19 +227,19 @@ function CompactScoreBreakdown({ post }: { post: PostWithConfigId }) {
 
       {/* Pain Points - Enhanced */}
       {post.analysisData?.painPoints && (
-        <div className="p-4 bg-gradient-to-r from-red-50 to-pink-50 rounded-xl">
-          <div className="font-semibold text-red-900 mb-3 flex items-center gap-3">
-            <div className="p-1.5 bg-red-100 rounded-lg">
-              <div className="w-3 h-3 bg-red-500 rounded-full"></div>
+        <div className="p-3 bg-gradient-to-r from-red-50 to-pink-50 rounded-lg">
+          <div className="font-semibold text-red-900 mb-2 flex items-center gap-2">
+            <div className="p-1 bg-red-100 rounded-lg">
+              <div className="w-2.5 h-2.5 bg-red-500 rounded-full"></div>
             </div>
             Pain Points Identified
           </div>
-          <p className="text-red-800 text-sm leading-relaxed pl-8">{post.analysisData.painPoints}</p>
+          <p className="text-red-800 text-sm leading-relaxed pl-6">{post.analysisData.painPoints}</p>
         </div>
       )}
       
       {/* Score Grid - Enhanced Responsive */}
-      <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4">
+      <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-3">
         {factors.map((factor, index) => {
           if (factor.score == null) return null;
           
@@ -272,14 +272,14 @@ function CompactScoreBreakdown({ post }: { post: PostWithConfigId }) {
           return (
             <div 
               key={index} 
-              className={`relative p-4 rounded-xl ${bgColor} ring-1 ${ringColor} group cursor-help transition-all duration-200 hover:shadow-md hover:scale-105 hover:ring-2`}
+              className={`relative p-3 rounded-lg ${bgColor} ring-1 ${ringColor} group cursor-help transition-all duration-200 hover:shadow-md hover:scale-105 hover:ring-2`}
               title={factor.justification || ''}
             >
-              <div className="flex flex-col items-center gap-2">
-                <div className="p-2 rounded-lg bg-white/60" style={{ color: displayColor }}>
+              <div className="flex flex-col items-center gap-1.5">
+                <div className="p-1.5 rounded-lg bg-white/60" style={{ color: displayColor }}>
                   {factor.icon}
                 </div>
-                <div className="text-xl font-bold" style={{ color: displayColor }}>
+                <div className="text-lg font-bold" style={{ color: displayColor }}>
                   {factor.score}%
                 </div>
                 <div className="text-xs font-semibold text-slate-700 text-center leading-tight">
@@ -303,14 +303,14 @@ function CompactScoreBreakdown({ post }: { post: PostWithConfigId }) {
       
       {/* Overall Assessment - Enhanced */}
       {post.overallAssessment && (
-        <div className="p-4 bg-gradient-to-r from-slate-50 to-blue-50 rounded-xl ring-1 ring-slate-200">
-          <div className="font-semibold text-slate-900 mb-3 flex items-center gap-3">
-            <div className="p-1.5 bg-blue-100 rounded-lg">
-              <div className="w-3 h-3 bg-blue-500 rounded-full"></div>
+        <div className="p-3 bg-gradient-to-r from-slate-50 to-blue-50 rounded-lg ring-1 ring-slate-200">
+          <div className="font-semibold text-slate-900 mb-2 flex items-center gap-2">
+            <div className="p-1 bg-blue-100 rounded-lg">
+              <div className="w-2.5 h-2.5 bg-blue-500 rounded-full"></div>
             </div>
             AI Assessment
           </div>
-          <p className="text-slate-700 leading-relaxed text-sm pl-8">{post.overallAssessment}</p>
+          <p className="text-slate-700 leading-relaxed text-sm pl-6">{post.overallAssessment}</p>
         </div>
       )}
     </div>
@@ -425,10 +425,10 @@ export default function LeadDetailPage() {
 
   return (
     <DashboardLayout>
-      <div className="max-w-7xl mx-auto p-6 space-y-4">
+      <div className="max-w-5xl mx-auto p-4 space-y-3">
         {/* Back Button */}
         <Link href="/leads">
-          <Button variant="ghost" className="mb-4">
+          <Button variant="ghost" className="mb-2">
             <ChevronLeft className="w-4 h-4 mr-2" />
             Back to Leads
           </Button>
@@ -436,13 +436,13 @@ export default function LeadDetailPage() {
 
         {/* Header Card */}
         <Card className="border-0 shadow-sm bg-white">
-          <CardHeader className="pb-6">
-            <div className="flex justify-between items-start gap-8">
+          <CardHeader className="pb-4">
+            <div className="flex justify-between items-start gap-4">
               <div className="flex-1">
-                <CardTitle className="text-xl font-semibold text-slate-900 leading-tight mb-3">
+                <CardTitle className="text-lg font-semibold text-slate-900 leading-tight mb-2">
                   {post.title}
                 </CardTitle>
-                <div className="flex items-center gap-3 mb-3">
+                <div className="flex items-center gap-2 mb-2">
                   <Badge variant="secondary" className="text-xs font-medium bg-slate-100 text-slate-700 hover:bg-slate-200 flex items-center gap-1">
                     r/{post.subreddit}
                   </Badge>
@@ -508,30 +508,30 @@ export default function LeadDetailPage() {
 
         {/* Content Card with Better Layout */}
         <Card className="border-0 shadow-sm bg-white">
-          <CardHeader className="pb-4">
-            <CardTitle className="text-lg font-semibold text-slate-900">Original Post Content</CardTitle>
+          <CardHeader className="pb-3">
+            <CardTitle className="text-base font-semibold text-slate-900">Original Post Content</CardTitle>
           </CardHeader>
-          <CardContent>
-            <div className="p-6 bg-slate-50 rounded-xl max-h-80 overflow-y-auto">
-              <p className="text-slate-700 leading-relaxed whitespace-pre-wrap text-base">{post.content}</p>
+          <CardContent className="pt-0">
+            <div className="p-4 bg-slate-50 rounded-lg max-h-64 overflow-y-auto">
+              <p className="text-slate-700 leading-relaxed whitespace-pre-wrap text-sm">{post.content}</p>
             </div>
           </CardContent>
         </Card>
 
         {/* AI Scoring Analysis - Enhanced */}
         <Card className="shadow-sm bg-white border-0 overflow-hidden">
-          <CardHeader className="pb-4 bg-gradient-to-r from-blue-50/50 to-indigo-50/50 border-b border-slate-100/50">
-            <CardTitle className="text-lg font-semibold text-slate-900 flex items-center gap-3">
-              <div className="p-2 bg-blue-100 rounded-lg">
-                <Activity className="w-5 h-5 text-blue-600" />
+          <CardHeader className="pb-3 bg-gradient-to-r from-blue-50/50 to-indigo-50/50 border-b border-slate-100/50">
+            <CardTitle className="text-base font-semibold text-slate-900 flex items-center gap-2">
+              <div className="p-1.5 bg-blue-100 rounded-lg">
+                <Activity className="w-4 h-4 text-blue-600" />
               </div>
               Lead Score Analysis
             </CardTitle>
-            <CardDescription className="text-slate-600 mt-1">
+            <CardDescription className="text-slate-600 text-sm">
               AI-powered scoring breakdown with detailed insights
             </CardDescription>
           </CardHeader>
-          <CardContent className="pt-8 px-8 pb-8">
+          <CardContent className="pt-5 px-6 pb-6">
             <CompactScoreBreakdown post={post} />
           </CardContent>
         </Card>

@@ -31,47 +31,69 @@ class IsolatedStreamManager:
     async def refresh_streams(self, db_manager: DatabaseManager):
         async with self._lock:
             print("Refreshing streams...")
-            icps = db_manager.refresh_icps_cache()
+            icps = db_manager.get_icps()
             if not icps:
                 print("No ICPs found, stopping all streams.")
                 await self._stop_all_streams()
                 return
             
-            new_configs = {}
-            for icp in icps:
-                stream_id = f"icp_{icp.id}_stream"
-                subreddits = set()
-                if icp.data and icp.data.subreddits:
-                    for subreddit in icp.data.subreddits:
-                        subreddits.add(subreddit.strip())
-                subreddits.add("TestAgent")
-                
-                config = StreamConfig(
-                    subreddits=subreddits,
-                    icp=icp,
-                    stream_id=stream_id
-                )
-                new_configs[stream_id] = config
-            
-            streams_to_stop = set(self.stream_configs.keys()) - set(new_configs.keys())
-            for stream_id in streams_to_stop:
-                print(f"Stopping stream: {stream_id}")
-                await self._stop_stream(stream_id)
-            
-            for stream_id, config in new_configs.items():
-                if (stream_id not in self.stream_configs or 
-                    self.stream_configs[stream_id].subreddits != config.subreddits or
-                    self.stream_configs[stream_id].icp.id != config.icp.id):
-                    
-                    if stream_id in self.active_streams:
-                        print(f"Restarting stream: {stream_id}")
-                        await self._stop_stream(stream_id)
-                    
-                    print(f"Starting stream: {stream_id} for ICP {config.icp.id} with subreddits: {config.subreddits}")
-                    await self._start_stream(stream_id, config, db_manager)
+            new_configs = self._build_stream_configs(icps)
+            await self._stop_obsolete_streams(new_configs)
+            await self._start_or_restart_streams(new_configs, db_manager)
             
             self.stream_configs = new_configs
             self.needs_refresh = False
+    
+    def _build_stream_configs(self, icps) -> Dict[str, StreamConfig]:
+        new_configs = {}
+        for icp in icps:
+            stream_id = f"icp_{icp.id}_stream"
+            subreddits = self._get_subreddits_for_icp(icp)
+            
+            config = StreamConfig(
+                subreddits=subreddits,
+                icp=icp,
+                stream_id=stream_id
+            )
+            new_configs[stream_id] = config
+        return new_configs
+    
+    def _get_subreddits_for_icp(self, icp) -> Set[str]:
+        subreddits = set()
+        if not icp.data or not icp.data.subreddits:
+            subreddits.add("TestAgent")
+            return subreddits
+        
+        for subreddit in icp.data.subreddits:
+            subreddits.add(subreddit.strip())
+        subreddits.add("TestAgent")
+        return subreddits
+    
+    async def _stop_obsolete_streams(self, new_configs: Dict[str, StreamConfig]):
+        streams_to_stop = set(self.stream_configs.keys()) - set(new_configs.keys())
+        for stream_id in streams_to_stop:
+            print(f"Stopping stream: {stream_id}")
+            await self._stop_stream(stream_id)
+    
+    async def _start_or_restart_streams(self, new_configs: Dict[str, StreamConfig], db_manager: DatabaseManager):
+        for stream_id, config in new_configs.items():
+            if not self._stream_needs_restart(stream_id, config):
+                continue
+            
+            if stream_id in self.active_streams:
+                print(f"Restarting stream: {stream_id}")
+                await self._stop_stream(stream_id)
+            
+            print(f"Starting stream: {stream_id} for ICP {config.icp.id} with subreddits: {config.subreddits}")
+            await self._start_stream(stream_id, config, db_manager)
+    
+    def _stream_needs_restart(self, stream_id: str, config: StreamConfig) -> bool:
+        if stream_id not in self.stream_configs:
+            return True
+        
+        existing_config = self.stream_configs[stream_id]
+        return (existing_config.subreddits != config.subreddits or 
+                existing_config.icp.id != config.icp.id)
     
     
     async def _start_stream(self, stream_id: str, config: StreamConfig, db_manager: DatabaseManager):
@@ -82,16 +104,23 @@ class IsolatedStreamManager:
         self.active_streams[stream_id] = task
     
     async def _stop_stream(self, stream_id: str):
-        if stream_id in self.active_streams:
-            print(f"Stopping stream task: {stream_id}")
-            task = self.active_streams[stream_id]
-            task.cancel()
-            try:
-                await task
-            except asyncio.CancelledError:
-                print(f"Stream {stream_id} cancelled.")
-            del self.active_streams[stream_id]
+        await self._stop_active_stream_task(stream_id)
+        self._remove_stream_config(stream_id)
+    
+    async def _stop_active_stream_task(self, stream_id: str):
+        if stream_id not in self.active_streams:
+            return
         
+        print(f"Stopping stream task: {stream_id}")
+        task = self.active_streams[stream_id]
+        task.cancel()
+        try:
+            await task
+        except asyncio.CancelledError:
+            print(f"Stream {stream_id} cancelled.")
+        del self.active_streams[stream_id]
+    
+    def _remove_stream_config(self, stream_id: str):
         if stream_id in self.stream_configs:
             del self.stream_configs[stream_id]
     
@@ -112,32 +141,8 @@ class IsolatedStreamManager:
                     print(f"Stream {stream_id} (ICP {config.icp.id}) needs refresh, breaking loop.")
                     break
                 
-                print(f"ICP {config.icp.id} polling subreddit(s): {subreddit_string}")
-                current_subreddit = await reddit_client.get_subreddit(subreddit_string)
-                
-                # Get recent posts from the subreddit
-                processed_count = 0
-                async for post in current_subreddit.new(limit=50):
-                    if self.needs_refresh:
-                        print(f"Stream {stream_id} (ICP {config.icp.id}) needs refresh, breaking post loop.")
-                        break
-                    
-                    post_subreddit = post.subreddit.display_name
-                    if post_subreddit not in config.subreddits:
-                        continue
-
-                    # Check if we've already processed this post
-                    if self._is_post_already_processed(post.id, db_manager):
-                        continue
-
-                    print(f"Processing post: {post.title} in subreddit: {post_subreddit} for ICP {config.icp.id}")
-                    await self._process_post_for_icp(post, db_manager, config.icp)
-                    processed_count += 1
-                    await asyncio.sleep(0.1)
-                
+                processed_count = await self._poll_subreddit_posts(stream_id, config, reddit_client, db_manager, subreddit_string)
                 print(f"Processed {processed_count} new posts for ICP {config.icp.id}. Next poll in {POLLING_INTERVAL_MINUTES} minutes.")
-                
-                # Wait for the polling interval
                 await asyncio.sleep(POLLING_INTERVAL_SECONDS)
                     
             except Exception as e:
@@ -145,67 +150,117 @@ class IsolatedStreamManager:
                 if self.needs_refresh:
                     print(f"Stream {stream_id} (ICP {config.icp.id}) needs refresh, breaking after exception.")
                     break
-                await asyncio.sleep(60)  # Wait 1 minute before retrying on error
+                await asyncio.sleep(60)
+    
+    async def _poll_subreddit_posts(self, stream_id: str, config: StreamConfig, 
+                                  reddit_client: RedditClient, db_manager: DatabaseManager, 
+                                  subreddit_string: str) -> int:
+        print(f"ICP {config.icp.id} polling subreddit(s): {subreddit_string}")
+        current_subreddit = await reddit_client.get_subreddit(subreddit_string)
+        
+        processed_count = 0
+        async for post in current_subreddit.new(limit=50):
+            if self.needs_refresh:
+                print(f"Stream {stream_id} (ICP {config.icp.id}) needs refresh, breaking post loop.")
+                break
+            
+            if not self._should_process_post(post, config, db_manager):
+                continue
+
+            print(f"Processing post: {post.title} in subreddit: {post.subreddit.display_name} for ICP {config.icp.id}")
+            await self._process_post_for_icp(post, db_manager, config.icp)
+            processed_count += 1
+            await asyncio.sleep(0.1)
+        
+        return processed_count
+    
+    def _should_process_post(self, post, config: StreamConfig, db_manager: DatabaseManager) -> bool:
+        post_subreddit = post.subreddit.display_name
+        if post_subreddit not in config.subreddits:
+            return False
+        
+        if self._is_post_already_processed(post.id, db_manager):
+            return False
+        
+        return True
     
     def _is_post_already_processed(self, submission_id: str, db_manager: DatabaseManager) -> bool:
         """Check if a post has already been processed by checking the database"""
         return db_manager.post_exists(submission_id)
     
     async def _process_post_for_icp(self, post: Submission, db_manager: DatabaseManager, icp: ICPModel):
+        try:
+            result = await self._score_post(post, icp)
+            print(f"Score: {result.lead_quality} | {post.title}")
+            
+            if result.lead_quality <= 1:
+                return
+            
+            print(f"Inserting post '{post.title}' with score {result.lead_quality} into database.")
+            post_data = self._build_post_data(post, icp, result)
+            db_manager.insert_reddit_post(post_data)
+        except Exception as e:
+            print(f"Error processing post '{post.title}' for ICP {icp.id}: {e}")
+    
+    async def _score_post(self, post: Submission, icp: ICPModel):
+        post_content = post.selftext if post.selftext else ""
+        icp_description = icp.data.description if icp.data and icp.data.description else ""
+        icp_pain_points = icp.data.painPoints if icp.data and icp.data.painPoints else ""
+        
+        print(f"Scoring post '{post.title}' for ICP {icp.id}")
+        return await score_lead_intent_two_stage(
+            post_title=post.title,
+            post_content=post_content,
+            icp_description=icp_description,
+            icp_pain_points=icp_pain_points
+        )
+    
+    def _build_post_data(self, post: Submission, icp: ICPModel, result) -> dict:
         subreddit_name = post.subreddit.display_name
         post_content = post.selftext if post.selftext else ""
         reddit_created_at = datetime.fromtimestamp(post.created_utc).isoformat() if post.created_utc else None
-
-        try:
-            print(f"Scoring post '{post.title}' for ICP {icp.id}")
-            result = await score_lead_intent_two_stage(
-                post_title=post.title,
-                post_content=post_content,
-                icp_description=icp.data.description if icp.data and icp.data.description else "",
-                icp_pain_points=icp.data.painPoints if icp.data and icp.data.painPoints else ""
-            )
-            print(f"Score: {result.lead_quality} | {post.title}")
-            if result.lead_quality > 1:
-                print(f"Inserting post '{post.title}' with score {result.lead_quality} into database.")
-                post_data = {
-                    "subreddit": subreddit_name,
-                    "title": post.title,
-                    "content": post_content,
-                    "url": post.url,
-                    "icp_id": icp.id,
-                    "lead_quality": result.lead_quality,
-                    "submission_id": post.id,
-                    "reddit_created_at": reddit_created_at,
-                    "analysis_data": {
-                        "painPoints": result.pain_points,
-                        "productFitScore": result.factor_scores.product_fit,
-                        "intentSignalsScore": result.factor_scores.intent_signals,
-                        "urgencyIndicatorsScore": result.factor_scores.urgency_indicators,
-                        "decisionAuthorityScore": result.factor_scores.decision_authority,
-                        "engagementQualityScore": result.factor_scores.engagement_quality,
-                        "productFitJustification": result.factor_justifications.product_fit,
-                        "intentSignalsJustification": result.factor_justifications.intent_signals,
-                        "urgencyIndicatorsJustification": result.factor_justifications.urgency_indicators,
-                        "decisionAuthorityJustification": result.factor_justifications.decision_authority,
-                        "engagementQualityJustification": result.factor_justifications.engagement_quality
-                    }
-                }
-                db_manager.insert_reddit_post(post_data)
-        except Exception as e:
-            print(f"Error processing post '{post.title}' for ICP {icp.id}: {e}")
+        
+        return {
+            "subreddit": subreddit_name,
+            "title": post.title,
+            "content": post_content,
+            "url": post.url,
+            "icp_id": icp.id,
+            "lead_quality": result.lead_quality,
+            "submission_id": post.id,
+            "reddit_created_at": reddit_created_at,
+            "analysis_data": {
+                "painPoints": result.pain_points,
+                "productFitScore": result.factor_scores.product_fit,
+                "intentSignalsScore": result.factor_scores.intent_signals,
+                "urgencyIndicatorsScore": result.factor_scores.urgency_indicators,
+                "decisionAuthorityScore": result.factor_scores.decision_authority,
+                "engagementQualityScore": result.factor_scores.engagement_quality,
+                "productFitJustification": result.factor_justifications.product_fit,
+                "intentSignalsJustification": result.factor_justifications.intent_signals,
+                "urgencyIndicatorsJustification": result.factor_justifications.urgency_indicators,
+                "decisionAuthorityJustification": result.factor_justifications.decision_authority,
+                "engagementQualityJustification": result.factor_justifications.engagement_quality
+            }
+        }
 
 stream_manager = IsolatedStreamManager()
 
 async def reddit_main():
     db_manager = DatabaseManager()
-    print("Starting reddit_main loop")
+
     await stream_manager.refresh_streams(db_manager)
     while True:
         try:
-            if stream_manager.needs_refresh:
-                print("Detected refresh needed in main loop.")
-                await stream_manager.refresh_streams(db_manager)
+            await _check_and_refresh_streams(db_manager)
             await asyncio.sleep(5)  
         except Exception as e:
             print(f"Exception in reddit_main: {e}")
-            await asyncio.sleep(10) 
+            await asyncio.sleep(10)
+
+async def _check_and_refresh_streams(db_manager: DatabaseManager):
+    if not stream_manager.needs_refresh:
+        return
+    
+    print("Detected refresh needed in main loop.")
+    await stream_manager.refresh_streams(db_manager) 
