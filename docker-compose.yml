@@ -15,7 +15,7 @@ services:
 
   reddit-bot-front:
     build:
-      context: ./reddit-bot-front
+      context: ./front
       dockerfile: Dockerfile
       args:
         - UPSTASH_REDIS_REST_TOKEN=${UPSTASH_REDIS_REST_TOKEN}
