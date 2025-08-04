@@ -12,7 +12,7 @@ from src.reddit.client import RedditClient
 from src.db.db import DatabaseManager
 from src.models.db_models import ICPModel
 from src.agent.services import score_lead_intent_two_stage
-from praw.models import Submission
+from asyncpraw.models import Submission
 
 SLEEP_INTERVAL = 1
 POLLING_INTERVAL_MINUTES = 1
