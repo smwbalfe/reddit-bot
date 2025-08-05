@@ -2,7 +2,7 @@
 
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
-import { Target, MessageSquare, BarChart3, X, LogOut, Zap, Crown, CircleX, User } from 'lucide-react'
+import { Target, MessageSquare, BarChart3, X, LogOut, Zap, Crown, CircleX, User, ChevronDown } from 'lucide-react'
 import { supabaseBrowserClient } from '@/src/lib/supabase/client'
 import { useCheckout } from '@/src/lib/hooks/use-checkout'
 import { Button } from '@/src/lib/components/ui/button'
@@ -134,21 +134,22 @@ export default function Sidebar({ isOpen, onClose }: SidebarProps) {
                   </Badge>
                 )}
               </div>
+              <ChevronDown className="h-4 w-4 text-gray-400" />
             </DropdownMenuTrigger>
-            <DropdownMenuContent align="start" className="w-56 bg-white">
+            <DropdownMenuContent align="end" className="w-56 bg-white z-[80]">
               <div className="px-2 py-1.5 text-sm text-gray-600">{user.email}</div>
               <DropdownMenuSeparator />
               {!isSubscribed && (
-                <DropdownMenuItem onClick={handleCheckout} disabled={isLoading} className="cursor-pointer bg-white hover:bg-gray-100 focus:bg-gray-100">
+                <DropdownMenuItem onClick={() => { handleCheckout(); onClose(); }} disabled={isLoading} className="cursor-pointer bg-white hover:bg-gray-100 focus:bg-gray-100">
                   <Zap className="mr-2 h-4 w-4 text-gray-800" />
                   <span>Upgrade to Premium</span>
                 </DropdownMenuItem>
               )}
-              <DropdownMenuItem onClick={handleSignOut} className="cursor-pointer bg-white focus:bg-gray-100">
+              <DropdownMenuItem onClick={() => { handleSignOut(); onClose(); }} className="cursor-pointer bg-white focus:bg-gray-100">
                 <LogOut className="mr-2 h-4 w-4" />
                 <span>Sign Out</span>
               </DropdownMenuItem>
-              <DropdownMenuItem onClick={handleDeleteAccount} className="text-red-500 cursor-pointer focus:bg-red-50">
+              <DropdownMenuItem onClick={() => { handleDeleteAccount(); onClose(); }} className="text-red-500 cursor-pointer focus:bg-red-50">
                 <CircleX className="mr-2 h-4 w-4" />
                 <span>Delete Account</span>
               </DropdownMenuItem>
@@ -223,8 +224,9 @@ export default function Sidebar({ isOpen, onClose }: SidebarProps) {
                       </Badge>
                     )}
                   </div>
+                  <ChevronDown className="h-4 w-4 text-gray-400" />
                 </DropdownMenuTrigger>
-                <DropdownMenuContent align="start" className="w-56 bg-white">
+                <DropdownMenuContent align="end" className="w-56 bg-white z-[80]">
                   <div className="px-2 py-1.5 text-sm text-gray-600">{user.email}</div>
                   <DropdownMenuSeparator />
                   {!isSubscribed && (
