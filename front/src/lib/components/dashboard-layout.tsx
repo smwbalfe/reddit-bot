@@ -30,9 +30,9 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
     <div className="min-h-screen bg-gray-50">
       {/* Mobile header */}
       <div className="md:hidden bg-white border-b border-gray-200 px-4 py-3 flex items-center justify-between fixed top-0 left-0 right-0 z-50">
-        <div className="flex items-center gap-2">
-          <img src="/file.svg" alt="Sublead" className="w-6 h-6" />
-          <span className="font-semibold text-gray-900">{getPageTitle()}</span>
+        <div className="flex items-center gap-3">
+          <img src="/file.svg" alt="Sublead" className="w-8 h-8" />
+          <span className="text-xl font-bold text-gray-900">{getPageTitle()}</span>
         </div>
         <button
           onClick={() => setSidebarOpen(true)}

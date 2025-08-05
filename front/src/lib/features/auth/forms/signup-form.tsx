@@ -67,7 +67,7 @@ export function SignupForm() {
                         </FormItem>
                     )}
                 />
-                <Button variant="default" type="submit" className="w-full text-white " disabled={loading}>
+                <Button type="submit" className="w-full bg-blue-600 hover:bg-blue-700 text-white" disabled={loading}>
                     {loading ? "Signing up..." : "Sign up"}
                 </Button>
                 <FormDivider />

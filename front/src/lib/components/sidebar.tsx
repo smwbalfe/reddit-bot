@@ -34,9 +34,9 @@ export default function Sidebar({ isOpen, onClose }: SidebarProps) {
     <div className="flex flex-col h-full">
       {/* Logo/Brand area - mobile only */}
       <div className="md:hidden flex items-center justify-between p-4 border-b border-gray-200">
-        <div className="flex items-center gap-2">
-          <img src="/file.svg" alt="Sublead" className="w-6 h-6" />
-          <span className="font-semibold text-gray-900">Sublead</span>
+        <div className="flex items-center gap-3">
+          <img src="/file.svg" alt="Sublead" className="w-8 h-8" />
+          <span className="text-xl font-bold text-gray-900">Sublead</span>
         </div>
         <button 
           onClick={onClose}
@@ -78,9 +78,9 @@ export default function Sidebar({ isOpen, onClose }: SidebarProps) {
       {/* Desktop Sidebar */}
       <div className="hidden md:flex md:w-64 md:flex-col md:fixed md:inset-y-0">
         <div className="flex-1 flex flex-col min-h-0 bg-white border-r border-gray-200">
-          <div className="flex items-center gap-2 p-4 border-b border-gray-200">
-            <img src="/file.svg" alt="Sublead" className="w-6 h-6" />
-            <span className="font-semibold text-gray-900">Sublead</span>
+          <div className="flex items-center gap-3 p-4 border-b border-gray-200">
+            <img src="/file.svg" alt="Sublead" className="w-8 h-8" />
+            <span className="text-xl font-bold text-gray-900">Sublead</span>
           </div>
           <nav className="flex-1 p-4 space-y-1 pt-6">
             {navigationItems.map((item) => {

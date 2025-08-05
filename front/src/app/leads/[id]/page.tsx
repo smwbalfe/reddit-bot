@@ -123,35 +123,35 @@ function CompactScoreBreakdown({ post }: { post: PostWithConfigId }) {
       name: 'Product Fit',
       score: post.analysisData?.productFitScore,
       justification: post.analysisData?.productFitJustification,
-      icon: <Target className="w-4 h-4" />,
+      icon: <Target className="w-3 h-3 sm:w-4 sm:h-4" />,
       color: '#3b82f6'
     },
     {
       name: 'Intent',
       score: post.analysisData?.intentSignalsScore,
       justification: post.analysisData?.intentSignalsJustification,
-      icon: <Zap className="w-4 h-4" />,
+      icon: <Zap className="w-3 h-3 sm:w-4 sm:h-4" />,
       color: '#10b981'
     },
     {
       name: 'Urgency',
       score: post.analysisData?.urgencyIndicatorsScore,
       justification: post.analysisData?.urgencyIndicatorsJustification,
-      icon: <Clock className="w-4 h-4" />,
+      icon: <Clock className="w-3 h-3 sm:w-4 sm:h-4" />,
       color: '#f59e0b'
     },
     {
       name: 'Authority',
       score: post.analysisData?.decisionAuthorityScore,
       justification: post.analysisData?.decisionAuthorityJustification,
-      icon: <UserCheck className="w-4 h-4" />,
+      icon: <UserCheck className="w-3 h-3 sm:w-4 sm:h-4" />,
       color: '#8b5cf6'
     },
     {
       name: 'Engagement',
       score: post.analysisData?.engagementQualityScore,
       justification: post.analysisData?.engagementQualityJustification,
-      icon: <Star className="w-4 h-4" />,
+      icon: <Star className="w-3 h-3 sm:w-4 sm:h-4" />,
       color: '#ef4444'
     }
   ]
@@ -168,10 +168,10 @@ function CompactScoreBreakdown({ post }: { post: PostWithConfigId }) {
   }
 
   return (
-    <div className="space-y-4">
-      {/* Final Score Display - Enhanced */}
+    <div className="space-y-3 sm:space-y-4">
+      {/* Final Score Display - Mobile Optimized */}
       {post.leadQuality && (
-        <div className="flex items-center justify-center pb-4">
+        <div className="flex items-center justify-center pb-2 sm:pb-4">
           <div className="relative">
             {(() => {
               let bgGradient = 'from-blue-50 to-indigo-50'
@@ -209,13 +209,13 @@ function CompactScoreBreakdown({ post }: { post: PostWithConfigId }) {
               return (
                 <>
                   <div className={`absolute inset-0 bg-gradient-to-r ${glowGradient} rounded-xl blur opacity-20`}></div>
-                  <div className={`relative bg-gradient-to-r ${bgGradient} p-4 rounded-xl`}>
+                  <div className={`relative bg-gradient-to-r ${bgGradient} p-3 sm:p-4 rounded-xl`}>
                     <div className="text-center">
-                      <div className={`text-3xl font-bold bg-gradient-to-r ${textGradient} bg-clip-text text-transparent mb-1`}>
+                      <div className={`text-2xl sm:text-3xl font-bold bg-gradient-to-r ${textGradient} bg-clip-text text-transparent mb-1`}>
                         {post.leadQuality}%
                       </div>
-                      <div className="text-sm text-slate-600 font-medium">Overall Lead Score</div>
-                      <div className={`mt-2 h-1 w-16 bg-gradient-to-r ${barGradient} rounded-full mx-auto`}></div>
+                      <div className="text-xs sm:text-sm text-slate-600 font-medium">Overall Lead Score</div>
+                      <div className={`mt-1.5 sm:mt-2 h-1 w-12 sm:w-16 bg-gradient-to-r ${barGradient} rounded-full mx-auto`}></div>
                     </div>
                   </div>
                 </>
@@ -225,21 +225,21 @@ function CompactScoreBreakdown({ post }: { post: PostWithConfigId }) {
         </div>
       )}
 
-      {/* Pain Points - Enhanced */}
+      {/* Pain Points - Mobile Optimized */}
       {post.analysisData?.painPoints && (
-        <div className="p-3 bg-gradient-to-r from-red-50 to-pink-50 rounded-lg">
-          <div className="font-semibold text-red-900 mb-2 flex items-center gap-2">
-            <div className="p-1 bg-red-100 rounded-lg">
-              <div className="w-2.5 h-2.5 bg-red-500 rounded-full"></div>
+        <div className="p-2.5 sm:p-3 bg-gradient-to-r from-red-50 to-pink-50 rounded-lg">
+          <div className="font-semibold text-red-900 mb-1.5 sm:mb-2 flex items-center gap-2">
+            <div className="p-0.5 sm:p-1 bg-red-100 rounded-lg flex-shrink-0">
+              <div className="w-2 h-2 sm:w-2.5 sm:h-2.5 bg-red-500 rounded-full"></div>
             </div>
-            Pain Points Identified
+            <span className="text-sm sm:text-base">Pain Points</span>
           </div>
-          <p className="text-red-800 text-sm leading-relaxed pl-6">{post.analysisData.painPoints}</p>
+          <p className="text-red-800 text-xs sm:text-sm leading-relaxed pl-5 sm:pl-6">{post.analysisData.painPoints}</p>
         </div>
       )}
       
-      {/* Score Grid - Enhanced Responsive */}
-      <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-3">
+      {/* Score Grid - Mobile Optimized */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-3 sm:gap-3">
         {factors.map((factor, index) => {
           if (factor.score == null) return null;
           
@@ -270,33 +270,30 @@ function CompactScoreBreakdown({ post }: { post: PostWithConfigId }) {
           }
           
           return (
-            <div 
-              key={index} 
-              className={`relative p-3 rounded-lg ${bgColor} ring-1 ${ringColor} group cursor-help transition-all duration-200 hover:shadow-md hover:scale-105 hover:ring-2`}
-              title={factor.justification || ''}
-            >
-              <div className="flex flex-col items-center gap-1.5">
-                <div className="p-1.5 rounded-lg bg-white/60" style={{ color: displayColor }}>
-                  {factor.icon}
-                </div>
-                <div className="text-lg font-bold" style={{ color: displayColor }}>
-                  {factor.score}%
-                </div>
-                <div className="text-xs font-semibold text-slate-700 text-center leading-tight">
-                  {factor.name}
+            <div key={index} className="space-y-2">
+              {/* Score Card */}
+              <div className={`p-3 sm:p-4 rounded-lg ${bgColor} ring-1 ${ringColor} transition-all duration-200`}>
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-3">
+                    <div className="p-2 rounded-lg bg-white/60 flex-shrink-0" style={{ color: displayColor }}>
+                      {factor.icon}
+                    </div>
+                    <div>
+                      <div className="text-lg sm:text-xl font-bold" style={{ color: displayColor }}>
+                        {factor.score}%
+                      </div>
+                      <div className="text-sm font-semibold text-slate-700">
+                        {factor.name}
+                      </div>
+                    </div>
+                  </div>
                 </div>
               </div>
               
-              {/* Enhanced Tooltip */}
+              {/* Mobile Justification Text */}
               {factor.justification && (
-                <div className="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-3 w-72 max-w-[90vw] p-3 bg-white rounded-lg shadow-xl ring-1 ring-slate-200 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-300 z-[999] 
-                  before:content-[''] before:absolute before:top-full before:left-1/2 before:transform before:-translate-x-1/2 before:-mt-1 before:w-3 before:h-3 before:bg-white before:ring-1 before:ring-slate-200 before:rotate-45
-                  md:left-1/2 md:-translate-x-1/2
-                  max-md:left-0 max-md:translate-x-0 max-md:ml-2 max-md:mr-2
-                  max-md:before:left-4 max-md:before:translate-x-0">
-                  <div className="text-xs text-slate-700 leading-relaxed">
-                    <span className="font-semibold text-slate-900">{factor.name}:</span> {factor.justification}
-                  </div>
+                <div className="px-3 py-2 bg-slate-50 rounded-lg text-xs text-slate-600 leading-relaxed border-l-2" style={{ borderLeftColor: displayColor }}>
+                  <span className="font-semibold text-slate-800">{factor.name}:</span> {factor.justification}
                 </div>
               )}
             </div>
@@ -304,16 +301,16 @@ function CompactScoreBreakdown({ post }: { post: PostWithConfigId }) {
         })}
       </div>
       
-      {/* Overall Assessment - Enhanced */}
+      {/* Overall Assessment - Mobile Optimized */}
       {post.overallAssessment && (
-        <div className="p-3 bg-gradient-to-r from-slate-50 to-blue-50 rounded-lg ring-1 ring-slate-200">
-          <div className="font-semibold text-slate-900 mb-2 flex items-center gap-2">
-            <div className="p-1 bg-blue-100 rounded-lg">
-              <div className="w-2.5 h-2.5 bg-blue-500 rounded-full"></div>
+        <div className="p-2.5 sm:p-3 bg-gradient-to-r from-slate-50 to-blue-50 rounded-lg ring-1 ring-slate-200">
+          <div className="font-semibold text-slate-900 mb-1.5 sm:mb-2 flex items-center gap-2">
+            <div className="p-0.5 sm:p-1 bg-blue-100 rounded-lg flex-shrink-0">
+              <div className="w-2 h-2 sm:w-2.5 sm:h-2.5 bg-blue-500 rounded-full"></div>
             </div>
-            AI Assessment
+            <span className="text-sm sm:text-base">AI Assessment</span>
           </div>
-          <p className="text-slate-700 leading-relaxed text-sm pl-6">{post.overallAssessment}</p>
+          <p className="text-slate-700 leading-relaxed text-xs sm:text-sm pl-5 sm:pl-6">{post.overallAssessment}</p>
         </div>
       )}
     </div>
