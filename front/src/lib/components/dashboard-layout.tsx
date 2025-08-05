@@ -22,7 +22,7 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
       case '/icps':
         return 'Product'
       default:
-        return 'Sublead'
+        return 'SubLead'
     }
   }
 
@@ -31,7 +31,7 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
       {/* Mobile header */}
       <div className="md:hidden bg-white border-b border-gray-200 px-4 py-3 flex items-center justify-between fixed top-0 left-0 right-0 z-50">
         <div className="flex items-center gap-3">
-          <img src="/file.svg" alt="Sublead" className="w-8 h-8" />
+          <img src="/file.svg" alt="SubLead" className="w-8 h-8" />
           <span className="text-xl font-bold text-gray-900">{getPageTitle()}</span>
         </div>
         <button

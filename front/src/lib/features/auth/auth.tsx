@@ -13,7 +13,7 @@ const AuthScreen = () => {
     const logo = {
         url: "/",
         src: "/file.svg",
-        alt: "Sublead",
+        alt: "SubLead",
     }
 
     const switchMode = (newMode: "login" | "reset" | "signup") => {
@@ -29,7 +29,7 @@ const AuthScreen = () => {
                     <div className="mb-6 flex flex-col items-center">
                         <a href={logo.url} className="mb-6 flex items-center gap-3">
                             <img src={logo.src} className="w-8 h-8" alt={logo.alt} />
-                            <span className="text-xl font-bold text-gray-900">Sublead</span>
+                            <span className="text-xl font-bold text-gray-900">SubLead</span>
                         </a>
                         <h1 className="mb-2 text-2xl font-bold">
                             {mode === "login" ? "Login" : mode === "signup" ? "Sign Up" : "Reset Password"}
