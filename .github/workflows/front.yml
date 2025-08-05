@@ -63,3 +63,4 @@ jobs:
             STRIPE_SECRET_KEY=${{ secrets.STRIPE_SECRET_KEY }}
             RESEND_API_KEY=${{ secrets.RESEND_API_KEY }}
             UPSTASH_REDIS_REST_TOKEN=${{ secrets.UPSTASH_REDIS_REST_TOKEN }}
+            NEXT_PUBLIC_STRIPE_PRICE_ID=${{ vars.NEXT_PUBLIC_STRIPE_PRICE_ID }}
