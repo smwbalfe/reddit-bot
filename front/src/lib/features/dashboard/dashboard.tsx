@@ -98,7 +98,7 @@ export function Dashboard() {
   }).length
 
   return (
-    <div className="max-w-6xl mx-auto p-4 sm:p-6 space-y-6 sm:space-y-8 pt-16 md:pt-6">
+          <div className="p-4 sm:p-6 space-y-6 sm:space-y-8">
       <div className="space-y-2">
         <h1 className="text-2xl sm:text-3xl font-bold text-slate-900">Dashboard</h1>
         <p className="text-slate-600 text-base sm:text-lg">Overview of your lead generation performance</p>
@@ -263,8 +263,8 @@ export function Dashboard() {
                     {posts.slice(0, 5).map((post) => (
                       <div key={post.id} className="flex items-start gap-3 p-3 rounded-lg bg-slate-50">
                         <div className="w-2 h-2 bg-blue-500 rounded-full mt-2 flex-shrink-0"></div>
-                        <div className="flex-1 min-w-0">
-                          <p className="text-sm font-medium text-slate-900 truncate">{post.title}</p>
+                        <div className="flex-1">
+                          <p className="text-sm font-medium text-slate-900">{post.title}</p>
                           <div className="flex items-center gap-2 mt-1">
                             <span className="text-xs text-slate-500">r/{post.subreddit}</span>
                             <span className="text-xs text-slate-400">•</span>

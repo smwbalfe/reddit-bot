@@ -32,7 +32,7 @@ export async function notifyConfigChange(
       ...(icpId && { icp_id: icpId })
     }
 
-    const response = await fetch(`${env.FASTAPI_SERVER_URL}/api/analyze-url/api/icp-config-change`, {
+    const response = await fetch(`${env.FASTAPI_SERVER_URL}/api/icp-config-change`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',

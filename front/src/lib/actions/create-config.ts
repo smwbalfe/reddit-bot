@@ -24,6 +24,15 @@ export async function createConfig(formData: FormData) {
       throw new Error('Unauthorized')
     }
 
+    // Check if user already has an ICP
+    const existingIcps = await db.select()
+      .from(icps)
+      .where(eq(icps.userId, user.id))
+    
+    if (existingIcps.length > 0) {
+      return { success: false, error: 'You can only create one product per account. Please edit your existing product instead.' }
+    }
+
     const rawData = {
       name: formData.get('name') as string,
       website: formData.get('website') as string,

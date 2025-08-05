@@ -166,6 +166,27 @@ export default function LeadsPage() {
   const [posts, setPosts] = useState<PostWithConfigId[]>([])
   const [loading, setLoading] = useState(true)
 
+  const getRelativeTime = (date: Date | null): string => {
+    if (!date) return 'Unknown'
+    
+    const now = new Date()
+    const diffInMs = now.getTime() - new Date(date).getTime()
+    const diffInHours = Math.floor(diffInMs / (1000 * 60 * 60))
+    const diffInDays = Math.floor(diffInHours / 24)
+    
+    if (diffInHours < 1) {
+      const diffInMinutes = Math.floor(diffInMs / (1000 * 60))
+      return `${diffInMinutes}m ago`
+    } else if (diffInHours < 24) {
+      return `${diffInHours}h ago`
+    } else if (diffInDays < 7) {
+      return `${diffInDays}d ago`
+    } else {
+      const diffInWeeks = Math.floor(diffInDays / 7)
+      return `${diffInWeeks}w ago`
+    }
+  }
+
   useEffect(() => {
     if (user?.id) {
       fetchConfigs()
@@ -219,7 +240,7 @@ export default function LeadsPage() {
 
   return (
     <DashboardLayout>
-      <div className="max-w-7xl mx-auto p-6 space-y-8">
+      <div className="p-4 sm:p-6 space-y-8">
         <Card className="border-0 shadow-sm bg-white">
           <CardHeader className="pb-4">
             <div className="flex justify-between items-start flex-wrap gap-4">
@@ -275,95 +296,122 @@ export default function LeadsPage() {
             </CardContent>
           </Card>
         ) : (
-          <Card className="border border-slate-200 shadow-sm bg-white">
-            <CardContent className="p-0">
-              <Table className="border-separate border-spacing-0">
-                <TableHeader>
-                  <TableRow className="bg-slate-50/50">
-                    <TableHead className="font-semibold border-b border-slate-200 py-4 px-6">Subreddit</TableHead>
-                    <TableHead className="font-semibold border-b border-slate-200 py-4 px-6">Product</TableHead>
-                    <TableHead className="font-semibold border-b border-slate-200 py-4 px-6">Buying Interest</TableHead>
-                    <TableHead className="font-semibold border-b border-slate-200 py-4 px-6">Post Title</TableHead>
-                    <TableHead className="font-semibold border-b border-slate-200 py-4 px-6">Date</TableHead>
-                    <TableHead className="font-semibold text-right border-b border-slate-200 py-4 px-6">Actions</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {posts.map(post => {
-                    const config = configs.find(c => c.id === post.configId)
-                    
-                    return (
-                      <TableRow key={post.id} className="hover:bg-slate-50/50 border-b border-slate-100">
-                        <TableCell className="py-4 px-6">
-                          <Badge variant="secondary" className="text-xs font-medium bg-slate-100 text-slate-700 hover:bg-slate-200">
-                            r/{post.subreddit}
-                          </Badge>
-                        </TableCell>
-                        <TableCell className="py-4 px-6">
-                          <Badge variant="secondary" className="text-xs font-medium bg-blue-100 text-blue-700 hover:bg-blue-200 flex items-center gap-1 w-fit">
-                            <Package className="w-3 h-3" />
-                            {config?.name || 'Unknown Product'}
-                          </Badge>
-                        </TableCell>
-                        <TableCell className="py-4 px-6">
+          <>
+            {/* Mobile Card Layout */}
+            <div className="block md:hidden space-y-4">
+              {posts.map(post => {
+                const config = configs.find(c => c.id === post.configId)
+                
+                return (
+                  <Card key={post.id} className="border border-slate-200 shadow-sm bg-white">
+                    <CardContent className="p-4">
+                      <div className="space-y-3">
+                        <div className="flex items-start justify-between">
+                          <div className="flex items-center gap-2">
+                            <Badge variant="secondary" className="text-xs font-medium bg-slate-100 text-slate-700">
+                              r/{post.subreddit}
+                            </Badge>
+                            <Badge variant="secondary" className="text-xs font-medium bg-blue-100 text-blue-700 flex items-center gap-1">
+                              <Package className="w-3 h-3" />
+                              {config?.name || 'Unknown'}
+                            </Badge>
+                          </div>
                           <InterestLabel leadQuality={post.leadQuality ?? null} />
-                        </TableCell>
-                        <TableCell className="max-w-md py-4 px-6">
+                        </div>
+                        
+                        <a 
+                          href={post.url} 
+                          target="_blank" 
+                          rel="noopener noreferrer"
+                          className="font-medium text-slate-900 hover:text-slate-700 cursor-pointer transition-colors line-clamp-2 block"
+                          title={post.title}
+                        >
+                          {post.title}
+                        </a>
+                        
+                        <div className="flex items-center justify-between">
+                          <div className="text-slate-500 text-sm">
+                            {getRelativeTime(post.redditCreatedAt || post.createdAt)}
+                          </div>
                           <Link href={`/leads/${post.id}`}>
-                            <div className="truncate font-medium text-slate-900 hover:text-slate-700 cursor-pointer transition-colors" title={post.title}>
-                              {post.title}
-                            </div>
+                            <Button variant="ghost" size="sm" className="text-slate-900 hover:text-slate-700 hover:bg-slate-100 text-xs">
+                              View More Details
+                            </Button>
                           </Link>
-                        </TableCell>
-                        <TableCell className="text-slate-500 text-sm py-4 px-6">
-                          <div className="space-y-1">
-                            <div>
-                              {post.redditCreatedAt 
-                                ? new Date(post.redditCreatedAt).toLocaleDateString('en-US', { 
-                                    month: 'short', 
-                                    day: 'numeric' 
-                                  })
-                                : new Date(post.createdAt).toLocaleDateString('en-US', { 
-                                    month: 'short', 
-                                    day: 'numeric' 
-                                  })
-                              }
-                            </div>
-                            {post.redditCreatedAt && (
-                              <div className="text-xs text-slate-400">
-                                Found {new Date(post.createdAt).toLocaleDateString('en-US', { 
-                                  month: 'short', 
-                                  day: 'numeric' 
-                                })}
-                              </div>
-                            )}
-                          </div>
-                        </TableCell>
-                        <TableCell className="text-right py-4 px-6">
-                          <div className="flex items-center justify-end gap-2">
-                            <Link href={`/leads/${post.id}`}>
-                              <Button variant="ghost" size="sm" className="text-slate-900 hover:text-slate-700 hover:bg-slate-100">
-                                Details
-                              </Button>
-                            </Link>
-                            <a 
-                              href={post.url} 
-                              target="_blank" 
-                              rel="noopener noreferrer"
-                            >
-                              <Button variant="ghost" size="sm" className="text-slate-900 hover:text-slate-700 hover:bg-slate-100">
-                                <ExternalLink className="w-3 h-3" />
-                              </Button>
-                            </a>
-                          </div>
-                        </TableCell>
+                        </div>
+                      </div>
+                    </CardContent>
+                  </Card>
+                )
+              })}
+            </div>
+
+            {/* Desktop Table Layout */}
+            <div className="max-w-6xl">
+              <Card className="border border-slate-200 shadow-sm bg-white hidden md:block">
+                <CardContent className="p-0">
+                  <div className="overflow-x-auto">
+                    <Table className="border-separate border-spacing-0">
+                    <TableHeader>
+                      <TableRow className="bg-slate-50/50">
+                        <TableHead className="font-semibold border-b border-slate-200 py-4 px-6 w-24">Subreddit</TableHead>
+                        <TableHead className="font-semibold border-b border-slate-200 py-4 px-6 w-32">Product</TableHead>
+                        <TableHead className="font-semibold border-b border-slate-200 py-4 px-6 w-20">Interest</TableHead>
+                        <TableHead className="font-semibold border-b border-slate-200 py-4 px-6 max-w-sm">Title</TableHead>
+                        <TableHead className="font-semibold border-b border-slate-200 py-4 px-6 w-24">Posted</TableHead>
+                        <TableHead className="font-semibold text-center border-b border-slate-200 py-4 px-6 w-32">Actions</TableHead>
                       </TableRow>
-                    )
-                  })}
-                </TableBody>
-              </Table>
-            </CardContent>
-          </Card>
+                    </TableHeader>
+                    <TableBody>
+                      {posts.map(post => {
+                        const config = configs.find(c => c.id === post.configId)
+                        
+                        return (
+                          <TableRow key={post.id} className="hover:bg-slate-50/50 border-b border-slate-100">
+                            <TableCell className="py-4 px-6 w-24">
+                              <Badge variant="secondary" className="text-xs font-medium bg-slate-100 text-slate-700 hover:bg-slate-200">
+                                r/{post.subreddit}
+                              </Badge>
+                            </TableCell>
+                            <TableCell className="py-4 px-6 w-32">
+                              <Badge variant="secondary" className="text-xs font-medium bg-blue-100 text-blue-700 hover:bg-blue-200 flex items-center gap-1 w-fit">
+                                <Package className="w-3 h-3" />
+                                {config?.name || 'Unknown Product'}
+                              </Badge>
+                            </TableCell>
+                            <TableCell className="py-4 px-6 w-20">
+                              <InterestLabel leadQuality={post.leadQuality ?? null} />
+                            </TableCell>
+                            <TableCell className="py-4 px-6 max-w-sm">
+                              <a 
+                                href={post.url} 
+                                target="_blank" 
+                                rel="noopener noreferrer"
+                                className="font-medium text-slate-900 hover:text-slate-700 cursor-pointer transition-colors line-clamp-2 block"
+                              >
+                                {post.title}
+                              </a>
+                            </TableCell>
+                            <TableCell className="text-slate-500 text-sm py-4 px-6 w-24">
+                              {getRelativeTime(post.redditCreatedAt || post.createdAt)}
+                            </TableCell>
+                            <TableCell className="text-center py-4 px-6 w-32">
+                              <Link href={`/leads/${post.id}`}>
+                                <Button variant="ghost" size="sm" className="text-slate-900 hover:text-slate-700 hover:bg-slate-100 text-xs">
+                                  View More Details
+                                </Button>
+                              </Link>
+                            </TableCell>
+                          </TableRow>
+                        )
+                      })}
+                    </TableBody>
+                  </Table>
+                </div>
+              </CardContent>
+            </Card>
+            </div>
+          </>
         )}
       </div>
     </DashboardLayout>

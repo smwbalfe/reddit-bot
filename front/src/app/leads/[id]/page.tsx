@@ -289,11 +289,14 @@ function CompactScoreBreakdown({ post }: { post: PostWithConfigId }) {
               
               {/* Enhanced Tooltip */}
               {factor.justification && (
-                <div className="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-3 w-72 p-3 bg-white rounded-lg shadow-xl ring-1 ring-slate-200 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-300 z-20">
+                <div className="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-3 w-72 max-w-[90vw] p-3 bg-white rounded-lg shadow-xl ring-1 ring-slate-200 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-300 z-[999] 
+                  before:content-[''] before:absolute before:top-full before:left-1/2 before:transform before:-translate-x-1/2 before:-mt-1 before:w-3 before:h-3 before:bg-white before:ring-1 before:ring-slate-200 before:rotate-45
+                  md:left-1/2 md:-translate-x-1/2
+                  max-md:left-0 max-md:translate-x-0 max-md:ml-2 max-md:mr-2
+                  max-md:before:left-4 max-md:before:translate-x-0">
                   <div className="text-xs text-slate-700 leading-relaxed">
                     <span className="font-semibold text-slate-900">{factor.name}:</span> {factor.justification}
                   </div>
-                  <div className="absolute top-full left-1/2 transform -translate-x-1/2 -mt-1 w-3 h-3 bg-white ring-1 ring-slate-200 transform rotate-45"></div>
                 </div>
               )}
             </div>
@@ -425,7 +428,7 @@ export default function LeadDetailPage() {
 
   return (
     <DashboardLayout>
-      <div className="max-w-5xl mx-auto p-4 space-y-3">
+      <div className="p-4 space-y-3">
         {/* Back Button */}
         <Link href="/leads">
           <Button variant="ghost" className="mb-2">
@@ -512,7 +515,7 @@ export default function LeadDetailPage() {
             <CardTitle className="text-base font-semibold text-slate-900">Original Post Content</CardTitle>
           </CardHeader>
           <CardContent className="pt-0">
-            <div className="p-4 bg-slate-50 rounded-lg max-h-64 overflow-y-auto">
+            <div className="p-4 bg-slate-50 rounded-lg">
               <p className="text-slate-700 leading-relaxed whitespace-pre-wrap text-sm">{post.content}</p>
             </div>
           </CardContent>

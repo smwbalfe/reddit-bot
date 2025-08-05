@@ -2,9 +2,7 @@
 
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
-import { Target, MessageSquare, BarChart3, Menu, X } from 'lucide-react'
-import { useState, useEffect } from 'react'
-import { useIsMobile } from '../hooks/use-mobile'
+import { Target, MessageSquare, BarChart3, X } from 'lucide-react'
 
 const navigationItems = [
   {
@@ -18,109 +16,109 @@ const navigationItems = [
     icon: MessageSquare
   },
   {
-    name: 'Products',
+    name: 'Product',
     href: '/icps',
     icon: Target
   }
 ]
 
-export default function Sidebar() {
+interface SidebarProps {
+  isOpen: boolean
+  onClose: () => void
+}
+
+export default function Sidebar({ isOpen, onClose }: SidebarProps) {
   const pathname = usePathname()
-  const isMobile = useIsMobile()
-  const [isOpen, setIsOpen] = useState(false)
 
-  useEffect(() => {
-    if (!isMobile) {
-      setIsOpen(false)
-    }
-  }, [isMobile])
-
-  if (isMobile) {
-    return (
-      <>
+  const SidebarContent = () => (
+    <div className="flex flex-col h-full">
+      {/* Logo/Brand area - mobile only */}
+      <div className="md:hidden flex items-center justify-between p-4 border-b border-gray-200">
+        <div className="flex items-center gap-2">
+          <img src="/file.svg" alt="Sublead" className="w-6 h-6" />
+          <span className="font-semibold text-gray-900">Sublead</span>
+        </div>
         <button 
-          onClick={() => setIsOpen(true)}
-          className="fixed top-4 left-4 z-50 p-2 bg-white border border-gray-200 rounded-md shadow-sm md:hidden"
-          aria-label="Open menu"
+          onClick={onClose}
+          className="p-2 hover:bg-gray-100 rounded-md"
         >
-          <Menu className="h-5 w-5 text-gray-600" />
+          <X className="h-5 w-5 text-gray-600" />
         </button>
+      </div>
 
-        {isOpen && (
-          <>
-            <div 
-              className="fixed inset-0 bg-black bg-opacity-50 z-40 md:hidden"
-              onClick={() => setIsOpen(false)}
-            />
-            <div className="fixed inset-y-0 left-0 w-64 bg-white border-r border-gray-200 z-50 md:hidden">
-              <div className="flex items-center justify-between p-6 border-b border-gray-200">
-                <h2 className="text-lg font-semibold text-gray-900">Menu</h2>
-                <button 
-                  onClick={() => setIsOpen(false)}
-                  className="p-2 hover:bg-gray-100 rounded-md"
-                  aria-label="Close menu"
-                >
-                  <X className="h-5 w-5 text-gray-600" />
-                </button>
-              </div>
-              <div className="p-6">
-                <nav className="space-y-2">
-                  {navigationItems.map((item) => {
-                    const isActive = pathname === item.href
-                    const IconComponent = item.icon
-                    return (
-                      <Link
-                        key={item.name}
-                        href={item.href}
-                        onClick={() => setIsOpen(false)}
-                        className={`
-                          flex items-center gap-3 px-3 py-3 rounded-md text-sm font-medium transition-colors
-                          ${isActive 
-                            ? 'bg-blue-50 text-blue-700 border-r-2 border-blue-700' 
-                            : 'text-gray-700 hover:bg-gray-50 hover:text-gray-900'
-                          }
-                        `}
-                      >
-                        <IconComponent className={`h-5 w-5 ${isActive ? 'text-blue-700' : 'text-gray-500'}`} />
-                        <span className="font-medium">{item.name}</span>
-                      </Link>
-                    )
-                  })}
-                </nav>
-              </div>
-            </div>
-          </>
-        )}
-      </>
-    )
-  }
+      {/* Navigation */}
+      <nav className="flex-1 p-4 space-y-1 pt-6">
+        {navigationItems.map((item) => {
+          const isActive = pathname === item.href
+          const IconComponent = item.icon
+          return (
+            <Link
+              key={item.name}
+              href={item.href}
+              onClick={onClose}
+              className={`
+                flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-colors group
+                ${isActive 
+                  ? 'bg-gray-100 text-gray-900' 
+                  : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900'
+                }
+              `}
+            >
+              <IconComponent className={`h-5 w-5 ${isActive ? 'text-gray-900' : 'text-gray-400 group-hover:text-gray-600'}`} />
+              <span>{item.name}</span>
+            </Link>
+          )
+        })}
+      </nav>
+    </div>
+  )
 
   return (
-    <div className="w-64 bg-white border-r border-gray-200 min-h-screen">
-      <div className="p-6">
-        <nav className="space-y-2">
-          {navigationItems.map((item) => {
-            const isActive = pathname === item.href
-            const IconComponent = item.icon
-            return (
-              <Link
-                key={item.name}
-                href={item.href}
-                className={`
-                  flex items-center gap-3 px-3 py-3 rounded-md text-sm font-medium transition-colors
-                  ${isActive 
-                    ? 'bg-blue-50 text-blue-700 border-r-2 border-blue-700' 
-                    : 'text-gray-700 hover:bg-gray-50 hover:text-gray-900'
-                  }
-                `}
-              >
-                <IconComponent className={`h-5 w-5 ${isActive ? 'text-blue-700' : 'text-gray-500'}`} />
-                <span className="font-medium">{item.name}</span>
-              </Link>
-            )
-          })}
-        </nav>
+    <>
+      {/* Desktop Sidebar */}
+      <div className="hidden md:flex md:w-64 md:flex-col md:fixed md:inset-y-0">
+        <div className="flex-1 flex flex-col min-h-0 bg-white border-r border-gray-200">
+          <div className="flex items-center gap-2 p-4 border-b border-gray-200">
+            <img src="/file.svg" alt="Sublead" className="w-6 h-6" />
+            <span className="font-semibold text-gray-900">Sublead</span>
+          </div>
+          <nav className="flex-1 p-4 space-y-1 pt-6">
+            {navigationItems.map((item) => {
+              const isActive = pathname === item.href
+              const IconComponent = item.icon
+              return (
+                <Link
+                  key={item.name}
+                  href={item.href}
+                  className={`
+                    flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-colors group
+                    ${isActive 
+                      ? 'bg-gray-100 text-gray-900' 
+                      : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900'
+                    }
+                  `}
+                >
+                  <IconComponent className={`h-5 w-5 ${isActive ? 'text-gray-900' : 'text-gray-400 group-hover:text-gray-600'}`} />
+                  <span>{item.name}</span>
+                </Link>
+              )
+            })}
+          </nav>
+        </div>
       </div>
-    </div>
+
+      {/* Mobile Sidebar */}
+      {isOpen && (
+        <>
+          <div 
+            className="fixed inset-0 bg-gray-600 bg-opacity-75 z-[60] md:hidden"
+            onClick={onClose}
+          />
+          <div className="fixed inset-y-0 left-0 w-64 bg-white z-[70] md:hidden shadow-xl">
+            <SidebarContent />
+          </div>
+        </>
+      )}
+    </>
   )
 }
