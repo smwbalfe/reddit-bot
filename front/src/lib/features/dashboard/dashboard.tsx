@@ -98,10 +98,10 @@ export function Dashboard() {
   }).length
 
   return (
-    <div className="max-w-6xl mx-auto p-6 space-y-8">
+    <div className="max-w-6xl mx-auto p-4 sm:p-6 space-y-6 sm:space-y-8 pt-16 md:pt-6">
       <div className="space-y-2">
-        <h1 className="text-3xl font-bold text-slate-900">Dashboard</h1>
-        <p className="text-slate-600 text-lg">Overview of your lead generation performance</p>
+        <h1 className="text-2xl sm:text-3xl font-bold text-slate-900">Dashboard</h1>
+        <p className="text-slate-600 text-base sm:text-lg">Overview of your lead generation performance</p>
       </div>
 
       {loading ? (
@@ -110,30 +110,30 @@ export function Dashboard() {
         </div>
       ) : (
         <>
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6">
             <Card className="border-0 shadow-sm bg-white">
-              <CardContent className="p-6">
+              <CardContent className="p-4 sm:p-6">
                 <div className="flex items-center justify-between">
                   <div>
                     <p className="text-sm font-medium text-slate-600">Total Leads</p>
-                    <p className="text-3xl font-bold text-slate-900">{posts.length}</p>
+                    <p className="text-2xl sm:text-3xl font-bold text-slate-900">{posts.length}</p>
                   </div>
                   <div className="h-12 w-12 bg-blue-100 rounded-lg flex items-center justify-center">
                     <MessageSquare className="h-6 w-6 text-blue-600" />
                   </div>
                 </div>
-                <div className="mt-4 flex text-sm text-slate-600">
+                <div className="mt-4 flex text-xs sm:text-sm text-slate-600">
                   <span>Today: {todayLeads} • This week: {weekLeads}</span>
                 </div>
               </CardContent>
             </Card>
 
             <Card className="border-0 shadow-sm bg-white">
-              <CardContent className="p-6">
+              <CardContent className="p-4 sm:p-6">
                 <div className="flex items-center justify-between">
                   <div>
                     <p className="text-sm font-medium text-slate-600">Active Products</p>
-                    <p className="text-3xl font-bold text-slate-900">{configs.length}</p>
+                    <p className="text-2xl sm:text-3xl font-bold text-slate-900">{configs.length}</p>
                   </div>
                   <div className="h-12 w-12 bg-green-100 rounded-lg flex items-center justify-center">
                     <Target className="h-6 w-6 text-green-600" />
@@ -148,11 +148,11 @@ export function Dashboard() {
             </Card>
 
             <Card className="border-0 shadow-sm bg-white">
-              <CardContent className="p-6">
+              <CardContent className="p-4 sm:p-6">
                 <div className="flex items-center justify-between">
                   <div>
                     <p className="text-sm font-medium text-slate-600">Avg Lead Quality</p>
-                    <p className="text-3xl font-bold text-slate-900">{avgLeadQuality}%</p>
+                    <p className="text-2xl sm:text-3xl font-bold text-slate-900">{avgLeadQuality}%</p>
                   </div>
                   <div className="h-12 w-12 bg-amber-100 rounded-lg flex items-center justify-center">
                     <TrendingUp className="h-6 w-6 text-amber-600" />
@@ -165,32 +165,32 @@ export function Dashboard() {
             </Card>
 
             <Card className="border-0 shadow-sm bg-white">
-              <CardContent className="p-6">
+              <CardContent className="p-4 sm:p-6">
                 <div className="flex items-center justify-between">
                   <div>
                     <p className="text-sm font-medium text-slate-600">Never/Minimal</p>
-                    <p className="text-3xl font-bold text-slate-900">{neverLeads + minimalLeads}</p>
+                    <p className="text-2xl sm:text-3xl font-bold text-slate-900">{neverLeads + minimalLeads}</p>
                   </div>
                   <div className="h-12 w-12 bg-red-100 rounded-lg flex items-center justify-center">
                     <Activity className="h-6 w-6 text-red-600" />
                   </div>
                 </div>
-                <div className="mt-4 flex text-sm text-slate-600">
+                <div className="mt-4 flex text-xs sm:text-sm text-slate-600">
                   <span>≤ 20% quality</span>
                 </div>
               </CardContent>
             </Card>
           </div>
 
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6">
             <Card className="border-0 shadow-sm bg-white">
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <BarChart3 className="h-5 w-5 text-slate-600" />
+              <CardHeader className="p-4 sm:p-6">
+                <CardTitle className="flex items-center gap-2 text-base sm:text-lg">
+                  <BarChart3 className="h-4 w-4 sm:h-5 sm:w-5 text-slate-600" />
                   Lead Quality Distribution
                 </CardTitle>
               </CardHeader>
-              <CardContent>
+              <CardContent className="p-4 sm:p-6">
                 <div className="space-y-3">
                   <div className="flex items-center justify-between">
                     <div className="flex items-center gap-3">
@@ -239,13 +239,13 @@ export function Dashboard() {
             </Card>
 
             <Card className="border-0 shadow-sm bg-white">
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <Calendar className="h-5 w-5 text-slate-600" />
+              <CardHeader className="p-4 sm:p-6">
+                <CardTitle className="flex items-center gap-2 text-base sm:text-lg">
+                  <Calendar className="h-4 w-4 sm:h-5 sm:w-5 text-slate-600" />
                   Recent Activity
                 </CardTitle>
               </CardHeader>
-              <CardContent>
+              <CardContent className="p-4 sm:p-6">
                 {posts.length === 0 ? (
                   <div className="text-center py-8">
                     <MessageSquare className="h-12 w-12 text-slate-300 mx-auto mb-4" />
@@ -288,20 +288,20 @@ export function Dashboard() {
           </div>
 
           <Card className="border-0 shadow-sm bg-gradient-to-r from-blue-50 to-indigo-50">
-            <CardContent className="p-8">
-              <div className="flex items-center justify-between">
+            <CardContent className="p-6 sm:p-8">
+              <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
                 <div>
-                  <h3 className="text-xl font-semibold text-slate-900 mb-2">Ready to analyze your leads?</h3>
-                  <p className="text-slate-600 mb-4">View detailed AI analysis, manage your products, and explore all discovered leads.</p>
+                  <h3 className="text-lg sm:text-xl font-semibold text-slate-900 mb-2">Ready to analyze your leads?</h3>
+                  <p className="text-slate-600 mb-4 text-sm sm:text-base">View detailed AI analysis, manage your products, and explore all discovered leads.</p>
                   <Link 
                     href="/leads" 
-                    className="inline-flex items-center px-6 py-3 bg-slate-900 text-white font-medium rounded-lg hover:bg-slate-800 transition-colors"
+                    className="inline-flex items-center px-4 sm:px-6 py-2 sm:py-3 bg-slate-900 text-white font-medium rounded-lg hover:bg-slate-800 transition-colors text-sm sm:text-base"
                   >
                     View Leads & Analysis
                   </Link>
                 </div>
-                <div className="hidden md:block">
-                  <BarChart3 className="h-24 w-24 text-blue-200" />
+                <div className="hidden lg:block">
+                  <BarChart3 className="h-16 sm:h-24 w-16 sm:w-24 text-blue-200" />
                 </div>
               </div>
             </CardContent>

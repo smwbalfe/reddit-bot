@@ -60,14 +60,14 @@ export const Navbar = () => {
 
     return (
         <nav className="bg-white border-b border-gray-200 shadow-sm">
-            <div className="flex items-center justify-between w-full px-6 py-3">
+            <div className="flex items-center justify-between w-full px-4 sm:px-6 py-3">
                 <div className="flex items-center">
                     <div className="flex items-center gap-2">
                         <img src="/file.svg" alt="Logo" className="h-8 w-8" />
-                        <h1 className="text-2xl font-bold text-gray-900">SubLead</h1>
+                        <h1 className="text-xl sm:text-2xl font-bold text-gray-900">SubLead</h1>
                     </div>
                 </div>
-                <div className="flex items-center gap-4">
+                <div className="flex items-center gap-2 sm:gap-4">
                     {user ? (
                         <DropdownMenu>
                             <DropdownMenuTrigger className="flex items-center gap-2 outline-none">
@@ -78,11 +78,11 @@ export const Navbar = () => {
                                             <User className="h-4 w-4 text-gray-500" />
                                         </AvatarFallback>
                                     </Avatar>
-                                    <span className="text-sm font-medium text-gray-700">{user.user_metadata.name}</span>
+                                    <span className="hidden sm:block text-sm font-medium text-gray-700">{user.user_metadata.name}</span>
                                     {isSubscribed && (
-                                        <Badge className="flex items-center gap-1 bg-gray-700 text-white rounded-normal">
+                                        <Badge className="hidden sm:flex items-center gap-1 bg-gray-700 text-white rounded-normal">
                                             <Crown className="h-3 w-3" />
-                                            Premium
+                                            <span className="hidden md:inline">Premium</span>
                                         </Badge>
                                     )}
                                 </div>
