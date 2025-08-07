@@ -65,7 +65,9 @@ class IsolatedStreamManager:
             return subreddits
         
         for subreddit in icp.data.subreddits:
-            subreddits.add(subreddit.strip())
+            clean_subreddit = subreddit.strip() if subreddit else ""
+            if clean_subreddit:  # Only add non-empty subreddits
+                subreddits.add(clean_subreddit)
         subreddits.add("TestAgent")
         return subreddits
     
@@ -156,7 +158,15 @@ class IsolatedStreamManager:
                                   reddit_client: RedditClient, db_manager: DatabaseManager, 
                                   subreddit_string: str) -> int:
         print(f"ICP {config.icp.id} polling subreddit(s): {subreddit_string}")
-        current_subreddit = await reddit_client.get_subreddit(subreddit_string)
+        
+        try:
+            current_subreddit = await reddit_client.get_subreddit(subreddit_string)
+        except ValueError as e:
+            print(f"Error: Invalid subreddit name '{subreddit_string}' for ICP {config.icp.id}: {e}")
+            return 0
+        except Exception as e:
+            print(f"Error accessing subreddit '{subreddit_string}' for ICP {config.icp.id}: {e}")
+            return 0
         
         processed_count = 0
         async for post in current_subreddit.new(limit=50):
@@ -193,7 +203,7 @@ class IsolatedStreamManager:
             result = await self._score_post(post, icp)
             print(f"Score: {result.lead_quality} | {post.title}")
             
-            if result.lead_quality <= 1:
+            if result.lead_quality <= 30:
                 return
             
             print(f"Inserting post '{post.title}' with score {result.lead_quality} into database.")

@@ -1,39 +1,10 @@
+
 {
-  "task": "You will receive a JSON object with 'count' and 'page_content' fields. Generate exactly the requested number of keywords and phrases to monitor from Reddit for finding people experiencing pain points and problems related to the product/service.",
-  "input_format": {
-    "count": "Number of keywords to generate (integer, required)",
-    "page_content": "Text content of the product or service page (string, required)"
-  },
-  "keyword_distribution": {
-    "single_words": "40%",
-    "multi_word_phrases": "60%"
-  },
-  "requirements": [
-    "Single words should be specific product/service pain indicators (expensive, slow, buggy, crashes, unreliable)",
-    "Phrases should be 2-4 words capturing specific product problems and pain points",
-    "Focus on keywords that indicate product failures, limitations, or inadequacies",
-    "Target language people use when complaining about specific product issues or seeking alternatives"
-  ],
-  "examples": {
-    "single_words": ["expensive", "slow", "buggy", "crashes", "unreliable", "outdated", "confusing"],
-    "multi_word_phrases": ["doesn't work", "too expensive", "keeps crashing", "bad customer service", "poor quality", "missing features", "hard to use", "always breaks"]
-  },
-  "output_example": {
-    "description": "For 10 keywords requested, output should contain 4 single words (40%) and 6 multi-word phrases (60%)",
-    "sample_output": {
-      "keywords": [
-        "expensive",
-        "slow", 
-        "buggy",
-        "crashes",
-        "doesn't work",
-        "too expensive", 
-        "keeps crashing",
-        "bad customer service",
-        "poor quality",
-        "hard to use"
-      ]
-    }
-  },
-  "goal": "The keywords should help identify Reddit users who are experiencing specific product pain points and problems that this product/service could solve, focusing on concrete product issues and limitations rather than general emotions or purchase intent."
+  "role": "An agent to generate high intent keywords to search for relevant subreddits",
+  "task": [
+    "Generate <count> high intent keywords given the input <icp_description> that help find relevant subreddits",
+    "IMPORTANT: the keywords should be incredibly specific and relevant to the business, dont have more than 2 words in each keyword/phrase",
+    "IMPORTANT: the keywords should help us find subreddits where the ICP for this business would be active"
+  ]
+
 }

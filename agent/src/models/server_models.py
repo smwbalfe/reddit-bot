@@ -13,20 +13,10 @@ class KeywordFromUrlRequest(BaseModel):
     count: Optional[int] = 30
 
 
-class SubredditRequest(BaseModel):
-    description: str
-    count: Optional[int] = 20
-
-
 class AnalyzeUrlRequest(BaseModel):
     url: str
-    keyword_count: Optional[int] = 15
-    subreddit_count: Optional[int] = 20
-    use_alternative_subreddit_gen: Optional[bool] = False
-
 
 class AnalyzeUrlResponse(BaseModel):
-    keywords: List[str]
     subreddits: List[str]
     icp_description: str
     pain_points: str
@@ -49,3 +39,14 @@ class LeadIntentResponse(BaseModel):
 class ICPConfigChangeResponse(BaseModel):
     success: bool
     message: str
+
+
+class GenerateSuggestionsRequest(BaseModel):
+    description: str
+    pain_points: str
+    keyword_count: Optional[int] = 15
+
+
+class GenerateSuggestionsResponse(BaseModel):
+    keywords: List[str]
+    subreddits: List[str]

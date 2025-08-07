@@ -25,5 +25,7 @@ class RedditClient:
         return self._reddit
     
     async def get_subreddit(self, subreddit_name: str):
+        if not subreddit_name or not subreddit_name.strip():
+            raise ValueError(f"Invalid subreddit name: '{subreddit_name}' - cannot be empty")
         reddit = self.get_client()
-        return await reddit.subreddit(subreddit_name)
+        return await reddit.subreddit(subreddit_name.strip())

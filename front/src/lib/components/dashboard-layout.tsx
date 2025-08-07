@@ -4,26 +4,18 @@ import Sidebar from './sidebar'
 import { Menu } from 'lucide-react'
 import { useState } from 'react'
 import { usePathname } from 'next/navigation'
-
-interface DashboardLayoutProps {
-  children: React.ReactNode
-}
+import { DashboardLayoutProps } from '../features/dashboard/types'
 
 export default function DashboardLayout({ children }: DashboardLayoutProps) {
   const [sidebarOpen, setSidebarOpen] = useState(false)
   const pathname = usePathname()
 
   const getPageTitle = () => {
-    switch (pathname) {
-      case '/':
-        return 'Dashboard'
-      case '/leads':
-        return 'Leads'
-      case '/icps':
-        return 'Product'
-      default:
-        return 'SubLead'
-    }
+    if (pathname === '/') return 'Dashboard'
+    if (pathname === '/leads') return 'Leads'
+    if (pathname === '/icps') return 'Product'
+    if (pathname.startsWith('/leads/')) return 'Lead Details'
+    return 'SubLead'
   }
 
   return (
@@ -42,9 +34,16 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
         </button>
       </div>
 
+      {/* Desktop sticky header */}
+      <div className="hidden md:block bg-white border-b border-gray-200 px-6 py-4 fixed top-0 left-64 right-0 z-40">
+        <div className="flex items-center gap-3">
+          <h1 className="text-2xl font-bold text-gray-900">{getPageTitle()}</h1>
+        </div>
+      </div>
+
       <div className="flex">
         <Sidebar isOpen={sidebarOpen} onClose={() => setSidebarOpen(false)} />
-        <main className="flex-1 md:ml-64 pt-16 md:pt-0">
+        <main className="flex-1 md:ml-64 pt-16 md:pt-20">
           {children}
         </main>
       </div>

@@ -2,7 +2,7 @@
   "role": "Pain Points Extraction Agent",
   "objective": "Extract specific customer pain points and problems from product webpage content",
   "input_format": {
-    "html_content": "Raw HTML content from the product/service webpage (required)"
+    "icp_description": "specific description of the ideal customer profile"
   },
   "output_format": {
     "pain_points": "Concise paragraph format (2-4 sentences) listing the main problems or pain points that the product/service addresses"

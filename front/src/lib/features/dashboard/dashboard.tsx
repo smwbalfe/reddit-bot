@@ -1,72 +1,29 @@
 "use client"
 
 import { useUser } from "@/src/lib/features/auth/hooks/use-user"
-import { useState, useEffect } from "react"
+import { useEffect } from "react"
 import { Card, CardContent, CardHeader, CardTitle } from "@/src/lib/components/ui/card"
-import { getUserConfigs, getUserPosts } from "@/src/lib/actions/create-config"
-import { ICP } from "@/src/lib/db/schema"
 import { MessageSquare, TrendingUp, Activity, Target, Calendar, BarChart3 } from "lucide-react"
 import Link from "next/link"
-
-type PostWithConfigId = {
-  id: number
-  configId: number
-  subreddit: string
-  title: string
-  content: string
-  url: string
-  leadQuality?: number | null
-  analysisData: {
-    painPoints?: string;
-    productFitScore?: number;
-    intentSignalsScore?: number;
-    urgencyIndicatorsScore?: number;
-    decisionAuthorityScore?: number;
-    engagementQualityScore?: number;
-    productFitJustification?: string;
-    intentSignalsJustification?: string;
-    urgencyIndicatorsJustification?: string;
-    decisionAuthorityJustification?: string;
-    engagementQualityJustification?: string;
-  } | null
-  createdAt: Date
-  updatedAt: Date
-}
+import { useDashboardStore } from "@/src/lib/store"
+import { useDashboardMetrics } from "@/src/lib/hooks"
 
 export function Dashboard() {
   const { user } = useUser()
-  const [configs, setConfigs] = useState<ICP[]>([])
-  const [posts, setPosts] = useState<PostWithConfigId[]>([])
-  const [loading, setLoading] = useState(true)
+  const { 
+    configs, 
+    posts, 
+    isLoading: loading, 
+    fetchDashboardData 
+  } = useDashboardStore()
+  
+  const metrics = useDashboardMetrics(posts)
 
   useEffect(() => {
     if (user?.id) {
-      fetchConfigs()
-      fetchPosts()
+      fetchDashboardData()
     }
-  }, [user?.id])
-
-  const fetchConfigs = async () => {
-    if (!user?.id) return
-    try {
-      const data = await getUserConfigs()
-      setConfigs(data)
-    } catch (error) {
-      console.error('Error fetching configs:', error)
-    } finally {
-      setLoading(false)
-    }
-  }
-
-  const fetchPosts = async () => {
-    if (!user?.id) return
-    try {
-      const data = await getUserPosts()
-      setPosts(data)
-    } catch (error) {
-      console.error('Error fetching posts:', error)
-    }
-  }
+  }, [user?.id, fetchDashboardData])
 
   if (!user) {
     return (
@@ -76,31 +33,9 @@ export function Dashboard() {
     )
   }
 
-  const neverLeads = posts.filter(post => (post.leadQuality ?? 0) <= 10).length
-  const minimalLeads = posts.filter(post => (post.leadQuality ?? 0) > 10 && (post.leadQuality ?? 0) <= 20).length
-  const moderateLeads = posts.filter(post => (post.leadQuality ?? 0) > 20 && (post.leadQuality ?? 0) <= 40).length
-  const genuineLeads = posts.filter(post => (post.leadQuality ?? 0) > 40 && (post.leadQuality ?? 0) <= 60).length
-  const strongLeads = posts.filter(post => (post.leadQuality ?? 0) > 60 && (post.leadQuality ?? 0) <= 80).length
-  const readyLeads = posts.filter(post => (post.leadQuality ?? 0) > 80).length
-  const avgLeadQuality = posts.length > 0 ? Math.round(posts.reduce((acc, post) => acc + (post.leadQuality ?? 0), 0) / posts.length) : 0
-  
-  const todayLeads = posts.filter(post => {
-    const postDate = new Date(post.createdAt)
-    const today = new Date()
-    return postDate.toDateString() === today.toDateString()
-  }).length
-
-  const weekLeads = posts.filter(post => {
-    const postDate = new Date(post.createdAt)
-    const weekAgo = new Date()
-    weekAgo.setDate(weekAgo.getDate() - 7)
-    return postDate >= weekAgo
-  }).length
-
   return (
           <div className="p-4 sm:p-6 space-y-6 sm:space-y-8">
       <div className="space-y-2">
-        <h1 className="text-2xl sm:text-3xl font-bold text-slate-900">Dashboard</h1>
         <p className="text-slate-600 text-base sm:text-lg">Overview of your lead generation performance</p>
       </div>
 
@@ -116,14 +51,14 @@ export function Dashboard() {
                 <div className="flex items-center justify-between">
                   <div>
                     <p className="text-sm font-medium text-slate-600">Total Leads</p>
-                    <p className="text-2xl sm:text-3xl font-bold text-slate-900">{posts.length}</p>
+                    <p className="text-2xl sm:text-3xl font-bold text-slate-900">{metrics.totalLeads}</p>
                   </div>
                   <div className="h-12 w-12 bg-blue-100 rounded-lg flex items-center justify-center">
                     <MessageSquare className="h-6 w-6 text-blue-600" />
                   </div>
                 </div>
                 <div className="mt-4 flex text-xs sm:text-sm text-slate-600">
-                  <span>Today: {todayLeads} • This week: {weekLeads}</span>
+                  <span>Today: {metrics.todayLeads} • This week: {metrics.weekLeads}</span>
                 </div>
               </CardContent>
             </Card>
@@ -152,14 +87,14 @@ export function Dashboard() {
                 <div className="flex items-center justify-between">
                   <div>
                     <p className="text-sm font-medium text-slate-600">Avg Lead Quality</p>
-                    <p className="text-2xl sm:text-3xl font-bold text-slate-900">{avgLeadQuality}%</p>
+                    <p className="text-2xl sm:text-3xl font-bold text-slate-900">{metrics.avgLeadQuality}%</p>
                   </div>
                   <div className="h-12 w-12 bg-amber-100 rounded-lg flex items-center justify-center">
                     <TrendingUp className="h-6 w-6 text-amber-600" />
                   </div>
                 </div>
                 <div className="mt-4 flex text-sm text-slate-600">
-                  <span>Ready: {readyLeads} • Strong: {strongLeads}</span>
+                  <span>Ready: {metrics.leadDistribution.readyLeads} • Strong: {metrics.leadDistribution.strongLeads}</span>
                 </div>
               </CardContent>
             </Card>
@@ -169,7 +104,7 @@ export function Dashboard() {
                 <div className="flex items-center justify-between">
                   <div>
                     <p className="text-sm font-medium text-slate-600">Never/Minimal</p>
-                    <p className="text-2xl sm:text-3xl font-bold text-slate-900">{neverLeads + minimalLeads}</p>
+                    <p className="text-2xl sm:text-3xl font-bold text-slate-900">{metrics.leadDistribution.neverLeads + metrics.leadDistribution.minimalLeads}</p>
                   </div>
                   <div className="h-12 w-12 bg-red-100 rounded-lg flex items-center justify-center">
                     <Activity className="h-6 w-6 text-red-600" />
@@ -197,42 +132,42 @@ export function Dashboard() {
                       <div className="w-3 h-3 bg-green-600 rounded-full"></div>
                       <span className="text-sm font-medium text-slate-700">Ready (81-100%)</span>
                     </div>
-                    <span className="text-lg font-bold text-slate-900">{readyLeads}</span>
+                    <span className="text-lg font-bold text-slate-900">{metrics.leadDistribution.readyLeads}</span>
                   </div>
                   <div className="flex items-center justify-between">
                     <div className="flex items-center gap-3">
                       <div className="w-3 h-3 bg-lime-500 rounded-full"></div>
                       <span className="text-sm font-medium text-slate-700">Strong (61-80%)</span>
                     </div>
-                    <span className="text-lg font-bold text-slate-900">{strongLeads}</span>
+                    <span className="text-lg font-bold text-slate-900">{metrics.leadDistribution.strongLeads}</span>
                   </div>
                   <div className="flex items-center justify-between">
                     <div className="flex items-center gap-3">
                       <div className="w-3 h-3 bg-yellow-500 rounded-full"></div>
                       <span className="text-sm font-medium text-slate-700">Genuine (41-60%)</span>
                     </div>
-                    <span className="text-lg font-bold text-slate-900">{genuineLeads}</span>
+                    <span className="text-lg font-bold text-slate-900">{metrics.leadDistribution.genuineLeads}</span>
                   </div>
                   <div className="flex items-center justify-between">
                     <div className="flex items-center gap-3">
                       <div className="w-3 h-3 bg-amber-500 rounded-full"></div>
                       <span className="text-sm font-medium text-slate-700">Moderate (21-40%)</span>
                     </div>
-                    <span className="text-lg font-bold text-slate-900">{moderateLeads}</span>
+                    <span className="text-lg font-bold text-slate-900">{metrics.leadDistribution.moderateLeads}</span>
                   </div>
                   <div className="flex items-center justify-between">
                     <div className="flex items-center gap-3">
                       <div className="w-3 h-3 bg-orange-500 rounded-full"></div>
                       <span className="text-sm font-medium text-slate-700">Minimal (11-20%)</span>
                     </div>
-                    <span className="text-lg font-bold text-slate-900">{minimalLeads}</span>
+                    <span className="text-lg font-bold text-slate-900">{metrics.leadDistribution.minimalLeads}</span>
                   </div>
                   <div className="flex items-center justify-between">
                     <div className="flex items-center gap-3">
                       <div className="w-3 h-3 bg-red-500 rounded-full"></div>
                       <span className="text-sm font-medium text-slate-700">Never (0-10%)</span>
                     </div>
-                    <span className="text-lg font-bold text-slate-900">{neverLeads}</span>
+                    <span className="text-lg font-bold text-slate-900">{metrics.leadDistribution.neverLeads}</span>
                   </div>
                 </div>
               </CardContent>
@@ -278,7 +213,7 @@ export function Dashboard() {
                         href="/leads" 
                         className="block text-center text-sm text-blue-600 hover:text-blue-800 font-medium pt-2"
                       >
-                        View all {posts.length} leads →
+                        View all {metrics.totalLeads} leads →
                       </Link>
                     )}
                   </div>

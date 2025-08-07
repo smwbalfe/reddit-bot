@@ -1,6 +1,6 @@
 from pydantic_ai import Agent
 from .model import gemini_flash_lite_model, gemini_flash_model, gemini_pro_model
-from ..models.agent_models import LeadIntentResponse, KeywordResponse, SubredditResponse, ICPResponse, PainPointsResponse, SubredditRelevanceResponse
+from ..models.agent_models import LeadIntentResponse, KeywordResponse, SubredditResponse, ICPResponse, PainPointsResponse, SubredditRelevanceResponse, ICPPainPointsResponse
 import json
 import os
 
@@ -53,6 +53,13 @@ def load_subreddit_relevance_agent_config():
         config = json.load(f)
     return json.dumps(config)
 
+def load_icp_pain_points_combined_agent_config():
+    """Load combined ICP and pain points agent configuration from JSON file"""
+    config_path = os.path.join(os.path.dirname(__file__), '..', '..', 'config', 'icp_pain_points_combined_agent_config.json')
+    with open(config_path, 'r') as f:
+        config = json.load(f)
+    return json.dumps(config)
+
 
 lead_score_agent_weak = Agent(
     gemini_flash_lite_model,
@@ -94,6 +101,12 @@ subreddit_relevance_agent = Agent(
     gemini_flash_model,
     output_type=SubredditRelevanceResponse,
     system_prompt=load_subreddit_relevance_agent_config(),
+)
+
+icp_pain_points_combined_agent = Agent(
+    gemini_flash_model,
+    output_type=ICPPainPointsResponse,
+    system_prompt=load_icp_pain_points_combined_agent_config(),
 )
 
 

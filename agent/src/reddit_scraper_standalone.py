@@ -65,12 +65,14 @@ class DatabaseStreamManager:
     def _get_subreddits_for_icp(self, icp) -> Set[str]:
         subreddits = set()
         if not icp.data or not icp.data.subreddits:
-            subreddits.add("TestAgent")
+            
             return subreddits
         
         for subreddit in icp.data.subreddits:
-            subreddits.add(subreddit.strip())
-        subreddits.add("TestAgent")
+            clean_subreddit = subreddit.strip() if subreddit else ""
+            if clean_subreddit:  # Only add non-empty subreddits
+                subreddits.add(clean_subreddit)
+       
         return subreddits
     
     async def _stop_obsolete_streams(self, new_configs: Dict[str, StreamConfig]):
@@ -137,6 +139,9 @@ class DatabaseStreamManager:
         print(f"Running isolated polling stream {stream_id} for ICP {config.icp.id} on subreddits: {subreddit_string}")
         print(f"Polling interval: {POLLING_INTERVAL_MINUTES} minutes ({POLLING_INTERVAL_SECONDS} seconds)")
         
+        # First, scrape historical posts from the subreddits
+        await self._scrape_historical_posts(stream_id, config, reddit_client, subreddit_string)
+        
         while True:
             try:
                 if self.db_manager.check_scraper_refresh_needed():
@@ -154,9 +159,84 @@ class DatabaseStreamManager:
                     break
                 await asyncio.sleep(60)
     
+    async def _scrape_historical_posts(self, stream_id: str, config: StreamConfig, reddit_client: RedditClient, subreddit_string: str):
+        """Scrape historical posts from hot, top, and rising feeds when starting a new ICP stream"""
+        print(f"Starting historical scraping for ICP {config.icp.id} on subreddits: {subreddit_string}")
+        
+        try:
+            current_subreddit = await reddit_client.get_subreddit(subreddit_string)
+        except ValueError as e:
+            print(f"Error: Invalid subreddit name '{subreddit_string}' for ICP {config.icp.id}: {e}")
+            return
+        except Exception as e:
+            print(f"Error accessing subreddit '{subreddit_string}' for ICP {config.icp.id}: {e}")
+            return
+        
+        # Define different feed types and their limits
+        feed_configs = [
+            ("hot", 100),
+            ("top", 50, "week"),  # Top posts from the past week
+            ("top", 25, "month"), # Top posts from the past month
+            ("rising", 50)
+        ]
+        
+        total_processed = 0
+        
+        for feed_config in feed_configs:
+            if self.db_manager.check_scraper_refresh_needed():
+                print(f"Stream {stream_id} (ICP {config.icp.id}) needs refresh during historical scraping.")
+                break
+                
+            feed_type = feed_config[0]
+            limit = feed_config[1]
+            time_filter = feed_config[2] if len(feed_config) > 2 else None
+            
+            print(f"Scraping {feed_type} posts (limit: {limit}) for ICP {config.icp.id}")
+            
+            try:
+                if feed_type == "hot":
+                    posts = current_subreddit.hot(limit=limit)
+                elif feed_type == "top":
+                    posts = current_subreddit.top(limit=limit, time_filter=time_filter)
+                elif feed_type == "rising":
+                    posts = current_subreddit.rising(limit=limit)
+                else:
+                    continue
+                
+                processed_count = 0
+                async for post in posts:
+                    if self.db_manager.check_scraper_refresh_needed():
+                        print(f"Stream {stream_id} (ICP {config.icp.id}) needs refresh, breaking historical scraping.")
+                        break
+                    
+                    if not self._should_process_post(post, config):
+                        continue
+
+                    print(f"Processing historical post: {post.title} in subreddit: {post.subreddit.display_name} for ICP {config.icp.id}")
+                    await self._process_post_for_icp(post, config.icp)
+                    processed_count += 1
+                    total_processed += 1
+                    await asyncio.sleep(0.1)  # Rate limiting
+                
+                print(f"Processed {processed_count} {feed_type} posts for ICP {config.icp.id}")
+                
+            except Exception as e:
+                print(f"Error scraping {feed_type} posts for ICP {config.icp.id}: {e}")
+                continue
+        
+        print(f"Historical scraping completed for ICP {config.icp.id}. Total processed: {total_processed} posts")
+    
     async def _poll_subreddit_posts(self, stream_id: str, config: StreamConfig, reddit_client: RedditClient, subreddit_string: str) -> int:
         print(f"ICP {config.icp.id} polling subreddit(s): {subreddit_string}")
-        current_subreddit = await reddit_client.get_subreddit(subreddit_string)
+        
+        try:
+            current_subreddit = await reddit_client.get_subreddit(subreddit_string)
+        except ValueError as e:
+            print(f"Error: Invalid subreddit name '{subreddit_string}' for ICP {config.icp.id}: {e}")
+            return 0
+        except Exception as e:
+            print(f"Error accessing subreddit '{subreddit_string}' for ICP {config.icp.id}: {e}")
+            return 0
         
         processed_count = 0
         async for post in current_subreddit.new(limit=50):

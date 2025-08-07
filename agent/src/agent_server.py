@@ -1,9 +1,9 @@
 #!/usr/bin/env python3
 from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
-from src.agent.services import extract_keywords, generate_icp_description, extract_pain_points, find_relevant_subreddits_by_keywords, find_relevant_subreddits_alternative
+from src.agent.services import extract_keywords, find_relevant_subreddits_by_keywords, generate_icp_and_pain_points_combined
 import asyncio
-from src.models import AnalyzeUrlRequest, AnalyzeUrlResponse, ICPConfigChangeRequest, ICPConfigChangeResponse
+from src.models import AnalyzeUrlRequest, AnalyzeUrlResponse, ICPConfigChangeRequest, ICPConfigChangeResponse, GenerateSuggestionsRequest, GenerateSuggestionsResponse
 from src.utils.parse_page import fetch_html, parse_html_content
 from src.db.db import DatabaseManager
 
@@ -22,23 +22,31 @@ async def analyze_url_endpoint(request: AnalyzeUrlRequest):
     try:
         html_content = await fetch_html(request.url)
         parsed_content = parse_html_content(html_content)
-        keywords, icp_description, pain_points = await asyncio.gather(
-            extract_keywords(parsed_content),
-            generate_icp_description(parsed_content),
-            extract_pain_points(parsed_content)
-        )
         
-        
-        subreddits = await find_relevant_subreddits_by_keywords(keywords, parsed_content, request.subreddit_count)
-        
-        return AnalyzeUrlResponse(
-            keywords=keywords[:request.keyword_count],
-            subreddits=subreddits[:request.subreddit_count],
+        icp_description, pain_points = await generate_icp_and_pain_points_combined(parsed_content)
+        keywords = await extract_keywords(icp_description)
+        subreddits = await find_relevant_subreddits_by_keywords(keywords, icp_description, count=20)
+
+        return AnalyzeUrlResponse( 
+            subreddits=subreddits[:20],
             icp_description=icp_description,
             pain_points=pain_points
         )
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Failed to analyze URL: {str(e)}")
+
+@app.post("/api/generate-suggestions", response_model=GenerateSuggestionsResponse)
+async def generate_suggestions_endpoint(request: GenerateSuggestionsRequest):
+    try:
+        content = f"{request.description}\n\nPain Points:\n{request.pain_points}"
+        keywords = await extract_keywords(content)
+        subreddits = await find_relevant_subreddits_by_keywords(keywords,content, count=25)
+        return GenerateSuggestionsResponse(
+            keywords=keywords[:request.keyword_count],
+            subreddits=subreddits[:25]
+        )
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Failed to generate suggestions: {str(e)}")
 
 @app.post("/api/icp-config-change", response_model=ICPConfigChangeResponse)
 async def icp_config_change_endpoint(request: ICPConfigChangeRequest):

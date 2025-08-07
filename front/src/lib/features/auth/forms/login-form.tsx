@@ -3,10 +3,7 @@ import { Input } from "@/src/lib/components/ui/input"
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/src/lib/components/ui/form"
 import useLoginForm from "../hooks/use-login-form"
 import { AuthAlert, FormDivider, SocialAuthButton } from "../components"
-
-type LoginFormProps = {
-    onSwitchMode: (mode: "login" | "reset" | "signup") => void
-}
+import { LoginFormProps } from "../types"
 
 export function LoginForm({ onSwitchMode }: LoginFormProps) {
     const { form, loading, serverError, handleEmailLogin, handleGoogleLogin } = useLoginForm()

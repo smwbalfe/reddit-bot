@@ -10,10 +10,7 @@ import {
     Tailwind,
     Text,
 } from '@react-email/components';
-
-type WelcomeEmailProps = {
-    name?: string;
-};
+import { WelcomeEmailProps } from '../components/types';
 
 const WelcomeEmail = ({ name = 'there' }: WelcomeEmailProps) => {
     const currentYear = new Date().getFullYear();

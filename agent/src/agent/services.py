@@ -1,8 +1,9 @@
 import asyncio
 import json
 import logging
-from typing import List, Callable, Any
-from .agents import lead_score_agent_strong, keyword_generation_agent, lead_score_agent_weak, subreddit_generation_agent, icp_description_agent, pain_points_agent, subreddit_relevance_agent
+from typing import List, Callable, Any, Set, Dict, Tuple
+from collections import Counter
+from .agents import lead_score_agent_strong, keyword_generation_agent, lead_score_agent_weak, subreddit_generation_agent, icp_description_agent, pain_points_agent, subreddit_relevance_agent, icp_pain_points_combined_agent
 from ..models import FactorScores, FactorJustifications, ServerLeadIntentResponse
 from ..reddit.client import RedditClient
 
@@ -116,10 +117,10 @@ async def score_lead_intent_two_stage(post_title: str, post_content: str, icp_de
         logger.info(f"Two-stage scoring - Skipping detailed scoring for '{post_title[:50]}' (initial score: {initial_result.lead_quality})")
         return initial_result
 
-async def extract_keywords(page_content: str, count: int = 30) -> List[str]:
+async def extract_keywords(page_description: str, count: int = 10) -> List[str]:
     prompt_data = {
         "count": count,
-        "page_content": page_content
+        "icp_description": page_description
     }
     prompt = json.dumps(prompt_data)
     
@@ -129,35 +130,33 @@ async def extract_keywords(page_content: str, count: int = 30) -> List[str]:
         "Keyword extraction",
         timeout=15.0,
         default_return=None,
-        context=page_content
+        context=page_description
     )
+
+    print(result.output.keywords)
     
     if result is None:
         return []
         
-    logger.info(f"Extracted {len(result.output.keywords)} keywords from content: {page_content[:100]}...")
+    logger.info(f"Extracted {len(result.output.keywords)} keywords from content: {page_description[:100]}...")
+
     return result.output.keywords
 
-async def find_relevant_subreddits_by_keywords(keywords: List[str], original_content: str, count: int = 20) -> List[str]:
+async def find_relevant_subreddits_by_keywords(keywords: List[str], description: str, count: int = 20) -> List[str]:
+  
     try:
-        all_subreddits = set()
-        
-        for keyword in keywords[:10]:
-            subreddits = await search_subreddits_by_keyword(keyword, limit=20)
-            all_subreddits.update(subreddits)
-            
-            if len(all_subreddits) >= count * 3:
-                break
-        
-        logger.info(f"Found {len(all_subreddits)} total subreddits from {len(keywords)} keywords")
-        
+        reddit_client = RedditClient()
+       
+        subreddit_pool = await find_relevant_subreddits_from_keywords(reddit_client, keywords, limit=20)
+
         prompt_data = {
-            "original_content": original_content,
-            "subreddit_candidates": list(all_subreddits)
+            "business_description": description,
+            "subreddits": subreddit_pool
         }
+
         prompt = json.dumps(prompt_data)
-        
-        result = await run_agent(
+
+        relevant_subreddits = await run_agent(
             subreddit_relevance_agent.run,
             prompt,
             "Subreddit relevance filtering",
@@ -166,160 +165,55 @@ async def find_relevant_subreddits_by_keywords(keywords: List[str], original_con
             context="keyword-based discovery"
         )
         
-        if result is None:
-            return []
-            
-        relevant_subreddits = result.output.relevant_subreddits
-        logger.info(f"AI filtered to {len(relevant_subreddits)} relevant subreddits")
-        return relevant_subreddits[:count]
+        return relevant_subreddits.output.relevant_subreddits
         
     except Exception as e:
         logger.error(f"Error during keyword-based subreddit discovery: {e}")
         return []
 
-async def find_relevant_subreddits(description: str, count: int = 20) -> List[str]:
-    reddit_client = None
-    try:
-        prompt = f"Product description: {description}\nFind {count * 2} relevant subreddits."
-        result = await run_agent(
-            subreddit_generation_agent.run,
-            prompt,
-            "Subreddit generation",
-            timeout=15.0,
-            default_return=None,
-            context=description
-        )
-        
-        if result is None:
-            return []
-            
-        generated_subreddits = [subreddit.replace("r/", "") for subreddit in result.output.subreddits]
-        logger.info(f"Generated {len(generated_subreddits)} subreddits for description: {description[:100]}...")
-        
-        reddit_client = RedditClient()
-        valid_subreddits = []
-        
-        for subreddit in generated_subreddits:
-            if await check_subreddit_exists(subreddit, reddit_client):
-                valid_subreddits.append(subreddit)
-                if len(valid_subreddits) >= count:
-                    break
-            else:
-                logger.info(f"Invalid subreddit filtered out: {subreddit}")
-        
-        logger.info(f"Validated {len(valid_subreddits)} out of {len(generated_subreddits)} generated subreddits")
-        return valid_subreddits[:count]
-    except Exception as e:
-        logger.error(f"Error during subreddit discovery for description '{description[:50]}...': {e}")
-        return []
-    finally:
-        if reddit_client and hasattr(reddit_client, '_reddit') and reddit_client._reddit:
-            await reddit_client._reddit.close()
 
-async def generate_icp_description(html_content: str) -> str:
+async def generate_icp_and_pain_points_combined(html_content: str) -> tuple[str, str]:
+    """Combined function to generate ICP description and extract pain points in one call"""
     result = await run_agent(
-        icp_description_agent.run,
+        icp_pain_points_combined_agent.run,
         html_content,
-        "ICP description generation",
-        timeout=15.0,
+        "ICP description and pain points extraction",
+        timeout=20.0,
         default_return=None,
         context=html_content
     )
     
     if result is None:
-        return "Unable to generate ICP description due to timeout or error"
+        return ("Unable to generate ICP description due to timeout or error", 
+                "Unable to extract pain points due to timeout or error")
         
-    logger.info(f"Generated ICP description from content: {html_content[:100]}...")
-    return result.output.icp_description
+    logger.info(f"Generated ICP description and pain points from content: {html_content[:100]}...")
+    return result.output.icp_description, result.output.pain_points
 
-async def extract_pain_points(html_content: str) -> str:
-    result = await run_agent(
-        pain_points_agent.run,
-        html_content,
-        "Pain points extraction",
-        timeout=15.0,
-        default_return=None,
-        context=html_content
-    )
-    
-    if result is None:
-        return "Unable to extract pain points due to timeout or error"
-        
-    logger.info(f"Extracted pain points from content: {html_content[:100]}...")
-    return result.output.pain_points
-
-async def search_subreddits_by_keyword(keyword: str, limit: int = 30) -> List[str]:
-    """Search Reddit for subreddits using a keyword and return list of subreddit names."""
-    reddit_client = RedditClient()
-    reddit = reddit_client.get_client()
-    
+async def find_relevant_subreddits_from_keywords(reddit: RedditClient, keywords: List[str], limit: int = 10, min_subscribers: int = 10000) -> List[Tuple[str, int, int, str]]:
+    print(keywords)
     try:
-        subreddits = []
-        async for subreddit in reddit.subreddits.search(keyword, limit=limit):
-            subreddits.append(subreddit.display_name)
-        
-        return subreddits
-        
+        subreddit_counts = Counter()
+        subreddit_subscribers = {}
+        subreddit_descriptions = {}
+
+        for keyword in keywords:
+            async for subreddit in reddit.get_client().subreddits.search(keyword, limit=limit):
+                if subreddit.subscribers and subreddit.subscribers >= min_subscribers:
+                    subreddit_counts[subreddit.display_name] += 1
+                    subreddit_subscribers[subreddit.display_name] = subreddit.subscribers
+                    subreddit_descriptions[subreddit.display_name] = subreddit.public_description or ""
+
+        top_subreddits = [
+            (name, count, subreddit_subscribers[name], subreddit_descriptions[name])
+            for name, count in subreddit_counts.most_common(25)
+        ]
+        top_5 = top_subreddits[:5]
+        print("Top 5 subreddits found:")
+        for name, count, subscribers, description in top_5:
+            print(f"r/{name} - {subscribers} subscribers ({count} keyword matches)")
+        return sorted(top_subreddits, key=lambda x: x[1], reverse=True)
+
     except Exception as e:
-        logger.error(f"Error searching subreddits for keyword '{keyword}': {e}")
+        logger.error(f"Error searching subreddits for keywords {keywords}: {e}")
         return []
-    finally:
-        await reddit.close()
-
-async def check_subreddit_exists(subreddit_name: str, reddit_client) -> bool:
-    """Check if a subreddit exists using PRAW. Logs and returns False if it doesn't exist."""
-    try:
-        subreddit = await reddit_client.get_subreddit(subreddit_name)
-        await subreddit.load()
-        return True
-    except Exception:
-        logger.warning(f"Subreddit '{subreddit_name}' does not exist or is inaccessible")
-        return False
-
-async def find_relevant_subreddits_alternative(html_content: str, count: int = 25) -> List[str]:
-    """Alternative subreddit generation that uses an agent to directly output an array of strings and validates them."""
-    reddit_client = None
-    try:
-        
-        prompt_data = {
-            "description": html_content,
-            "count": count
-        }
-        prompt = json.dumps(prompt_data)
-        
-        result = await run_agent(
-            subreddit_generation_agent.run,
-            prompt,
-            "Alternative subreddit generation",
-            timeout=15.0,
-            default_return=None,
-            context=html_content
-        )
-        
-        if result is None:
-            return []
-            
-        generated_subreddits = [subreddit.replace("r/", "") for subreddit in result.output.subreddits]
-        logger.info(f"Generated {len(generated_subreddits)} subreddits using alternative method from HTML content: {html_content[:100]}...")
-        
-        # Validate each subreddit exists
-        reddit_client = RedditClient()
-        valid_subreddits = []
-        
-        for subreddit in generated_subreddits:
-            # if await check_subreddit_exists(subreddit, reddit_client):
-            valid_subreddits.append(subreddit)
-            if len(valid_subreddits) >= count:
-                break
-            # else:
-            #     logger.info(f"Invalid subreddit filtered out: {subreddit}")
-        
-        logger.info(f"Alternative method validated {len(valid_subreddits)} out of {len(generated_subreddits)} generated subreddits")
-        return valid_subreddits[:count]
-        
-    except Exception as e:
-        logger.error(f"Error during alternative subreddit discovery for content '{html_content[:50]}...': {e}")
-        return []
-    finally:
-        if reddit_client and hasattr(reddit_client, '_reddit') and reddit_client._reddit:
-            await reddit_client._reddit.close()

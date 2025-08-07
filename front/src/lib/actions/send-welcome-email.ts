@@ -5,14 +5,9 @@ import { db } from '@/src/lib/db';
 import { accounts } from '@/src/lib/db/schema';
 import { eq } from 'drizzle-orm';
 import env from '../env';
+import { EmailData } from '../types';
 
 const resend = new Resend(env.RESEND_API_KEY);
-
-type EmailData = {
-    email: string;
-    name: string;
-    userId: string;
-}
 
 export async function sendWelcomeEmail(emailData: EmailData) {
     const { email, name, userId } = emailData;

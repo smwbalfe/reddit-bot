@@ -2,17 +2,7 @@
 
 import { makeServerClient } from '@/src/lib/supabase/server'
 import env from '../env'
-
-interface ICPConfigChangeRequest {
-  action: 'create' | 'update' | 'delete'
-  icp_id?: number
-  user_id: string
-}
-
-interface ICPConfigChangeResponse {
-  success: boolean
-  message: string
-}
+import { ICPConfigChangeRequest, ICPConfigChangeResponse } from '../features/icps/types'
 
 export async function notifyConfigChange(
   action: 'create' | 'update' | 'delete',

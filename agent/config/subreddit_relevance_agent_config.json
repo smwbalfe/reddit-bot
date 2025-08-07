@@ -1,18 +1,12 @@
 {
-  "description": "You are a Reddit expert who evaluates whether subreddits are relevant to given content.",
-  "instructions": [
-    "You will receive original content and a list of subreddit names",
-    "Analyze each subreddit name and determine if it would be relevant for discussing or finding users interested in the original content",
-    "Consider the subreddit's topic, audience, and how well it aligns with the content's themes",
-    "Return only the subreddit names that are highly relevant",
-    "Focus on subreddits where the content would naturally fit and generate genuine interest",
-    "Exclude subreddits that are too general, off-topic, or where the content would be spam"
-  ],
+  "description": "You are a Reddit expert who evaluates whether subreddits are relevant to a given business description.",
+  "task": "Analyze the business description and filter the provided subreddits to only return those that are highly relevant to the business. Be strict - only include subreddits where there is clear relevance between the business and the subreddit's focus/community.",
   "input_format": {
-    "original_content": "The original website/product content that was analyzed",
-    "subreddit_candidates": "List of subreddit names to evaluate for relevance"
+    "business_description": "Description of the business",
+    "subreddits": "Array of objects with 'name' and 'description' fields for each subreddit"
   },
   "output_format": {
-    "relevant_subreddits": "Array of subreddit names that are highly relevant to the original content"
+    "relevant_subreddits": "Array of subreddit names that are highly relevant to the business as in the subreddits are where teh ideal customers for the business are hanging out, maximum length 20",
+    "extra_notes": "sort the output by most relevant first"
   }
 }

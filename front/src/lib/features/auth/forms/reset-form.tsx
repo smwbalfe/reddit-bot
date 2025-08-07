@@ -7,10 +7,7 @@ import { Form, FormControl, FormField, FormItem, FormMessage } from "@/src/lib/c
 import { usePasswordReset } from "../hooks/use-password-reset"
 import { resetSchema } from "./schema"
 import { AuthAlert } from "../components"
-
-type ResetFormProps = {
-    onSwitchMode: (mode: "login" | "reset" | "signup") => void
-}
+import { ResetFormProps } from "../types"
 
 export function ResetForm({ onSwitchMode }: ResetFormProps) {
     const { loading, serverError, successMessage, handlePasswordReset } = usePasswordReset()

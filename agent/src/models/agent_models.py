@@ -58,3 +58,8 @@ class SubredditRelevanceResponse(BaseModel):
     relevant_subreddits: List[str]
 
 
+class ICPPainPointsResponse(BaseModel):
+    icp_description: str
+    pain_points: str
+
+

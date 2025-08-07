@@ -10,12 +10,13 @@ from .agent_models import (
 from .server_models import (
     KeywordRequest,
     KeywordFromUrlRequest,
-    SubredditRequest,
     AnalyzeUrlRequest,
     AnalyzeUrlResponse,
     LeadIntentResponse as ServerLeadIntentResponse,
     ICPConfigChangeRequest,
-    ICPConfigChangeResponse
+    ICPConfigChangeResponse,
+    GenerateSuggestionsRequest,
+    GenerateSuggestionsResponse
 )
 
 from .reddit_models import (
@@ -36,12 +37,13 @@ __all__ = [
     # Server models
     "KeywordRequest",
     "KeywordFromUrlRequest",
-    "SubredditRequest", 
     "AnalyzeUrlRequest",
     "AnalyzeUrlResponse",
     "ServerLeadIntentResponse",
     "ICPConfigChangeRequest",
     "ICPConfigChangeResponse",
+    "GenerateSuggestionsRequest",
+    "GenerateSuggestionsResponse",
     
     # Reddit models
     "ICPConfig",

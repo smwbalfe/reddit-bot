@@ -2,20 +2,11 @@
 import Stripe from 'stripe';
 import env from '@/src/lib/env';
 import { STRIPE_CUSTOMER_ID_KV } from '../stripe/stripe';
+import { CheckoutRequestBody } from '../types';
 
 const stripe = new Stripe(env.STRIPE_SECRET_KEY, {
     apiVersion: '2025-06-30.basil'
 });
-
-type CheckoutRequestBody = {
-    userId: string;
-    email: string;
-    name?: string;
-    line_item: {
-        price: string;
-        quantity: number;
-    }
-}
 
 export async function createCheckoutSession(formData: CheckoutRequestBody) {
     const { userId, email, line_item } = formData;
