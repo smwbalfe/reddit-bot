@@ -7,7 +7,7 @@ const env = {
     
     FASTAPI_SERVER_URL: process.env.NODE_ENV === 'development'
         ? 'http://localhost:8000'
-        : 'http://agent',
+        : 'http://agent:8000',
     
     NEXT_PUBLIC_SUPABASE_URL: process.env.NEXT_PUBLIC_SUPABASE_URL!,
     NEXT_PUBLIC_SUPABASE_KEY: process.env.NEXT_PUBLIC_SUPABASE_KEY!,
