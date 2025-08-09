@@ -16,7 +16,9 @@ dependencies = [
     "uvicorn",
     "aiohttp",
     "beautifulsoup4",
-    "lxml"
+    "lxml",
+    "redis",
+    "slowapi"
 ]
 
 requires-python = ">=3.10"

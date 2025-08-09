@@ -50,3 +50,12 @@ class GenerateSuggestionsRequest(BaseModel):
 class GenerateSuggestionsResponse(BaseModel):
     keywords: List[str]
     subreddits: List[str]
+
+
+class GenerateReplyRequest(BaseModel):
+    reddit_post: str
+    product_description: str
+
+
+class GenerateReplyResponse(BaseModel):
+    reply: str

@@ -3,7 +3,7 @@ import json
 import logging
 from typing import List, Callable, Any, Set, Dict, Tuple
 from collections import Counter
-from .agents import lead_score_agent_strong, keyword_generation_agent, lead_score_agent_weak, subreddit_generation_agent, icp_description_agent, pain_points_agent, subreddit_relevance_agent, icp_pain_points_combined_agent
+from .agents import lead_score_agent_strong, keyword_generation_agent, lead_score_agent_weak, subreddit_generation_agent, icp_description_agent, pain_points_agent, subreddit_relevance_agent, icp_pain_points_combined_agent, reply_generation_agent
 from ..models import FactorScores, FactorJustifications, ServerLeadIntentResponse
 from ..reddit.client import RedditClient
 
@@ -217,3 +217,27 @@ async def find_relevant_subreddits_from_keywords(reddit: RedditClient, keywords:
     except Exception as e:
         logger.error(f"Error searching subreddits for keywords {keywords}: {e}")
         return []
+
+
+async def generate_reddit_reply(reddit_post: str, product_description: str) -> str:
+    """Generate a Reddit reply based on a post and product description"""
+    prompt_data = {
+        "reddit_post": reddit_post,
+        "product_description": product_description
+    }
+    prompt = json.dumps(prompt_data)
+    
+    result = await run_agent(
+        reply_generation_agent.run,
+        prompt,
+        "Reddit reply generation",
+        timeout=20.0,
+        default_return=None,
+        context=reddit_post[:100]
+    )
+    
+    if result is None:
+        return "Unable to generate reply due to timeout or error"
+        
+    logger.info(f"Generated reply for post: {reddit_post[:100]}...")
+    return result.output.reply

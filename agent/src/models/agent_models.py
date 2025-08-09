@@ -62,4 +62,5 @@ class ICPPainPointsResponse(BaseModel):
     icp_description: str
     pain_points: str
 
-
+class ReplyResponse(BaseModel):
+    reply: str

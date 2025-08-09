@@ -8,7 +8,7 @@ import { Badge } from "@/src/lib/components/ui/badge"
 import { getUserConfigs, getUserPosts } from "@/src/lib/actions/create-config"
 import { ICP } from "@/src/lib/db/schema"
 import { PostWithConfigId } from "@/src/lib/types"
-import { ChevronLeft, MessageSquare, Activity, ExternalLink, Package, Hash, ChevronDown, ChevronUp, Target, Zap, Clock, UserCheck, Star } from "lucide-react"
+import { ChevronLeft, MessageSquare, Activity, ExternalLink, Package, Target, Zap, Clock, UserCheck, Star, Bot } from "lucide-react"
 import DashboardLayout from '@/src/lib/components/dashboard-layout'
 import Link from 'next/link'
 import { useParams } from 'next/navigation'
@@ -322,6 +322,8 @@ export function LeadDetailPage() {
   const [configs, setConfigs] = useState<ICP[]>([])
   const [post, setPost] = useState<PostWithConfigId | null>(null)
   const [loading, setLoading] = useState(true)
+  const [generatedReply, setGeneratedReply] = useState<string>('')
+  const [isGeneratingReply, setIsGeneratingReply] = useState(false)
 
   useEffect(() => {
     if (user?.id && leadId) {
@@ -343,6 +345,36 @@ export function LeadDetailPage() {
       console.error('Error fetching data:', error)
     } finally {
       setLoading(false)
+    }
+  }
+
+  const generateReply = async () => {
+    if (!post || !config) return
+    
+    setIsGeneratingReply(true)
+    try {
+      const response = await fetch('http://localhost:8000/api/generate-reply', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          reddit_post: `${post.title}\n\n${post.content}`,
+          product_description: config.data?.description || config.name
+        }),
+      })
+      
+      if (!response.ok) {
+        throw new Error('Failed to generate reply')
+      }
+      
+      const data = await response.json()
+      setGeneratedReply(data.reply)
+    } catch (error) {
+      console.error('Error generating reply:', error)
+      setGeneratedReply('Failed to generate reply. Please try again.')
+    } finally {
+      setIsGeneratingReply(false)
     }
   }
 
@@ -500,6 +532,47 @@ export function LeadDetailPage() {
             <CompactScoreBreakdown post={post} />
           </CardContent>
         </Card>
+
+        {generatedReply && (
+          <Card className="shadow-sm bg-white border-0 overflow-hidden">
+            <CardHeader className="pb-3 bg-gradient-to-r from-green-50/50 to-emerald-50/50 border-b border-slate-100/50">
+              <CardTitle className="text-base font-semibold text-slate-900 flex items-center gap-2">
+                <div className="p-1.5 bg-green-100 rounded-lg">
+                  <Bot className="w-4 h-4 text-green-600" />
+                </div>
+                Generated Reply
+              </CardTitle>
+              <CardDescription className="text-slate-600 text-sm">
+                AI-generated authentic Reddit reply following OGTool best practices
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="pt-5 px-6 pb-6">
+              <div className="p-6 bg-slate-50 rounded-lg">
+                <p className="text-slate-700 leading-relaxed whitespace-pre-wrap break-words text-base">{generatedReply}</p>
+              </div>
+              <div className="mt-4 flex gap-2">
+                <Button
+                  onClick={async () => {
+                    await navigator.clipboard.writeText(generatedReply)
+                    window.open(post.url, '_blank')
+                  }}
+                  variant="outline"
+                  size="sm"
+                >
+                  Copy & Go to Reddit
+                </Button>
+                <Button
+                  onClick={generateReply}
+                  disabled={isGeneratingReply}
+                  variant="outline"
+                  size="sm"
+                >
+                  Regenerate
+                </Button>
+              </div>
+            </CardContent>
+          </Card>
+        )}
 
 
 

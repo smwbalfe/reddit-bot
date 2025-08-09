@@ -16,7 +16,9 @@ from .server_models import (
     ICPConfigChangeRequest,
     ICPConfigChangeResponse,
     GenerateSuggestionsRequest,
-    GenerateSuggestionsResponse
+    GenerateSuggestionsResponse,
+    GenerateReplyRequest,
+    GenerateReplyResponse
 )
 
 from .reddit_models import (
@@ -44,6 +46,8 @@ __all__ = [
     "ICPConfigChangeResponse",
     "GenerateSuggestionsRequest",
     "GenerateSuggestionsResponse",
+    "GenerateReplyRequest",
+    "GenerateReplyResponse",
     
     # Reddit models
     "ICPConfig",

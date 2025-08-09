@@ -9,6 +9,8 @@ services:
       - REDDIT_CLIENT_SECRET=${REDDIT_CLIENT_SECRET}
       - OPENROUTER_API_KEY=${OPENROUTER_API_KEY}
       - DATABASE_URL=${DATABASE_URL}
+      - UPSTASH_REDIS_REST_URL=${UPSTASH_REDIS_REST_URL}
+      - UPSTASH_REDIS_REST_TOKEN=${UPSTASH_REDIS_REST_TOKEN}
     networks:
       - reddit-bot-network
     restart: unless-stopped

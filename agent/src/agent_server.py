@@ -1,13 +1,18 @@
 #!/usr/bin/env python3
-from fastapi import FastAPI, HTTPException
+from fastapi import FastAPI, HTTPException, Request
 from fastapi.middleware.cors import CORSMiddleware
-from src.agent.services import extract_keywords, find_relevant_subreddits_by_keywords, generate_icp_and_pain_points_combined
+from src.agent.services import extract_keywords, find_relevant_subreddits_by_keywords, generate_icp_and_pain_points_combined, generate_reddit_reply
 import asyncio
-from src.models import AnalyzeUrlRequest, AnalyzeUrlResponse, ICPConfigChangeRequest, ICPConfigChangeResponse, GenerateSuggestionsRequest, GenerateSuggestionsResponse
+from src.models import AnalyzeUrlRequest, AnalyzeUrlResponse, ICPConfigChangeRequest, ICPConfigChangeResponse, GenerateSuggestionsRequest, GenerateSuggestionsResponse, GenerateReplyRequest, GenerateReplyResponse
 from src.utils.parse_page import fetch_html, parse_html_content
 from src.db.db import DatabaseManager
+from src.middleware.rate_limiter import check_rate_limit, limiter
+from slowapi import _rate_limit_exceeded_handler
+from slowapi.errors import RateLimitExceeded
 
 app = FastAPI(title="Keyword Generation API", version="1.0.0")
+app.state.limiter = limiter
+app.add_exception_handler(RateLimitExceeded, _rate_limit_exceeded_handler)
 
 app.add_middleware(
     CORSMiddleware,
@@ -18,7 +23,8 @@ app.add_middleware(
 )
 
 @app.post("/api/analyze-url", response_model=AnalyzeUrlResponse)
-async def analyze_url_endpoint(request: AnalyzeUrlRequest):
+async def analyze_url_endpoint(request: AnalyzeUrlRequest, http_request: Request):
+    await check_rate_limit(http_request, "analyze-url", 5, 300)
     try:
         html_content = await fetch_html(request.url)
         parsed_content = parse_html_content(html_content)
@@ -36,7 +42,8 @@ async def analyze_url_endpoint(request: AnalyzeUrlRequest):
         raise HTTPException(status_code=500, detail=f"Failed to analyze URL: {str(e)}")
 
 @app.post("/api/generate-suggestions", response_model=GenerateSuggestionsResponse)
-async def generate_suggestions_endpoint(request: GenerateSuggestionsRequest):
+async def generate_suggestions_endpoint(request: GenerateSuggestionsRequest, http_request: Request):
+    await check_rate_limit(http_request, "generate-suggestions", 10, 300)
     try:
         content = f"{request.description}\n\nPain Points:\n{request.pain_points}"
         keywords = await extract_keywords(content)
@@ -49,7 +56,8 @@ async def generate_suggestions_endpoint(request: GenerateSuggestionsRequest):
         raise HTTPException(status_code=500, detail=f"Failed to generate suggestions: {str(e)}")
 
 @app.post("/api/icp-config-change", response_model=ICPConfigChangeResponse)
-async def icp_config_change_endpoint(request: ICPConfigChangeRequest):
+async def icp_config_change_endpoint(request: ICPConfigChangeRequest, http_request: Request):
+    await check_rate_limit(http_request, "icp-config-change", 20, 300)
     try:
         db_manager = DatabaseManager()
         success = db_manager.trigger_scraper_refresh()
@@ -61,6 +69,15 @@ async def icp_config_change_endpoint(request: ICPConfigChangeRequest):
         )
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Failed to handle ICP config change: {str(e)}")
+
+@app.post("/api/generate-reply", response_model=GenerateReplyResponse)
+async def generate_reply_endpoint(request: GenerateReplyRequest, http_request: Request):
+    await check_rate_limit(http_request, "generate-reply", 30, 300)
+    try:
+        reply = await generate_reddit_reply(request.reddit_post, request.product_description)
+        return GenerateReplyResponse(reply=reply)
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Failed to generate reply: {str(e)}")
 
 @app.get("/health")
 async def health_check():
