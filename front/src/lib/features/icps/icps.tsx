@@ -138,14 +138,6 @@ export function IcpsPage() {
     }))
   }
 
-  const handleSeedICP = async (icpId: number) => {
-    const result = await seedICP(icpId, 'current-user-id') // Replace with actual user ID
-    if (result.success) {
-      alert(`Successfully seeded ${result.posts_scraped} posts!`)
-    } else {
-      alert(`Failed to seed ICP: ${result.message}`)
-    }
-  }
 
 
 
@@ -253,29 +245,7 @@ export function IcpsPage() {
                       </div>
                     </div>
                     
-                    {/* Seed Button */}
-                    {(selectedSubreddits[icp.id] || []).length > 0 && (
-                      <div className="border-t border-gray-200 pt-4">
-                        <div className="flex items-center justify-between">
-                          <div>
-                            <p className="text-sm font-medium text-gray-900">Lead Database</p>
-                            <p className="text-xs text-gray-600 mt-1">
-                              {icp.seeded ? 'Initial leads have been scraped' : 'Seed with initial leads from configured subreddits'}
-                            </p>
-                          </div>
-                          <Button
-                            onClick={() => handleSeedICP(icp.id)}
-                            disabled={isSeeding === icp.id || icp.seeded}
-                            size="sm"
-                            variant={icp.seeded ? "outline" : "default"}
-                            className="flex items-center gap-2"
-                          >
-                            <Database className="w-4 h-4" />
-                            {isSeeding === icp.id ? 'Seeding...' : (icp.seeded ? 'Seeded' : 'Seed Leads')}
-                          </Button>
-                        </div>
-                      </div>
-                    )}
+          
                   </div>
 
                   {/* Collapsible Sections */}

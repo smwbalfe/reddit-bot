@@ -117,56 +117,6 @@ export function Dashboard() {
                 </div>
               </CardContent>
             </Card>
-
-            <Card className="border-0 shadow-sm bg-white">
-              <CardContent className="p-4 sm:p-6">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <p className="text-sm font-medium text-slate-600">Monthly Usage</p>
-                    {usageLoading ? (
-                      <div className="animate-pulse bg-slate-200 h-8 w-16 rounded mt-1"></div>
-                    ) : usageStats ? (
-                      <p className="text-2xl sm:text-3xl font-bold text-slate-900">
-                        {usageStats.monthly_qualified_leads}/{usageStats.is_subscribed ? '∞' : usageStats.monthly_lead_limit}
-                      </p>
-                    ) : (
-                      <p className="text-2xl sm:text-3xl font-bold text-slate-900">-/-</p>
-                    )}
-                  </div>
-                  <div className={`h-12 w-12 rounded-lg flex items-center justify-center ${
-                    usageStats && !usageStats.is_subscribed && usageStats.monthly_qualified_leads >= usageStats.monthly_lead_limit 
-                      ? 'bg-red-100' 
-                      : 'bg-purple-100'
-                  }`}>
-                    <Zap className={`h-6 w-6 ${
-                      usageStats && !usageStats.is_subscribed && usageStats.monthly_qualified_leads >= usageStats.monthly_lead_limit 
-                        ? 'text-red-600' 
-                        : 'text-purple-600'
-                    }`} />
-                  </div>
-                </div>
-                <div className="mt-4 flex text-xs sm:text-sm text-slate-600">
-                  {usageStats ? (
-                    usageStats.is_subscribed ? (
-                      <span className="text-green-600">Unlimited</span>
-                    ) : (
-                      <span className={
-                        usageStats.monthly_qualified_leads >= usageStats.monthly_lead_limit 
-                          ? 'text-red-600' 
-                          : 'text-slate-600'
-                      }>
-                        {usageStats.monthly_qualified_leads >= usageStats.monthly_lead_limit 
-                          ? 'Limit reached'
-                          : `${usageStats.monthly_lead_limit - usageStats.monthly_qualified_leads} remaining`
-                        }
-                      </span>
-                    )
-                  ) : (
-                    <span>Loading...</span>
-                  )}
-                </div>
-              </CardContent>
-            </Card>
           </div>
 
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6">
