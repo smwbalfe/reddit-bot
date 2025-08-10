@@ -2,7 +2,7 @@ import json
 import logging
 from typing import List, Tuple
 from collections import Counter
-from server.agents import keyword_generation_agent, subreddit_relevance_agent
+from server.agents.agents import keyword_generation_agent, subreddit_relevance_agent
 from shared.agent.agent_services import run_agent
 from shared.reddit.client import RedditClient
 
