@@ -9,6 +9,7 @@ COPY pyproject.toml uv.lock README.md ./
 RUN uv sync --frozen
 
 COPY scraper/ ./scraper/
+COPY server/ ./server/
 COPY shared/ ./shared/
 COPY config/ ./config/
 
