@@ -1,9 +1,9 @@
 import { Button } from "@/src/lib/components/ui/button"
 import { Input } from "@/src/lib/components/ui/input"
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/src/lib/components/ui/form"
-import useLoginForm from "../hooks/use-login-form"
-import { AuthAlert, FormDivider, SocialAuthButton } from "../components"
-import { LoginFormProps } from "../types"
+import { AuthAlert, FormDivider, SocialAuthButton } from "@/src/lib/features/auth/components"
+import { LoginFormProps } from "@/src/lib/features/auth/types"
+import useLoginForm from "@/src/lib/features/auth/hooks/use-login-form"
 
 export function LoginForm({ onSwitchMode }: LoginFormProps) {
     const { form, loading, serverError, handleEmailLogin, handleGoogleLogin } = useLoginForm()

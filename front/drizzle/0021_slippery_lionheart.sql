@@ -1,0 +1,1 @@
+ALTER TABLE "ICP" ADD COLUMN "monitoringEnabled" boolean DEFAULT true NOT NULL;

@@ -1,7 +1,7 @@
 import { create } from 'zustand'
-import { analyzeUrl } from '../actions/analyze-url'
-import { generateSuggestions } from '../actions/generate-suggestions'
-import { FormState, FormActions } from './types'
+import { FormState, FormActions } from '@/src/lib/store/types'
+import { generateSuggestions } from '../actions/content/generate-suggestions'
+import { analyzeUrl } from '../actions/content/analyze-url'
 
 const initialState: FormState = {
   generatedSubreddits: [],
@@ -99,7 +99,6 @@ export const useFormStore = create<FormState & FormActions>((set, get) => ({
         painPoints: result.pain_points
       })
       
-      // Auto-generate subreddits from the extracted description and pain points
       if (result.icp_description.trim() || result.pain_points.trim()) {
         const suggestions = await generateSuggestions(result.icp_description, result.pain_points)
         set({
@@ -107,7 +106,7 @@ export const useFormStore = create<FormState & FormActions>((set, get) => ({
           selectedSubreddits: suggestions.subreddits.slice(0, 5)
         })
       } else {
-        // Fallback to URL-based subreddits if no description/pain points
+    
         set({
           generatedSubreddits: result.subreddits,
           selectedSubreddits: result.subreddits.slice(0, 5)

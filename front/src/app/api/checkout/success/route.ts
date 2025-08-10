@@ -1,7 +1,7 @@
 
 import { redirect } from 'next/navigation';
-import { STRIPE_CUSTOMER_ID_KV, syncStripeDataToKV } from '@/src/lib/stripe/stripe';
-import { makeServerClient } from '@/src/lib/supabase/server';
+import { STRIPE_CUSTOMER_ID_KV, syncStripeDataToKV } from '@/src/lib/services/stripe/stripe';
+import { makeServerClient } from '@/src/lib/services/supabase/server';
 
 export async function GET(req: Request) {
     const supabase = await makeServerClient()

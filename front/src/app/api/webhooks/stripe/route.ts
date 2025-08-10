@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import Stripe from "stripe";
 import { headers } from "next/headers";
-import { processEvent } from "@/src/lib/stripe/stripe";
+import { processEvent } from "@/src/lib/services/stripe/stripe";
 import env from "@/src/lib/env";
 
 const stripe = new Stripe(env.STRIPE_SECRET_KEY, {

@@ -19,6 +19,9 @@ export const icps = pgTable('ICP', {
     painPoints?: string,
     description?: string,
   }>().notNull().default({}),
+  monitoringEnabled: boolean('monitoringEnabled').default(true).notNull(),
+  leadLimit: integer('leadLimit').default(100).notNull(),
+  seeded: boolean('seeded').default(false).notNull(),
   createdAt: timestamp('createdAt').defaultNow().notNull(),
   updatedAt: timestamp('updatedAt').defaultNow().notNull(),
 })
@@ -26,7 +29,7 @@ export const icps = pgTable('ICP', {
 export const redditPosts = pgTable('RedditPost', {
   id: serial('id').primaryKey(),
   icpId: integer('icpId').notNull(),
-  submissionId: varchar('submissionId').notNull(),
+  submissionId: varchar('submissionId').notNull().unique(),
   subreddit: varchar('subreddit').notNull(),
   title: text('title').notNull(),
   content: text('content').notNull(),
@@ -64,6 +67,22 @@ export const systemFlags = pgTable('SystemFlag', {
   updatedAt: timestamp('updatedAt').defaultNow().notNull(),
 })
 
+export const usageTracking = pgTable('UsageTracking', {
+  id: serial('id').primaryKey(),
+  userId: varchar('userId').notNull(),
+  month: integer('month').notNull(),
+  year: integer('year').notNull(),
+  repliesGenerated: integer('repliesGenerated').default(0).notNull(),
+  qualifiedLeads: integer('qualifiedLeads').default(0).notNull(),
+  createdAt: timestamp('createdAt').defaultNow().notNull(),
+  updatedAt: timestamp('updatedAt').defaultNow().notNull(),
+}, (table) => ({
+  userMonthYear: {
+    columns: [table.userId, table.month, table.year],
+    unique: true,
+  },
+}))
+
 export type Account = typeof accounts.$inferSelect
 export type NewAccount = typeof accounts.$inferInsert
 
@@ -73,3 +92,5 @@ export type ICP = typeof icps.$inferSelect
 export type NewICP = typeof icps.$inferInsert
 export type SystemFlag = typeof systemFlags.$inferSelect
 export type NewSystemFlag = typeof systemFlags.$inferInsert
+export type UsageTracking = typeof usageTracking.$inferSelect
+export type NewUsageTracking = typeof usageTracking.$inferInsert

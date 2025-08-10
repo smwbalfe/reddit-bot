@@ -1,13 +1,13 @@
 import { create } from 'zustand'
-import { 
-  getUserConfigs, 
-  deleteConfig, 
-  updateConfig,
-  createConfig
-} from '../actions/create-config'
-import { generateSuggestions } from '../actions/generate-suggestions'
-import { analyzeUrl } from '../actions/analyze-url'
-import { ICPState, ICPActions } from '../features/icps/types'
+
+import { updateConfig } from '@/src/lib/actions/config/update-config'
+import { deleteConfig } from '@/src/lib/actions/config/delete-config'
+import { getUserConfigs } from '@/src/lib/actions/config/get-user-configs'
+import { createConfig } from '@/src/lib/actions/config/create-config'
+
+import { generateSuggestions } from '@/src/lib/actions/content/generate-suggestions'
+import { analyzeUrl } from '@/src/lib/actions/content/analyze-url'
+import { ICPState, ICPActions } from '@/src/lib/features/icps/types'
 
 export const useICPStore = create<ICPState & ICPActions>((set, get) => ({
   icps: [],
@@ -15,6 +15,7 @@ export const useICPStore = create<ICPState & ICPActions>((set, get) => ({
   isDeleting: null,
   isGenerating: null,
   isAnalyzingUrl: null,
+  isSeeding: null,
   generatedSubreddits: {},
   selectedSubreddits: {},
   error: null,
@@ -68,7 +69,6 @@ export const useICPStore = create<ICPState & ICPActions>((set, get) => ({
         if (!skipRefetch) {
           await get().fetchICPs()
         } else {
-          // Update the ICP data locally without refetching
           const { icps } = get()
           const updatedICPs = icps.map(icp => {
             if (icp.id === id) {
@@ -209,6 +209,49 @@ export const useICPStore = create<ICPState & ICPActions>((set, get) => ({
       set({ error: 'Failed to generate suggestions' })
     } finally {
       set({ isGenerating: null })
+    }
+  },
+
+  seedICP: async (icpId: number, userId: string) => {
+    set({ isSeeding: icpId })
+    
+    try {
+      const response = await fetch('http://localhost:8000/api/seed-icp', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          icp_id: icpId,
+          user_id: userId,
+        }),
+      })
+      
+      if (!response.ok) {
+        const errorData = await response.json()
+        throw new Error(errorData.detail || 'Failed to seed ICP')
+      }
+      
+      const result = await response.json()
+      
+      // Refresh ICPs to get updated seeded status
+      await get().fetchICPs()
+      
+      return {
+        success: true,
+        message: result.message,
+        posts_scraped: result.posts_scraped
+      }
+    } catch (error) {
+      const errorMsg = error instanceof Error ? error.message : 'Failed to seed ICP'
+      set({ error: errorMsg })
+      return {
+        success: false,
+        message: errorMsg,
+        posts_scraped: 0
+      }
+    } finally {
+      set({ isSeeding: null })
     }
   }
 }))

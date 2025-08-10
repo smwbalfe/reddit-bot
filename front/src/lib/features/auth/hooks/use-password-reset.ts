@@ -1,7 +1,7 @@
 import { useState } from "react"
-import { supabaseBrowserClient } from "@/src/lib/supabase/client"
+import { supabaseBrowserClient } from "@/src/lib/services/supabase/client"
 import * as z from "zod"
-import { resetSchema } from "../forms/schema"
+import { resetSchema } from "@/src/lib/features/auth/forms/schema"
 
 export function usePasswordReset() {
   const [loading, setLoading] = useState(false)

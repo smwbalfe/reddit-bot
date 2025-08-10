@@ -1,8 +1,8 @@
 import type { Metadata } from 'next'
 import '@/src/globals.css'
 import { PostHogProvider } from '@/src/lib/providers'
-import ThemeWrapper from '@/src/lib/components/theme-wrapper'
-import { Navbar } from '../lib/components/navbar'
+
+import { Navbar } from '@/src/lib/features/global/navbar'
 
 export const metadata: Metadata = {
   title: 'SubLead',
@@ -27,10 +27,9 @@ export default function RootLayout({
     <html lang="en" suppressHydrationWarning>
       <body suppressHydrationWarning className='font-primary'>
         <PostHogProvider>
-          <ThemeWrapper>
+  
             <Navbar/>
             {children}
-          </ThemeWrapper>
         </PostHogProvider>
       </body>
     </html>

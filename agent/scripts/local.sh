@@ -2,7 +2,7 @@
 
 source .env
 
-docker build -t reddit-agent agent/
+docker build -t reddit-agent .
 
 docker run -it --rm \
   -e LOGFIRE_TOKEN=${LOGFIRE_TOKEN} \

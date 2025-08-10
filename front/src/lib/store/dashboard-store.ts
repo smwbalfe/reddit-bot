@@ -1,7 +1,7 @@
 import { create } from 'zustand'
-import { getUserConfigs, getUserPosts } from '../actions/create-config'
-import { PostWithConfigId } from '../types'
-import { DashboardState, DashboardActions } from '../features/dashboard/types'
+import { getUserConfigs } from '@/src/lib/actions/config/get-user-configs'
+import { getUserPosts } from '@/src/lib/actions/config/get-user-posts'
+import { DashboardState, DashboardActions } from '@/src/lib/features/dashboard/types'
 
 export const useDashboardStore = create<DashboardState & DashboardActions>((set, get) => ({
   configs: [],

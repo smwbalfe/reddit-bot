@@ -1,6 +1,6 @@
 "use client"
 import { useState } from 'react'
-import { supabaseBrowserClient } from '@/src/lib/supabase/client'
+import { supabaseBrowserClient } from '@/src/lib/services/supabase/client'
 import { useRouter } from 'next/navigation'
 import { Button } from '@/src/lib/components/ui/button'
 import { Input } from '@/src/lib/components/ui/input'

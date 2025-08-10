@@ -19,6 +19,3 @@ export const resetSchema = z.object({
     email: z.string().email({ message: "Please enter a valid email address" }),
 })
 
-export type LoginFormValues = z.infer<typeof loginSchema>
-export type SignupFormValues = z.infer<typeof signupSchema>
-export type ResetFormValues = z.infer<typeof resetSchema> 

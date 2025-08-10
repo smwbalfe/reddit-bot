@@ -127,6 +127,48 @@
       "when": 1754337924547,
       "tag": "0017_melted_ghost_rider",
       "breakpoints": true
+    },
+    {
+      "idx": 18,
+      "version": "7",
+      "when": 1754749820709,
+      "tag": "0018_lonely_random",
+      "breakpoints": true
+    },
+    {
+      "idx": 19,
+      "version": "7",
+      "when": 1754753604530,
+      "tag": "0019_soft_guardsmen",
+      "breakpoints": true
+    },
+    {
+      "idx": 20,
+      "version": "7",
+      "when": 1754755526238,
+      "tag": "0020_modern_adam_destine",
+      "breakpoints": true
+    },
+    {
+      "idx": 21,
+      "version": "7",
+      "when": 1754756486950,
+      "tag": "0021_slippery_lionheart",
+      "breakpoints": true
+    },
+    {
+      "idx": 22,
+      "version": "7",
+      "when": 1754772031137,
+      "tag": "0022_loud_blacklash",
+      "breakpoints": true
+    },
+    {
+      "idx": 23,
+      "version": "7",
+      "when": 1754832597341,
+      "tag": "0023_public_cardiac",
+      "breakpoints": true
     }
   ]
 }

@@ -3,10 +3,11 @@
 import { useUser } from "@/src/lib/features/auth/hooks/use-user"
 import { useEffect } from "react"
 import { Card, CardContent, CardHeader, CardTitle } from "@/src/lib/components/ui/card"
-import { MessageSquare, TrendingUp, Activity, Target, Calendar, BarChart3 } from "lucide-react"
+import { MessageSquare, TrendingUp, Activity, Target, Calendar, BarChart3, Zap } from "lucide-react"
 import Link from "next/link"
 import { useDashboardStore } from "@/src/lib/store"
-import { useDashboardMetrics } from "@/src/lib/hooks"
+import { useDashboardMetrics } from "@/src/lib/features/dashboard/hooks/use-dashboard-metrics"
+import { useUsageStats } from "@/src/lib/features/dashboard/hooks/use-usage-stats"
 
 export function Dashboard() {
   const { user } = useUser()
@@ -18,6 +19,7 @@ export function Dashboard() {
   } = useDashboardStore()
   
   const metrics = useDashboardMetrics(posts)
+  const { stats: usageStats, isLoading: usageLoading } = useUsageStats()
 
   useEffect(() => {
     if (user?.id) {
@@ -45,7 +47,7 @@ export function Dashboard() {
         </div>
       ) : (
         <>
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4 sm:gap-6">
             <Card className="border-0 shadow-sm bg-white">
               <CardContent className="p-4 sm:p-6">
                 <div className="flex items-center justify-between">
@@ -112,6 +114,56 @@ export function Dashboard() {
                 </div>
                 <div className="mt-4 flex text-xs sm:text-sm text-slate-600">
                   <span>≤ 20% quality</span>
+                </div>
+              </CardContent>
+            </Card>
+
+            <Card className="border-0 shadow-sm bg-white">
+              <CardContent className="p-4 sm:p-6">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="text-sm font-medium text-slate-600">Monthly Usage</p>
+                    {usageLoading ? (
+                      <div className="animate-pulse bg-slate-200 h-8 w-16 rounded mt-1"></div>
+                    ) : usageStats ? (
+                      <p className="text-2xl sm:text-3xl font-bold text-slate-900">
+                        {usageStats.monthly_qualified_leads}/{usageStats.is_subscribed ? '∞' : usageStats.monthly_lead_limit}
+                      </p>
+                    ) : (
+                      <p className="text-2xl sm:text-3xl font-bold text-slate-900">-/-</p>
+                    )}
+                  </div>
+                  <div className={`h-12 w-12 rounded-lg flex items-center justify-center ${
+                    usageStats && !usageStats.is_subscribed && usageStats.monthly_qualified_leads >= usageStats.monthly_lead_limit 
+                      ? 'bg-red-100' 
+                      : 'bg-purple-100'
+                  }`}>
+                    <Zap className={`h-6 w-6 ${
+                      usageStats && !usageStats.is_subscribed && usageStats.monthly_qualified_leads >= usageStats.monthly_lead_limit 
+                        ? 'text-red-600' 
+                        : 'text-purple-600'
+                    }`} />
+                  </div>
+                </div>
+                <div className="mt-4 flex text-xs sm:text-sm text-slate-600">
+                  {usageStats ? (
+                    usageStats.is_subscribed ? (
+                      <span className="text-green-600">Unlimited</span>
+                    ) : (
+                      <span className={
+                        usageStats.monthly_qualified_leads >= usageStats.monthly_lead_limit 
+                          ? 'text-red-600' 
+                          : 'text-slate-600'
+                      }>
+                        {usageStats.monthly_qualified_leads >= usageStats.monthly_lead_limit 
+                          ? 'Limit reached'
+                          : `${usageStats.monthly_lead_limit - usageStats.monthly_qualified_leads} remaining`
+                        }
+                      </span>
+                    )
+                  ) : (
+                    <span>Loading...</span>
+                  )}
                 </div>
               </CardContent>
             </Card>

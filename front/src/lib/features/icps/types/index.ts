@@ -1,4 +1,4 @@
-import { ICP } from '../../../db/schema'
+import { ICP } from '@/src/lib/db/schema'
 
 export interface ICPState {
   icps: ICP[]
@@ -6,6 +6,7 @@ export interface ICPState {
   isDeleting: number | null
   isGenerating: number | null
   isAnalyzingUrl: number | null
+  isSeeding: number | null
   generatedSubreddits: Record<number, string[]>
   selectedSubreddits: Record<number, string[]>
   error: string | null
@@ -18,6 +19,7 @@ export interface ICPActions {
   deleteICP: (id: number) => Promise<boolean>
   analyzeWebsite: (icpId: number) => Promise<void>
   regenerateSuggestions: (icpId: number) => Promise<void>
+  seedICP: (icpId: number, userId: string) => Promise<{ success: boolean; message: string; posts_scraped: number }>
   updateSelectedSubreddits: (icpId: number, subreddits: string[]) => void
   setGeneratedSubreddits: (icpId: number, subreddits: string[]) => void
   setError: (error: string | null) => void

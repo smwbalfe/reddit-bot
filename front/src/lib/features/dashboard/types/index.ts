@@ -1,5 +1,5 @@
-import { ICP } from '../../../db/schema'
-import { PostWithConfigId } from '../../../types'
+import { ICP } from '@/src/lib/db/schema'
+import { PostWithConfigId } from '@/src/lib/types'
 
 export interface DashboardState {
   configs: ICP[]

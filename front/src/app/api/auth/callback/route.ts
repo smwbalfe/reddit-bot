@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server'
-import { makeServerClient } from '@/src/lib/supabase/server'
-import { createOrUpdateUserAccount } from '@/src/lib/actions/create-user'
+import { makeServerClient } from '@/src/lib/services/supabase/server'
+import { createOrUpdateUserAccount } from '@/src/lib/actions/user/create-user'
 import env from '@/src/lib/env'
 
 export async function GET(request: Request) {

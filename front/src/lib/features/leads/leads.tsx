@@ -1,142 +1,34 @@
 'use client'
 
+import React from "react"
 import { useUser } from "@/src/lib/features/auth/hooks/use-user"
 import { useState, useEffect } from "react"
+import { useUsage } from "@/src/lib/features/global/hooks/use-usage"
 import { Card, CardContent, CardHeader, CardDescription } from "@/src/lib/components/ui/card"
 import { Button } from "@/src/lib/components/ui/button"
 import { Badge } from "@/src/lib/components/ui/badge"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/src/lib/components/ui/table"
-import { getUserConfigs, getUserPosts } from "@/src/lib/actions/create-config"
+import { getUserConfigs } from "@/src/lib/actions/config/get-user-configs"
+import { getUserPosts } from "@/src/lib/actions/config/get-user-posts"
+import { disableMonitoring } from "@/src/lib/actions/config/disable-monitoring"
+import { generateReplyAction } from "@/src/lib/actions/generate-reply"
 import { ICP } from "@/src/lib/db/schema"
 import { PostWithConfigId } from "@/src/lib/types"
 import { MessageSquare, TrendingUp, ExternalLink, Package, Bot, ChevronDown, ChevronUp } from "lucide-react"
-import DashboardLayout from '@/src/lib/components/dashboard-layout'
+import DashboardLayout from '@/src/lib/features/global/dashboard-layout'
 import Link from 'next/link'
-
-
-function FuelGauge({ percentage, color }: { percentage: number; color: string }) {
-  const angle = 180 - (percentage / 100) * 180
-  
-  return (
-    <div className="relative w-12 h-6">
-      <svg width="48" height="24" viewBox="0 0 48 24" className="overflow-visible">
-        {Array.from({ length: 20 }, (_, i) => {
-          const segmentAngle = 180 - (i * 9)
-          const x1 = 24 + 18 * Math.cos((segmentAngle * Math.PI) / 180)
-          const y1 = 24 - 18 * Math.sin((segmentAngle * Math.PI) / 180)
-          const x2 = 24 + 14 * Math.cos((segmentAngle * Math.PI) / 180)
-          const y2 = 24 - 14 * Math.sin((segmentAngle * Math.PI) / 180)
-          
-          let segmentColor = '#e2e8f0'
-          if (i <= 6) segmentColor = '#f87171'
-          else if (i <= 13) segmentColor = '#fb923c'
-          else segmentColor = '#4ade80'
-          
-          return (
-            <line
-              key={i}
-              x1={x1}
-              y1={y1}
-              x2={x2}
-              y2={y2}
-              stroke={segmentColor}
-              strokeWidth="2"
-              strokeLinecap="round"
-            />
-          )
-        })}
-        
-        <line
-          x1="24"
-          y1="24"
-          x2={24 + 16 * Math.cos((angle * Math.PI) / 180)}
-          y2={24 - 16 * Math.sin((angle * Math.PI) / 180)}
-          stroke={color}
-          strokeWidth="2.5"
-          strokeLinecap="round"
-          markerEnd="url(#arrowhead)"
-        />
-        
-        <circle
-          cx="24"
-          cy="24"
-          r="2"
-          fill={color}
-        />
-        
-        <defs>
-          <marker
-            id="arrowhead"
-            markerWidth="6"
-            markerHeight="4"
-            refX="6"
-            refY="2"
-            orient="auto"
-          >
-            <polygon points="0 0, 6 2, 0 4" fill={color} />
-          </marker>
-        </defs>
-      </svg>
-    </div>
-  )
-}
-
-function InterestLabel({ leadQuality }: { leadQuality: number | null }) {
-  if (!leadQuality) return null
-  
-  let color, bgColor, label
-  
-  if (leadQuality <= 10) {
-    color = '#dc2626'
-    bgColor = 'bg-red-100'
-    label = 'Never'
-  } else if (leadQuality <= 20) {
-    color = '#ea580c'
-    bgColor = 'bg-orange-100'
-    label = 'Minimal'
-  } else if (leadQuality <= 40) {
-    color = '#d97706'
-    bgColor = 'bg-amber-100'
-    label = 'Moderate'
-  } else if (leadQuality <= 60) {
-    color = '#ca8a04'
-    bgColor = 'bg-yellow-100'
-    label = 'Genuine'
-  } else if (leadQuality <= 80) {
-    color = '#65a30d'
-    bgColor = 'bg-lime-100'
-    label = 'Strong'
-  } else {
-    color = '#16a34a'
-    bgColor = 'bg-green-100'
-    label = 'Ready'
-  }
-  
-  return (
-    <div className="flex flex-col items-center gap-2">
-      <FuelGauge percentage={leadQuality} color={color} />
-      <div className="flex flex-col items-center gap-1">
-        <span className="text-xs font-bold" style={{ color }}>{leadQuality}%</span>
-        <span 
-          className={`text-xs font-semibold px-2 py-1 rounded-full ${bgColor}`}
-          style={{ color }}
-        >
-          {label}
-        </span>
-      </div>
-    </div>
-  )
-}
-
+import { InterestLabel } from "@/src/lib/features/leads/components/interest-label"
 
 export function LeadsPage() {
   const { user } = useUser()
+  const { usage } = useUsage()
   const [configs, setConfigs] = useState<ICP[]>([])
   const [posts, setPosts] = useState<PostWithConfigId[]>([])
   const [loading, setLoading] = useState(true)
   const [expandedRows, setExpandedRows] = useState<Set<number>>(new Set())
   const [generatingReply, setGeneratingReply] = useState<Set<number>>(new Set())
   const [replies, setReplies] = useState<Map<number, string>>(new Map())
+
 
   const getRelativeTime = (date: Date | null): string => {
     if (!date) return 'Unknown'
@@ -165,6 +57,21 @@ export function LeadsPage() {
       fetchPosts()
     }
   }, [user?.id])
+
+  useEffect(() => {
+    if (usage && usage.isAtLimit && !usage.isSubscribed) {
+      handleDisableMonitoring()
+    }
+  }, [usage])
+
+  const handleDisableMonitoring = async () => {
+    try {
+      await disableMonitoring()
+      console.log('Monitoring disabled due to lead limit reached')
+    } catch (error) {
+      console.error('Error disabling monitoring:', error)
+    }
+  }
 
   const fetchConfigs = async () => {
     if (!user?.id) return
@@ -220,27 +127,15 @@ export function LeadsPage() {
     setGeneratingReply(newGenerating)
 
     try {
-      const response = await fetch('http://localhost:8000/api/generate-reply', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          reddit_post: `${post.title}\n\n${post.content}`,
-          product_description: config.data?.description || config.name
-        }),
+      const result = await generateReplyAction({
+        icpId: config.id,
+        redditPost: `${post.title}\n\n${post.content}`
       })
-      
-      if (!response.ok) {
-        throw new Error('Failed to generate reply')
-      }
-      
-      const data = await response.json()
+     
       const newReplies = new Map(replies)
-      newReplies.set(post.id, data.reply)
+      newReplies.set(post.id, result.reply)
       setReplies(newReplies)
       
-      // Auto-expand the row to show the reply
       const newExpanded = new Set(expandedRows)
       newExpanded.add(post.id)
       setExpandedRows(newExpanded)
@@ -284,8 +179,18 @@ export function LeadsPage() {
                   </div>
                   <div className="flex items-center gap-2">
                     <MessageSquare className="w-5 h-5 text-slate-500" />
-                    <span className="text-base font-medium text-slate-700">{posts.length}</span>
-                    <span className="text-base text-slate-500">total leads</span>
+                    <span className="text-base font-medium text-slate-700">
+                      {usage?.leadCount || posts.length}
+                      {usage && !usage.isSubscribed && (
+                        <span className="text-slate-400">/{usage.limit}</span>
+                      )}
+                    </span>
+                    <span className="text-base text-slate-500">
+                      {usage?.isAtLimit ? 'leads (limit reached)' : 'total leads'}
+                      {usage && !usage.isSubscribed && usage.isAtLimit && (
+                        <span className="text-orange-600 font-medium"> - upgrade for more</span>
+                      )}
+                    </span>
                   </div>
                 </div>
               </div>
@@ -464,8 +369,8 @@ export function LeadsPage() {
                         const reply = replies.get(post.id)
                         
                         return (
-                          <>
-                            <TableRow key={post.id} className="hover:bg-slate-50/50 border-b border-slate-100">
+                          <React.Fragment key={post.id}>
+                            <TableRow className="hover:bg-slate-50/50 border-b border-slate-100">
                               <TableCell className="py-4 px-6 w-24">
                                 <Badge variant="secondary" className="text-xs font-medium bg-slate-100 text-slate-700 hover:bg-slate-200">
                                   r/{post.subreddit}
@@ -570,7 +475,7 @@ export function LeadsPage() {
                                 </TableCell>
                               </TableRow>
                             )}
-                          </>
+                          </React.Fragment>
                         )
                       })}
                     </TableBody>
@@ -581,6 +486,8 @@ export function LeadsPage() {
             </div>
           </>
         )}
+        
+       
       </div>
     </DashboardLayout>
   )

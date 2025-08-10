@@ -1,6 +1,6 @@
 import { FcGoogle } from "react-icons/fc"
 import { Button } from "@/src/lib/components/ui/button"
-import { SocialAuthButtonProps } from "../types"
+import { SocialAuthButtonProps } from "@/src/lib/features/auth/types"
 
 export function SocialAuthButton({ 
     provider, 

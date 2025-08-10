@@ -1,6 +1,6 @@
 import { Alert, AlertDescription } from "@/src/lib/components/ui/alert"
 import { AlertCircle, CheckCircle } from "lucide-react"
-import { AuthAlertProps } from "../types"
+import { AuthAlertProps } from "@/src/lib/features/auth/types"
 
 export function AuthAlert({ message, type }: AuthAlertProps) {
     if (!message) return null

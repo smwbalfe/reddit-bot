@@ -8,7 +8,8 @@ COPY pyproject.toml uv.lock README.md ./
 
 RUN uv sync --frozen
 
-COPY src/ ./src/
+COPY scraper/ ./scraper/
+COPY shared/ ./shared/
 COPY config/ ./config/
 
-CMD ["uv", "run", "python", "src/reddit_scraper_standalone.py"]
+CMD ["uv", "run", "python", "scraper/agent_scraper.py"]

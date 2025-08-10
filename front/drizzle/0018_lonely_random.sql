@@ -1,0 +1,1 @@
+ALTER TABLE "RedditPost" ADD CONSTRAINT "RedditPost_submissionId_unique" UNIQUE("submissionId");

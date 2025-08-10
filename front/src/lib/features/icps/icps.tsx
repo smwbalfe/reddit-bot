@@ -1,13 +1,12 @@
 'use client'
 
 import { useEffect, useState } from 'react'
-import CreateIcpForm from '@/src/lib/components/create-icp-form'
-import DashboardLayout from '@/src/lib/components/dashboard-layout'
+import CreateIcpForm from './components/create-icp-form'
+import DashboardLayout from '@/src/lib/features/global/dashboard-layout'
 import { useICPStore } from '@/src/lib/store'
 import { Card, CardContent, CardHeader, CardTitle } from '@/src/lib/components/ui/card'
 import { Button } from '@/src/lib/components/ui/button'
-import { Badge } from '@/src/lib/components/ui/badge'
-import { ExternalLink, Trash2, Globe, RefreshCw, Plus, X, Edit2, Package, ChevronDown, ChevronRight } from 'lucide-react'
+import { ExternalLink, Trash2, Globe, RefreshCw, Plus, X, Edit2, Package, ChevronDown, ChevronRight, Database } from 'lucide-react'
 
 export function IcpsPage() {
   const [showCreateForm, setShowCreateForm] = useState(false)
@@ -22,6 +21,7 @@ export function IcpsPage() {
     isLoading,
     isDeleting,
     isGenerating,
+    isSeeding,
     generatedSubreddits,
     selectedSubreddits,
     fetchICPs,
@@ -29,7 +29,8 @@ export function IcpsPage() {
     updateICP,
     analyzeWebsite,
     regenerateSuggestions,
-    updateSelectedSubreddits
+    updateSelectedSubreddits,
+    seedICP
   } = useICPStore()
 
   useEffect(() => {
@@ -64,8 +65,7 @@ export function IcpsPage() {
       formData.append('painPoints', field === 'painPoints' ? value : icp.data.painPoints || '')
       formData.append('keywords', JSON.stringify(field === 'keywords' ? value : icp.data.keywords || []))
       formData.append('subreddits', JSON.stringify(field === 'subreddits' ? value : icp.data.subreddits || []))
-
-      // Skip refetch for subreddit updates to prevent page refresh
+      
       const skipRefetch = field === 'subreddits'
       const success = await updateICP(icpId, formData, skipRefetch)
       if (success) {
@@ -127,10 +127,6 @@ export function IcpsPage() {
     await saveField(icpId, 'subreddits', newSelected)
   }
 
-  const handleAnalyzeWebsite = async (icpId: number) => {
-    await analyzeWebsite(icpId)
-  }
-
   const handleRegenerateSuggestions = async (icpId: number) => {
     await regenerateSuggestions(icpId)
   }
@@ -140,6 +136,15 @@ export function IcpsPage() {
       ...prev,
       [section]: !prev[section]
     }))
+  }
+
+  const handleSeedICP = async (icpId: number) => {
+    const result = await seedICP(icpId, 'current-user-id') // Replace with actual user ID
+    if (result.success) {
+      alert(`Successfully seeded ${result.posts_scraped} posts!`)
+    } else {
+      alert(`Failed to seed ICP: ${result.message}`)
+    }
   }
 
 
@@ -233,7 +238,7 @@ export function IcpsPage() {
                 <CardContent className="space-y-4">
                   {/* Product Summary */}
                   <div className="bg-gray-50 rounded-lg p-4">
-                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-sm">
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-sm mb-4">
                       <div>
                         <span className="font-medium text-gray-600">Description:</span>
                         <p className="text-gray-800 mt-1 line-clamp-2">{icp.data.description || 'No description'}</p>
@@ -247,6 +252,30 @@ export function IcpsPage() {
                         <p className="text-gray-800 mt-1">{(selectedSubreddits[icp.id] || []).length}/5 selected</p>
                       </div>
                     </div>
+                    
+                    {/* Seed Button */}
+                    {(selectedSubreddits[icp.id] || []).length > 0 && (
+                      <div className="border-t border-gray-200 pt-4">
+                        <div className="flex items-center justify-between">
+                          <div>
+                            <p className="text-sm font-medium text-gray-900">Lead Database</p>
+                            <p className="text-xs text-gray-600 mt-1">
+                              {icp.seeded ? 'Initial leads have been scraped' : 'Seed with initial leads from configured subreddits'}
+                            </p>
+                          </div>
+                          <Button
+                            onClick={() => handleSeedICP(icp.id)}
+                            disabled={isSeeding === icp.id || icp.seeded}
+                            size="sm"
+                            variant={icp.seeded ? "outline" : "default"}
+                            className="flex items-center gap-2"
+                          >
+                            <Database className="w-4 h-4" />
+                            {isSeeding === icp.id ? 'Seeding...' : (icp.seeded ? 'Seeded' : 'Seed Leads')}
+                          </Button>
+                        </div>
+                      </div>
+                    )}
                   </div>
 
                   {/* Collapsible Sections */}
