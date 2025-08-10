@@ -163,7 +163,7 @@ async def collect_initial_posts(
 
                 if should_process_post(submission, db_manager):
                     await process_post_for_icp(
-                        submission, icp, db_manager, threshold=1
+                        submission, icp, db_manager, threshold=CONFIDENCE_THRESHOLD
                     )
                     posts_collected += 1
 
