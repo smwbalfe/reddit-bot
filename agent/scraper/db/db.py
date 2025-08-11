@@ -10,6 +10,8 @@ import os
 
 load_dotenv()
 
+FREE_LEAD_LIMIT = 500
+
 
 class ScraperDatabaseManager:
     def __init__(self):
@@ -228,4 +230,4 @@ class ScraperDatabaseManager:
             return True
             
         monthly_leads = self.get_user_monthly_qualified_leads(user_id)
-        return monthly_leads < 10000
+        return monthly_leads < FREE_LEAD_LIMIT

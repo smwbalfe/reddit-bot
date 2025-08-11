@@ -1,8 +1,13 @@
 import type { Metadata } from 'next'
 import '@/src/globals.css'
 import { PostHogProvider } from '@/src/lib/providers'
+import dynamic from 'next/dynamic'
 
 import { Navbar } from '@/src/lib/features/global/navbar'
+
+const CrispWithNoSSR = dynamic(
+  () => import('@/src/components/crisp')
+)
 
 export const metadata: Metadata = {
   title: 'SubLead',
@@ -27,7 +32,7 @@ export default function RootLayout({
     <html lang="en" suppressHydrationWarning>
       <body suppressHydrationWarning className='font-primary'>
         <PostHogProvider>
-  
+            <CrispWithNoSSR />
             <Navbar/>
             {children}
         </PostHogProvider>
