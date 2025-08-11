@@ -10,7 +10,6 @@ import { Badge } from "@/src/lib/components/ui/badge"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/src/lib/components/ui/table"
 import { getUserConfigs } from "@/src/lib/actions/config/get-user-configs"
 import { getUserPosts } from "@/src/lib/actions/config/get-user-posts"
-import { disableMonitoring } from "@/src/lib/actions/config/disable-monitoring"
 import { generateReplyAction } from "@/src/lib/actions/generate-reply"
 import { ICP } from "@/src/lib/db/schema"
 import { PostWithConfigId } from "@/src/lib/types"
@@ -57,21 +56,6 @@ export function LeadsPage() {
       fetchPosts()
     }
   }, [user?.id])
-
-  useEffect(() => {
-    if (usage && usage.isAtLimit && !usage.isSubscribed) {
-      handleDisableMonitoring()
-    }
-  }, [usage])
-
-  const handleDisableMonitoring = async () => {
-    try {
-      await disableMonitoring()
-      console.log('Monitoring disabled due to lead limit reached')
-    } catch (error) {
-      console.error('Error disabling monitoring:', error)
-    }
-  }
 
   const fetchConfigs = async () => {
     if (!user?.id) return
