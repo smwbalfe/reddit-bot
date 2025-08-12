@@ -2,6 +2,7 @@
 
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
+import Image from 'next/image'
 import { Target, MessageSquare, BarChart3, X, LogOut, Zap, Crown, CircleX, User, ChevronDown, AlertTriangle } from 'lucide-react'
 import { supabaseBrowserClient } from '@/src/lib/services/supabase/client'
 import { useCheckout } from '@/src/lib/features/global/hooks/use-checkout'
@@ -75,7 +76,7 @@ export default function Sidebar({ isOpen, onClose }: SidebarProps) {
   
       <div className="md:hidden flex items-center justify-between p-4 border-b border-gray-200">
         <div className="flex items-center gap-3">
-          <img src="/file.svg" alt="SubLead" className="w-8 h-8" />
+          <Image src="/file.svg" alt="SubLead" width={32} height={32} className="w-8 h-8" priority />
           <span className="text-xl font-bold text-gray-900">SubLead</span>
         </div>
         <button 
@@ -255,7 +256,7 @@ export default function Sidebar({ isOpen, onClose }: SidebarProps) {
       <div className="hidden md:flex md:w-64 md:flex-col md:fixed md:inset-y-0">
         <div className="flex-1 flex flex-col min-h-0 bg-white border-r border-gray-200">
           <div className="flex items-center gap-3 p-4 border-b border-gray-200">
-            <img src="/file.svg" alt="SubLead" className="w-8 h-8" />
+            <Image src="/file.svg" alt="SubLead" width={32} height={32} className="w-8 h-8" priority />
             <span className="text-xl font-bold text-gray-900">SubLead</span>
           </div>
 

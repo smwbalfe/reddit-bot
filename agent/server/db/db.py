@@ -27,8 +27,6 @@ class ServerDatabaseManager:
     def _get_connection(self):
         return psycopg2.connect(self.database_url, cursor_factory=RealDictCursor)
 
-   
-
     def set_system_flag(self, key: str, value: bool) -> bool:
         try:
             with self._get_connection() as conn:
@@ -48,5 +46,3 @@ class ServerDatabaseManager:
 
     def trigger_scraper_refresh(self) -> bool:
         return self.set_system_flag("scraper_refresh_needed", True)
-
-    

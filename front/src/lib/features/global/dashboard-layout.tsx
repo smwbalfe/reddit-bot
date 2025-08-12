@@ -4,6 +4,7 @@ import Sidebar from '@/src/lib/features/global/sidebar'
 import { Menu } from 'lucide-react'
 import { useState } from 'react'
 import { usePathname } from 'next/navigation'
+import Image from 'next/image'
 import type { DashboardLayoutProps } from '@/src/lib/features/dashboard/types'
 
 export default function DashboardLayout({ children }: DashboardLayoutProps) {
@@ -22,7 +23,7 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
     <div className="min-h-screen bg-gray-50">
       <div className="md:hidden bg-white border-b border-gray-200 px-4 py-3 flex items-center justify-between fixed top-0 left-0 right-0 z-50">
         <div className="flex items-center gap-3">
-          <img src="/file.svg" alt="SubLead" className="w-8 h-8" />
+          <Image src="/file.svg" alt="SubLead" width={32} height={32} className="w-8 h-8" priority />
           <span className="text-xl font-bold text-gray-900">{getPageTitle()}</span>
         </div>
         <button

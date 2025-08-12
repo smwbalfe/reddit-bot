@@ -335,21 +335,20 @@ export default function CreateIcpForm({ onSuccess, editingIcp }: CreateIcpFormPr
             <div className="space-y-6">
                 {/* Progress Indicator */}
                 <div className="mb-8">
-                    <div className="flex items-center justify-between mb-4">
-                        {STEPS.map((step, index) => (
-                            <div key={step.id} className="flex items-center">
-                                <div className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-medium ${currentStep > step.id ? 'bg-blue-600 text-white' :
-                                        currentStep === step.id ? 'bg-blue-100 text-blue-600 border-2 border-blue-600' :
-                                            'bg-gray-200 text-gray-600'
-                                    }`}>
-                                    {currentStep > step.id ? <Check className="w-4 h-4" /> : step.id}
+                    <div className="flex justify-center mb-4">
+                        <div className="flex space-x-8">
+                            {STEPS.map((step, index) => (
+                                <div key={step.id} className="flex flex-col items-center">
+                                    <div className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-medium ${currentStep > step.id ? 'bg-blue-600 text-white' :
+                                            currentStep === step.id ? 'bg-blue-100 text-blue-600 border-2 border-blue-600' :
+                                                'bg-gray-200 text-gray-600'
+                                        }`}>
+                                        {currentStep > step.id ? <Check className="w-4 h-4" /> : step.id}
+                                    </div>
+                                    <div className="mt-2 text-xs text-gray-500 hidden sm:block">{step.title}</div>
                                 </div>
-                                {index < STEPS.length - 1 && (
-                                    <div className={`w-16 h-0.5 ml-2 ${currentStep > step.id ? 'bg-blue-600' : 'bg-gray-200'
-                                        }`} />
-                                )}
-                            </div>
-                        ))}
+                            ))}
+                        </div>
                     </div>
                     <div className="text-center">
                         <h2 className="text-xl font-semibold text-gray-900">{STEPS[currentStep - 1]?.title}</h2>
@@ -358,7 +357,7 @@ export default function CreateIcpForm({ onSuccess, editingIcp }: CreateIcpFormPr
                 </div>
 
                 {/* Step Content */}
-                <div className="bg-white rounded-xl border border-gray-200 p-6">
+                <div className="bg-white rounded-xl border border-gray-100 p-6">
                     {renderStep()}
                 </div>
 

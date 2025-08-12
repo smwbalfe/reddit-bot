@@ -10,7 +10,8 @@ import os
 
 load_dotenv()
 
-FREE_LEAD_LIMIT = 500
+FREE_REPLY_LIMIT = int(os.getenv("FREE_REPLY_LIMIT", 15))
+FREE_LEAD_LIMIT = int(os.getenv("FREE_LEAD_LIMIT", 500))
 
 
 class ScraperDatabaseManager:
@@ -154,24 +155,26 @@ class ScraperDatabaseManager:
     def set_initial_seeding_mode(self, enabled: bool) -> bool:
         return self.set_system_flag("initial_seeding_mode", enabled)
 
-
     def is_user_subscribed(self, user_id: str) -> bool:
         """Check if user has active Stripe subscription using same pattern as NextJS"""
         try:
             customer_id = self.redis_client.get(f"user:{user_id}:stripe-customer-id")
             if not customer_id:
                 return False
-                
-            sub_data = self.redis_client.get(f"stripe:customer:{customer_id}:sub-status")
+
+            sub_data = self.redis_client.get(
+                f"stripe:customer:{customer_id}:sub-status"
+            )
             if not sub_data:
                 return False
-                
+
             if isinstance(sub_data, (bytes, str)):
                 import json
+
                 if isinstance(sub_data, bytes):
                     sub_data = sub_data.decode()
                 sub_data = json.loads(sub_data)
-                
+
             return sub_data.get("status") == "active"
         except Exception as e:
             print(f"Error checking subscription for user {user_id}: {e}")
@@ -181,13 +184,14 @@ class ScraperDatabaseManager:
         """Get qualified leads count for current month from UsageTracking table"""
         try:
             from datetime import datetime
+
             now = datetime.now()
-            
+
             with self._get_connection() as conn:
                 with conn.cursor() as cur:
                     cur.execute(
                         'SELECT "qualifiedLeads" FROM "UsageTracking" WHERE "userId" = %s AND month = %s AND year = %s',
-                        (user_id, now.month, now.year)
+                        (user_id, now.month, now.year),
                     )
                     result = cur.fetchone()
                     return result["qualifiedLeads"] if result else 0
@@ -199,26 +203,27 @@ class ScraperDatabaseManager:
         """Increment qualified leads count for current month in UsageTracking table"""
         try:
             from datetime import datetime
+
             now = datetime.now()
-            
+
             with self._get_connection() as conn:
                 with conn.cursor() as cur:
                     # First try to update existing record
                     cur.execute(
-                        '''UPDATE "UsageTracking" 
+                        """UPDATE "UsageTracking" 
                            SET "qualifiedLeads" = "qualifiedLeads" + 1, "updatedAt" = NOW()
-                           WHERE "userId" = %s AND month = %s AND year = %s''',
-                        (user_id, now.month, now.year)
+                           WHERE "userId" = %s AND month = %s AND year = %s""",
+                        (user_id, now.month, now.year),
                     )
-                    
+
                     # If no rows were updated, insert a new record
                     if cur.rowcount == 0:
                         cur.execute(
-                            '''INSERT INTO "UsageTracking" ("userId", month, year, "qualifiedLeads", "updatedAt")
-                               VALUES (%s, %s, %s, 1, NOW())''',
-                            (user_id, now.month, now.year)
+                            """INSERT INTO "UsageTracking" ("userId", month, year, "qualifiedLeads", "updatedAt")
+                               VALUES (%s, %s, %s, 1, NOW())""",
+                            (user_id, now.month, now.year),
                         )
-                    
+
                     conn.commit()
         except Exception as e:
             print(f"Error incrementing qualified leads for user {user_id}: {e}")
@@ -228,6 +233,6 @@ class ScraperDatabaseManager:
         is_subscribed = self.is_user_subscribed(user_id)
         if is_subscribed:
             return True
-            
+
         monthly_leads = self.get_user_monthly_qualified_leads(user_id)
         return monthly_leads < FREE_LEAD_LIMIT

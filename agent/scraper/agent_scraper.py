@@ -12,9 +12,87 @@ import logging
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger("agent_scraper")
 
-COLLECTION_INTERVAL = 1
-CONFIDENCE_THRESHOLD = 30
-INITIAL_SEEDING_POSTS_PER_SUBREDDIT = 50
+
+def get_scraper_config() -> dict:
+    return {
+        "collection_interval": 1,
+        "confidence_threshold": 30,
+        "initial_seeding_posts_per_subreddit": 50,
+        "error_retry_delay": 60,
+    }
+
+
+async def cancel_all_tasks(tasks: list) -> None:
+    if not tasks:
+        return
+
+    logger.info(f"Cancelling {len(tasks)} running tasks")
+    for task in tasks:
+        if not task.done():
+            task.cancel()
+
+    await asyncio.gather(*tasks, return_exceptions=True)
+    logger.info("All tasks have been stopped")
+    tasks.clear()
+
+
+def create_collection_tasks(
+    icps: list, db_manager: ScraperDatabaseManager, is_initial_seeding: bool = False
+) -> list:
+    tasks = []
+    for icp in icps:
+        task = asyncio.create_task(
+            collect_posts_for_icp(
+                icp, db_manager, is_initial_seeding=is_initial_seeding
+            )
+        )
+        tasks.append(task)
+    return tasks
+
+
+async def wait_for_tasks_completion(tasks: list) -> None:
+    if tasks:
+        await asyncio.gather(*tasks, return_exceptions=True)
+        tasks.clear()
+
+
+def refresh_icps_if_needed(db_manager: ScraperDatabaseManager, icps: list) -> list:
+    if db_manager.get_system_flag("scraper_refresh_needed") or not icps:
+        logger.info("Scraper refresh flag detected - fetching fresh ICPs")
+        icps = db_manager.get_icps()
+        db_manager.set_system_flag("scraper_refresh_needed", False)
+        logger.info(f"Loaded {len(icps)} ICPs")
+    return icps
+
+
+async def handle_initial_seeding(db_manager: ScraperDatabaseManager) -> None:
+    unseeded_icps = db_manager.get_unseeded_icps()
+    if not unseeded_icps:
+        return
+
+    logger.info(f"Found {len(unseeded_icps)} unseeded ICPs - starting initial seeding")
+    db_manager.set_initial_seeding_mode(True)
+
+    tasks = create_collection_tasks(unseeded_icps, db_manager, is_initial_seeding=True)
+    logger.info(f"Starting initial seeding for {len(unseeded_icps)} ICPs")
+    await wait_for_tasks_completion(tasks)
+
+    db_manager.set_initial_seeding_mode(False)
+    logger.info("Initial seeding completed")
+
+
+async def handle_regular_collection(
+    icps: list, db_manager: ScraperDatabaseManager
+) -> None:
+    logger.info("Starting regular collection cycle")
+    if not icps:
+        logger.info("No ICPs found")
+        return
+
+    tasks = create_collection_tasks(icps, db_manager, is_initial_seeding=False)
+    logger.info(f"Starting regular collection for {len(icps)} ICPs")
+    await wait_for_tasks_completion(tasks)
+    logger.info("Collection cycle completed")
 
 
 def get_subreddits_for_icp(icp: ICPModel) -> Set[str]:
@@ -60,27 +138,29 @@ async def process_post_for_icp(
     post: Submission,
     icp: ICPModel,
     db_manager: ScraperDatabaseManager,
-    threshold: int = CONFIDENCE_THRESHOLD,
+    threshold: int = None,
 ):
     try:
         result = await score_post(post, icp)
+        config = get_scraper_config()
+        threshold = threshold or config["confidence_threshold"]
         if result.final_score <= threshold:
             logger.info(
                 f"Post {post.id} scored {result.final_score}, skipping (<={threshold})"
             )
             return
-            
+
         if not db_manager.can_user_add_lead(icp.userId):
             logger.info(
                 f"User {icp.userId} has reached lead limit for this month, skipping post {post.id}"
             )
             return
-            
+
         post_data = build_post_data(post, icp, result)
         logger.info(f"Inserting post {post.id} with lead_quality {result.final_score}")
         db_manager.insert_reddit_post(post_data)
         db_manager.increment_user_qualified_leads(icp.userId)
-        
+
     except Exception as e:
         logger.warning(
             f"Exception processing post {getattr(post, 'id', None)} for ICP {icp.id}: {e}"
@@ -140,7 +220,7 @@ async def collect_initial_posts(
     db_manager: ScraperDatabaseManager,
 ):
     logger.info(
-        f"Initial seeding for ICP {icp.id} - collecting {INITIAL_SEEDING_POSTS_PER_SUBREDDIT} posts per subreddit"
+        f"Initial seeding for ICP {icp.id} - collecting {get_scraper_config()['initial_seeding_posts_per_subreddit']} posts per subreddit"
     )
 
     for subreddit_name in subreddits:
@@ -149,10 +229,11 @@ async def collect_initial_posts(
 
         try:
             individual_subreddit = await reddit_client.get_subreddit(subreddit_name)
+            config = get_scraper_config()
             async for submission in individual_subreddit.hot(
-                limit=INITIAL_SEEDING_POSTS_PER_SUBREDDIT * 2
+                limit=config["initial_seeding_posts_per_subreddit"] * 2
             ):
-                if posts_collected >= INITIAL_SEEDING_POSTS_PER_SUBREDDIT:
+                if posts_collected >= config["initial_seeding_posts_per_subreddit"]:
                     break
 
                 if db_manager.get_system_flag("scraper_refresh_needed"):
@@ -163,7 +244,10 @@ async def collect_initial_posts(
 
                 if should_process_post(submission, db_manager):
                     await process_post_for_icp(
-                        submission, icp, db_manager, threshold=CONFIDENCE_THRESHOLD
+                        submission,
+                        icp,
+                        db_manager,
+                        threshold=get_scraper_config()["confidence_threshold"],
                     )
                     posts_collected += 1
 
@@ -184,13 +268,13 @@ async def collect_new_posts(
     db_manager: ScraperDatabaseManager,
 ):
     logger.info(f"Collecting new posts for ICP {icp.id}")
-    
+
     if not db_manager.can_user_add_lead(icp.userId):
         logger.info(
             f"User {icp.userId} has reached lead limit - skipping stream for ICP {icp.id}"
         )
         return
-    
+
     subreddit_string = "+".join(subreddits)
     current_subreddit = await reddit_client.get_subreddit(subreddit_string)
 
@@ -227,6 +311,31 @@ async def collect_new_posts(
         logger.warning(f"Exception collecting new posts for ICP {icp.id}: {e}")
 
 
+async def run_collection_cycle(
+    db_manager: ScraperDatabaseManager, icps: list, current_tasks: list
+) -> list:
+    if db_manager.get_system_flag("scraper_refresh_needed") or not icps:
+        logger.info("Scraper refresh flag detected - stopping all current tasks")
+        await cancel_all_tasks(current_tasks)
+        icps = refresh_icps_if_needed(db_manager, icps)
+
+    await handle_initial_seeding(db_manager)
+    await handle_regular_collection(icps, db_manager)
+
+    return icps
+
+
+async def sleep_until_next_cycle() -> None:
+    config = get_scraper_config()
+    logger.info(f"Waiting {config['collection_interval']} seconds until next cycle")
+    await asyncio.sleep(config["collection_interval"])
+
+
+async def handle_main_loop_error(error: Exception) -> None:
+    logger.warning(f"Exception in main loop: {error}")
+    await asyncio.sleep(get_scraper_config()["error_retry_delay"])
+
+
 async def main():
     logger.info("Starting periodic collection loop")
     db_manager = ScraperDatabaseManager()
@@ -235,64 +344,10 @@ async def main():
 
     while True:
         try:
-            if db_manager.get_system_flag("scraper_refresh_needed") or not icps:
-                logger.info(
-                    "Scraper refresh flag detected - stopping all current tasks"
-                )
-                if current_tasks:
-                    logger.info(f"Cancelling {len(current_tasks)} running tasks")
-                    for task in current_tasks:
-                        if not task.done():
-                            task.cancel()
-                    await asyncio.gather(*current_tasks, return_exceptions=True)
-                    logger.info("All tasks have been stopped")
-                    current_tasks.clear()
-
-                logger.info("Fetching fresh ICPs")
-                icps = db_manager.get_icps()
-                db_manager.set_system_flag("scraper_refresh_needed", False)
-                logger.info(f"Loaded {len(icps)} ICPs")
-
-            unseeded_icps = db_manager.get_unseeded_icps()
-            if unseeded_icps:
-                logger.info(
-                    f"Found {len(unseeded_icps)} unseeded ICPs - starting initial seeding"
-                )
-                db_manager.set_initial_seeding_mode(True)
-
-                for icp in unseeded_icps:
-                    task = asyncio.create_task(
-                        collect_posts_for_icp(icp, db_manager, is_initial_seeding=True)
-                    )
-                    current_tasks.append(task)
-
-                logger.info(f"Starting initial seeding for {len(unseeded_icps)} ICPs")
-                await asyncio.gather(*current_tasks, return_exceptions=True)
-                current_tasks.clear()
-
-                db_manager.set_initial_seeding_mode(False)
-                logger.info("Initial seeding completed")
-
-            logger.info("Starting regular collection cycle")
-            if not icps:
-                logger.info("No ICPs found")
-            else:
-                for icp in icps:
-                    task = asyncio.create_task(
-                        collect_posts_for_icp(icp, db_manager, is_initial_seeding=False)
-                    )
-                    current_tasks.append(task)
-                logger.info(f"Starting regular collection for {len(icps)} ICPs")
-                await asyncio.gather(*current_tasks, return_exceptions=True)
-                logger.info("Collection cycle completed")
-                current_tasks.clear()
-
-            logger.info(f"Waiting {COLLECTION_INTERVAL} seconds until next cycle")
-            await asyncio.sleep(COLLECTION_INTERVAL)
-
+            icps = await run_collection_cycle(db_manager, icps, current_tasks)
+            await sleep_until_next_cycle()
         except Exception as e:
-            logger.warning(f"Exception in main loop: {e}")
-            await asyncio.sleep(60)
+            await handle_main_loop_error(e)
 
 
 if __name__ == "__main__":
