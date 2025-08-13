@@ -44,5 +44,4 @@ class OpenAIEmbeddingsService:
         return similarity_percentage >= threshold, similarity_percentage
 
 
-# Global instance
 embeddings_service = OpenAIEmbeddingsService()
