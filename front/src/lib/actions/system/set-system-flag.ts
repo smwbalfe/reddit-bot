@@ -5,7 +5,7 @@ import { systemFlags } from "@/src/lib/db/schema"
 import { eq } from "drizzle-orm"
 import { makeServerClient } from '@/src/lib/services/supabase/server'
 
-export async function setSystemFlag(key: string, value: boolean, description?: string) {
+async function setSystemFlag(key: string, value: boolean, description?: string) {
   try {
     const supabase = await makeServerClient()
     const { data: { user } } = await supabase.auth.getUser()
@@ -40,10 +40,6 @@ export async function setSystemFlag(key: string, value: boolean, description?: s
   }
 }
 
-export async function skipPollPeriod() {
-  return setSystemFlag('skip_poll_period', true, 'Skip current poll period and move to next cycle immediately')
-}
-
 export async function triggerScraperRefresh() {
   return setSystemFlag('scraper_refresh_needed', true, 'Trigger scraper to refresh ICP configurations')
 }
@@ -52,7 +48,7 @@ export async function resetPollPeriod() {
   return setSystemFlag('skip_poll_period', true, 'Reset current poll period and start next collection cycle immediately')
 }
 
-export async function getSystemFlag(key: string): Promise<boolean> {
+async function getSystemFlag(key: string): Promise<boolean> {
   try {
     const result = await db.select({ value: systemFlags.value })
       .from(systemFlags)

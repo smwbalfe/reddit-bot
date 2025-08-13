@@ -1,14 +1,8 @@
 'use server'
 import env from '@/src/lib/env'
 
-export interface GenerateSuggestionsRequest {
-  description: string
-  pain_points: string
-  keyword_count?: number
-  use_alternative_subreddit_gen?: boolean
-}
 
-export interface GenerateSuggestionsResponse {
+interface GenerateSuggestionsResponse {
   keywords: string[]
   subreddits: string[]
 }

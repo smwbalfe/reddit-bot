@@ -1,7 +1,7 @@
 'use server'
 import env from '@/src/lib/env'
 
-export interface AnalyzeUrlResponse {
+interface AnalyzeUrlResponse {
   keywords: string[]
   subreddits: string[]
   icp_description: string

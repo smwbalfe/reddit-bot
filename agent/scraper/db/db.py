@@ -10,7 +10,7 @@ import os
 
 load_dotenv()
 
-FREE_REPLY_LIMIT = int(os.getenv("FREE_REPLY_LIMIT", 15))
+
 FREE_LEAD_LIMIT = int(os.getenv("FREE_LEAD_LIMIT", 500))
 
 
@@ -149,22 +149,8 @@ class ScraperDatabaseManager:
             print(f"Error setting system flag {key}: {e}")
             return False
 
-    def trigger_scraper_refresh(self) -> bool:
-        return self.set_system_flag("scraper_refresh_needed", True)
-
     def set_initial_seeding_mode(self, enabled: bool) -> bool:
         return self.set_system_flag("initial_seeding_mode", enabled)
-
-    def get_system_string_flag(self, key: str) -> Optional[str]:
-        try:
-            with self._get_connection() as conn:
-                with conn.cursor() as cur:
-                    cur.execute('SELECT "stringValue" FROM "SystemFlag" WHERE key = %s', (key,))
-                    result = cur.fetchone()
-                    return result["stringValue"] if result and result["stringValue"] else None
-        except Exception as e:
-            print(f"Error getting system string flag {key}: {e}")
-            return None
 
     def set_system_flag(self, key: str, value) -> bool:
         try:
@@ -274,21 +260,3 @@ class ScraperDatabaseManager:
 
         monthly_leads = self.get_user_monthly_qualified_leads(user_id)
         return monthly_leads < FREE_LEAD_LIMIT
-
-    def get_icps_for_user(self, user_id: str) -> List[ICPModel]:
-        """Get ICPs for a specific user"""
-        with self._get_connection() as conn:
-            with conn.cursor() as cur:
-                cur.execute('SELECT * FROM "ICP" WHERE "userId" = %s', (user_id,))
-                rows = cur.fetchall()
-                icps = []
-                for row in rows:
-                    row_dict = dict(row)
-                    if row_dict.get("data"):
-                        row_dict["data"] = ICPDataModel(**row_dict["data"])
-                    icps.append(ICPModel(**row_dict))
-                return icps
-
-    def get_user_qualified_leads_count(self, user_id: str) -> int:
-        """Get current qualified leads count for user this month"""
-        return self.get_user_monthly_qualified_leads(user_id)

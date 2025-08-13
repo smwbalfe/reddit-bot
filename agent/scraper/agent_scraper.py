@@ -16,7 +16,7 @@ logger = logging.getLogger("agent_scraper")
 
 def get_scraper_config() -> dict:
     return {
-        "polling_interval": 300,  # 5 minutes default polling
+        "polling_interval": 300,  
         "confidence_threshold": 30,
         "initial_seeding_posts_per_subreddit": 50,
         "error_retry_delay": 60,
@@ -135,23 +135,31 @@ def should_process_post(post: Submission, db_manager: ScraperDatabaseManager) ->
     return not exists
 
 
-def embeddings_prefilter(post: Submission, icp: ICPModel, threshold: float = 35.0) -> tuple[bool, float]:
+def embeddings_prefilter(
+    post: Submission, icp: ICPModel, threshold: float = 35.0
+) -> tuple[bool, float]:
     """Use OpenAI embeddings to prefilter posts before expensive LLM scoring"""
     try:
         post_text = f"{post.title} {post.selftext or ''}".strip()
-        icp_description = icp.data.description if icp.data and icp.data.description else ""
-        
+        icp_description = (
+            icp.data.description if icp.data and icp.data.description else ""
+        )
+
         if not post_text or not icp_description:
-            logger.warning(f"Missing text for embeddings check: post={bool(post_text)}, icp={bool(icp_description)}")
+            logger.warning(
+                f"Missing text for embeddings check: post={bool(post_text)}, icp={bool(icp_description)}"
+            )
             return False, 0.0
-        
+
         passes_filter, similarity_score = embeddings_service.check_similarity(
             post_text, icp_description, threshold
         )
-        
-        logger.info(f"Post {post.id} embeddings similarity: {similarity_score:.1f}% (threshold: {threshold}%)")
+
+        logger.info(
+            f"Post {post.id} embeddings similarity: {similarity_score:.1f}% (threshold: {threshold}%)"
+        )
         return passes_filter, similarity_score
-        
+
     except Exception as e:
         logger.warning(f"Error in embeddings prefilter for post {post.id}: {e}")
         return True, 0.0  # Fall back to LLM scoring on error
@@ -164,7 +172,6 @@ async def process_post_for_icp(
     threshold: int = None,
 ):
     try:
-        # First, apply embeddings prefilter
         passes_embeddings, similarity_score = embeddings_prefilter(post, icp)
         if not passes_embeddings:
             logger.info(
@@ -172,7 +179,6 @@ async def process_post_for_icp(
             )
             return
 
-        # If passes embeddings filter, proceed with LLM scoring
         result = await score_post(post, icp)
         config = get_scraper_config()
         threshold = threshold or config["confidence_threshold"]
@@ -190,7 +196,9 @@ async def process_post_for_icp(
 
         post_data = build_post_data(post, icp, result)
         post_data["embeddings_similarity"] = similarity_score  # Store embeddings score
-        logger.info(f"Inserting post {post.id} with lead_quality {result.final_score}, embeddings_similarity {similarity_score:.1f}%")
+        logger.info(
+            f"Inserting post {post.id} with lead_quality {result.final_score}, embeddings_similarity {similarity_score:.1f}%"
+        )
         db_manager.insert_reddit_post(post_data)
         db_manager.increment_user_qualified_leads(icp.userId)
 
@@ -299,7 +307,7 @@ async def collect_new_posts(
     subreddits: Set[str],
     reddit_client: RedditClient,
     db_manager: ScraperDatabaseManager,
-    limit: int = 25,  # Default limit for polling
+    limit: int = 25,
 ):
     logger.info(f"Collecting new posts for ICP {icp.id} (polling mode, limit={limit})")
 
@@ -314,7 +322,9 @@ async def collect_new_posts(
 
     try:
         posts_processed = 0
-        async for submission in current_subreddit.new(limit=limit * 2):  # Get more to account for duplicates
+        async for submission in current_subreddit.new(
+            limit=limit * 2
+        ):  # Get more to account for duplicates
             try:
                 if asyncio.current_task().cancelled():
                     logger.info(f"Task cancelled for ICP {icp.id}")
@@ -357,7 +367,7 @@ async def run_collection_cycle(
     db_manager: ScraperDatabaseManager, icps: list, current_tasks: list
 ) -> list:
     db_manager.set_system_flag("scraper_paused", False)
-    
+
     if db_manager.get_system_flag("scraper_refresh_needed") or not icps:
         logger.info("Scraper refresh flag detected - stopping all current tasks")
         await cancel_all_tasks(current_tasks)
@@ -377,23 +387,22 @@ async def monitor_skip_flag(db_manager: ScraperDatabaseManager) -> None:
             db_manager.set_system_flag("skip_poll_period", False)
             db_manager.set_system_flag("scraper_paused", False)
             return
-        await asyncio.sleep(1)  
+        await asyncio.sleep(1)
 
 
 async def sleep_until_next_cycle(db_manager: ScraperDatabaseManager) -> None:
     config = get_scraper_config()
     polling_interval = config["polling_interval"]
-    
+
     logger.info(f"Waiting {polling_interval} seconds until next cycle")
     db_manager.set_system_flag("scraper_paused", True)
-    
+
     sleep_task = asyncio.create_task(asyncio.sleep(polling_interval))
     flag_task = asyncio.create_task(monitor_skip_flag(db_manager))
-    
+
     try:
         done, pending = await asyncio.wait(
-            [sleep_task, flag_task], 
-            return_when=asyncio.FIRST_COMPLETED
+            [sleep_task, flag_task], return_when=asyncio.FIRST_COMPLETED
         )
         for task in pending:
             task.cancel()
@@ -401,7 +410,7 @@ async def sleep_until_next_cycle(db_manager: ScraperDatabaseManager) -> None:
                 await task
             except asyncio.CancelledError:
                 pass
-                
+
     except Exception as e:
         sleep_task.cancel()
         flag_task.cancel()
@@ -414,59 +423,13 @@ async def sleep_until_next_cycle(db_manager: ScraperDatabaseManager) -> None:
         db_manager.set_system_flag("scraper_paused", False)
 
 
-async def handle_main_loop_error(error: Exception, db_manager: ScraperDatabaseManager = None) -> None:
+async def handle_main_loop_error(
+    error: Exception, db_manager: ScraperDatabaseManager = None
+) -> None:
     logger.warning(f"Exception in main loop: {error}")
     if db_manager:
         db_manager.set_system_flag("scraper_paused", True)
     await asyncio.sleep(get_scraper_config()["error_retry_delay"])
-
-
-async def collect_leads_on_demand(
-    db_manager: ScraperDatabaseManager, user_id: str = None, limit: int = 50
-) -> dict:
-    """Manually trigger lead collection for specific user or all users"""
-    logger.info(f"Starting on-demand collection (user_id={user_id}, limit={limit})")
-    
-    if user_id:
-        icps = db_manager.get_icps_for_user(user_id)
-    else:
-        icps = db_manager.get_icps()
-    
-    if not icps:
-        return {"success": True, "message": "No ICPs found", "leads_found": 0}
-    
-    total_leads_found = 0
-    
-    for icp in icps:
-        if not db_manager.can_user_add_lead(icp.userId):
-            logger.info(f"User {icp.userId} has reached lead limit - skipping ICP {icp.id}")
-            continue
-            
-        subreddits = get_subreddits_for_icp(icp)
-        if not subreddits:
-            continue
-            
-        reddit_client = RedditClient()
-        
-        try:
-            leads_before = db_manager.get_user_qualified_leads_count(icp.userId)
-            await collect_new_posts(icp, subreddits, reddit_client, db_manager, limit=limit)
-            leads_after = db_manager.get_user_qualified_leads_count(icp.userId)
-            leads_found = leads_after - leads_before
-            total_leads_found += leads_found
-            
-            logger.info(f"Found {leads_found} new leads for ICP {icp.id}")
-            
-        except Exception as e:
-            logger.warning(f"Error in on-demand collection for ICP {icp.id}: {e}")
-            continue
-    
-    logger.info(f"On-demand collection completed. Total leads found: {total_leads_found}")
-    return {
-        "success": True, 
-        "message": f"Collection completed for {len(icps)} ICPs",
-        "leads_found": total_leads_found
-    }
 
 
 async def main():

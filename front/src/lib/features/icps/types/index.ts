@@ -29,14 +29,3 @@ export interface CreateIcpFormProps {
   onSuccess?: () => void
   editingIcp?: ICP | null
 }
-
-export interface ICPConfigChangeRequest {
-  action: 'create' | 'update' | 'delete'
-  icp_id?: number
-  user_id: string
-}
-
-export interface ICPConfigChangeResponse {
-  success: boolean
-  message: string
-}

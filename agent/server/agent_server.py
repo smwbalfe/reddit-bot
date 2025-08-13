@@ -68,9 +68,6 @@ async def generate_suggestions_endpoint(request: GenerateSuggestionsRequest):
         )
 
 
-
-
-
 @app.post("/api/generate-reply", response_model=GenerateReplyResponse)
 async def generate_reply_endpoint(request: GenerateReplyRequest):
     try:
@@ -82,6 +79,7 @@ async def generate_reply_endpoint(request: GenerateReplyRequest):
         raise HTTPException(
             status_code=500, detail=f"Failed to generate reply: {str(e)}"
         )
+
 
 @app.get("/health")
 async def health_check():
