@@ -16,9 +16,10 @@ export async function getUserPosts() {
 
     // Check subscription status to determine lead limit
     const subscription = await checkSubscription()
-    const leadLimit = subscription.isSubscribed ? 500 : 100
+    // Premium users have unlimited leads, free users are capped at 500
+    const leadLimit = subscription.isSubscribed ? undefined : 500
 
-    const userPosts = await db.select({
+    const baseQuery = db.select({
       id: redditPosts.id,
       configId: redditPosts.icpId,
       subreddit: redditPosts.subreddit,
@@ -35,7 +36,9 @@ export async function getUserPosts() {
       .innerJoin(icps, eq(redditPosts.icpId, icps.id))
       .where(eq(icps.userId, user.id))
       .orderBy(desc(redditPosts.createdAt))
-      .limit(leadLimit)
+
+    // Apply limit only for free users (premium users have no limit)
+    const userPosts = await (leadLimit ? baseQuery.limit(leadLimit) : baseQuery)
     
     return userPosts
   } catch (error) {

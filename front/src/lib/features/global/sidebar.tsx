@@ -94,7 +94,7 @@ export default function Sidebar({ isOpen, onClose }: SidebarProps) {
             <div>
               <div className="flex items-center justify-between mb-2">
                 <span className="text-sm font-medium text-gray-700">Monthly Replies</span>
-                {usage.repliesGenerated >= usage.limit && (
+                {usage.replyLimit && usage.repliesGenerated >= usage.replyLimit && (
                   <AlertTriangle className="h-4 w-4 text-red-500" />
                 )}
               </div>
@@ -102,21 +102,23 @@ export default function Sidebar({ isOpen, onClose }: SidebarProps) {
                 <div className="flex-1 bg-gray-200 rounded-full h-2">
                   <div 
                     className={`h-2 rounded-full transition-all ${
-                      usage.repliesGenerated >= usage.limit 
+                      usage.replyLimit && usage.repliesGenerated >= usage.replyLimit
                         ? 'bg-red-500' 
-                        : usage.repliesGenerated / usage.limit > 0.8
+                        : usage.replyLimit && usage.repliesGenerated / usage.replyLimit > 0.8
                           ? 'bg-yellow-500'
                           : 'bg-green-500'
                     }`}
                     style={{ 
-                      width: `${Math.min(100, (usage.repliesGenerated / usage.limit) * 100)}%` 
+                      width: usage.replyLimit 
+                        ? `${Math.min(100, (usage.repliesGenerated / usage.replyLimit) * 100)}%`
+                        : '100%'
                     }}
                   />
                 </div>
               </div>
               <div className="flex items-center justify-between text-xs text-gray-600">
-                <span>{usage.repliesGenerated} / {usage.limit}</span>
-                {usage.repliesGenerated >= usage.limit && (
+                <span>{usage.repliesGenerated} / {usage.replyLimit || '∞'}</span>
+                {usage.replyLimit && usage.repliesGenerated >= usage.replyLimit && (
                   <span className="text-red-600 font-medium">Limit reached</span>
                 )}
               </div>
@@ -126,7 +128,7 @@ export default function Sidebar({ isOpen, onClose }: SidebarProps) {
             <div>
               <div className="flex items-center justify-between mb-2">
                 <span className="text-sm font-medium text-gray-700">Qualified Leads</span>
-                {usage.leadCount >= usage.limit && (
+                {usage.limit && usage.leadCount >= usage.limit && (
                   <AlertTriangle className="h-4 w-4 text-red-500" />
                 )}
               </div>
@@ -134,27 +136,29 @@ export default function Sidebar({ isOpen, onClose }: SidebarProps) {
                 <div className="flex-1 bg-gray-200 rounded-full h-2">
                   <div 
                     className={`h-2 rounded-full transition-all ${
-                      usage.leadCount >= usage.limit 
+                      usage.limit && usage.leadCount >= usage.limit
                         ? 'bg-red-500' 
-                        : usage.leadCount / usage.limit > 0.8
+                        : usage.limit && usage.leadCount / usage.limit > 0.8
                           ? 'bg-yellow-500'
                           : 'bg-blue-500'
                     }`}
                     style={{ 
-                      width: `${Math.min(100, (usage.leadCount / usage.limit) * 100)}%` 
+                      width: usage.limit
+                        ? `${Math.min(100, (usage.leadCount / usage.limit) * 100)}%`
+                        : '100%'
                     }}
                   />
                 </div>
               </div>
               <div className="flex items-center justify-between text-xs text-gray-600">
-                <span>{usage.leadCount} / {usage.limit}</span>
-                {usage.leadCount >= usage.limit && (
+                <span>{usage.leadCount} / {usage.limit || '∞'}</span>
+                {usage.limit && usage.leadCount >= usage.limit && (
                   <span className="text-red-600 font-medium">Limit reached</span>
                 )}
               </div>
             </div>
 
-            {usage.repliesGenerated >= usage.limit * 0.8 && usage.repliesGenerated < usage.limit && (
+            {usage.replyLimit && usage.repliesGenerated >= usage.replyLimit * 0.8 && usage.repliesGenerated < usage.replyLimit && (
               <Button 
                 size="sm" 
                 variant="outline" 
@@ -268,7 +272,7 @@ export default function Sidebar({ isOpen, onClose }: SidebarProps) {
                 <div>
                   <div className="flex items-center justify-between mb-2">
                     <span className="text-sm font-medium text-gray-700">Monthly Replies</span>
-                    {usage.repliesGenerated >= usage.limit && (
+                    {usage.replyLimit && usage.repliesGenerated >= usage.replyLimit && (
                       <AlertTriangle className="h-4 w-4 text-red-500" />
                     )}
                   </div>
@@ -276,21 +280,23 @@ export default function Sidebar({ isOpen, onClose }: SidebarProps) {
                     <div className="flex-1 bg-gray-200 rounded-full h-2">
                       <div 
                         className={`h-2 rounded-full transition-all ${
-                          usage.repliesGenerated >= usage.limit 
+                          usage.replyLimit && usage.repliesGenerated >= usage.replyLimit
                             ? 'bg-red-500' 
-                            : usage.repliesGenerated / usage.limit > 0.8
+                            : usage.replyLimit && usage.repliesGenerated / usage.replyLimit > 0.8
                               ? 'bg-yellow-500'
                               : 'bg-green-500'
                         }`}
                         style={{ 
-                          width: `${Math.min(100, (usage.repliesGenerated / usage.limit) * 100)}%` 
+                          width: usage.replyLimit
+                            ? `${Math.min(100, (usage.repliesGenerated / usage.replyLimit) * 100)}%`
+                            : '100%'
                         }}
                       />
                     </div>
                   </div>
                   <div className="flex items-center justify-between text-xs text-gray-600">
-                    <span>{usage.repliesGenerated} / {usage.limit}</span>
-                    {usage.repliesGenerated >= usage.limit && (
+                    <span>{usage.repliesGenerated} / {usage.replyLimit || '∞'}</span>
+                    {usage.replyLimit && usage.repliesGenerated >= usage.replyLimit && (
                       <span className="text-red-600 font-medium">Limit reached</span>
                     )}
                   </div>
@@ -300,7 +306,7 @@ export default function Sidebar({ isOpen, onClose }: SidebarProps) {
                 <div>
                   <div className="flex items-center justify-between mb-2">
                     <span className="text-sm font-medium text-gray-700">Qualified Leads</span>
-                    {usage.leadCount >= usage.limit && (
+                    {usage.limit && usage.leadCount >= usage.limit && (
                       <AlertTriangle className="h-4 w-4 text-red-500" />
                     )}
                   </div>
@@ -308,27 +314,29 @@ export default function Sidebar({ isOpen, onClose }: SidebarProps) {
                     <div className="flex-1 bg-gray-200 rounded-full h-2">
                       <div 
                         className={`h-2 rounded-full transition-all ${
-                          usage.leadCount >= usage.limit 
+                          usage.limit && usage.leadCount >= usage.limit
                             ? 'bg-red-500' 
-                            : usage.leadCount / usage.limit > 0.8
+                            : usage.limit && usage.leadCount / usage.limit > 0.8
                               ? 'bg-yellow-500'
                               : 'bg-blue-500'
                         }`}
                         style={{ 
-                          width: `${Math.min(100, (usage.leadCount / usage.limit) * 100)}%` 
+                          width: usage.limit
+                            ? `${Math.min(100, (usage.leadCount / usage.limit) * 100)}%`
+                            : '100%'
                         }}
                       />
                     </div>
                   </div>
                   <div className="flex items-center justify-between text-xs text-gray-600">
-                    <span>{usage.leadCount} / {usage.limit}</span>
-                    {usage.leadCount >= usage.limit && (
+                    <span>{usage.leadCount} / {usage.limit || '∞'}</span>
+                    {usage.limit && usage.leadCount >= usage.limit && (
                       <span className="text-red-600 font-medium">Limit reached</span>
                     )}
                   </div>
                 </div>
 
-                {usage.repliesGenerated >= usage.limit * 0.8 && usage.repliesGenerated < usage.limit && (
+                {usage.replyLimit && usage.repliesGenerated >= usage.replyLimit * 0.8 && usage.repliesGenerated < usage.replyLimit && (
                   <Button 
                     size="sm" 
                     variant="outline" 

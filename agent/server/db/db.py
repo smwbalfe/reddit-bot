@@ -27,17 +27,27 @@ class ServerDatabaseManager:
     def _get_connection(self):
         return psycopg2.connect(self.database_url, cursor_factory=RealDictCursor)
 
-    def set_system_flag(self, key: str, value: bool) -> bool:
+    def set_system_flag(self, key: str, value) -> bool:
         try:
             with self._get_connection() as conn:
                 with conn.cursor() as cur:
-                    cur.execute(
-                        """INSERT INTO "SystemFlag" (key, value, "updatedAt") 
-                           VALUES (%s, %s, NOW()) 
-                           ON CONFLICT (key) 
-                           DO UPDATE SET value = EXCLUDED.value, "updatedAt" = NOW()""",
-                        (key, value),
-                    )
+                    # Handle both boolean and string values
+                    if isinstance(value, str):
+                        cur.execute(
+                            """INSERT INTO "SystemFlag" (key, "stringValue", "updatedAt") 
+                               VALUES (%s, %s, NOW()) 
+                               ON CONFLICT (key) 
+                               DO UPDATE SET "stringValue" = EXCLUDED."stringValue", "updatedAt" = NOW()""",
+                            (key, value),
+                        )
+                    else:
+                        cur.execute(
+                            """INSERT INTO "SystemFlag" (key, value, "updatedAt") 
+                               VALUES (%s, %s, NOW()) 
+                               ON CONFLICT (key) 
+                               DO UPDATE SET value = EXCLUDED.value, "updatedAt" = NOW()""",
+                            (key, value),
+                        )
                     conn.commit()
                     return True
         except Exception as e:

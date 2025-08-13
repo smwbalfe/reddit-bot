@@ -7,6 +7,7 @@ import { makeServerClient } from '@/src/lib/services/supabase/server'
 
 interface UserUsageData {
   repliesGenerated: number
+  leadsQualified: number
 }
 
 export async function getUserUsage(): Promise<UserUsageData> {
@@ -35,7 +36,8 @@ export async function getUserUsage(): Promise<UserUsageData> {
       .limit(1)
 
     return {
-      repliesGenerated: usage.length > 0 ? usage[0].repliesGenerated : 0
+      repliesGenerated: usage.length > 0 ? usage[0].repliesGenerated : 0,
+      leadsQualified: usage.length > 0 ? usage[0].qualifiedLeads : 0
     }
   } catch (error) {
     console.error('Error fetching user usage:', error)

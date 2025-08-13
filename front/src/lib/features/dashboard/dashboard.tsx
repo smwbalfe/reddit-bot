@@ -1,13 +1,13 @@
 "use client"
 
 import { useUser } from "@/src/lib/features/auth/hooks/use-user"
-import { useEffect } from "react"
+import { useEffect, useState } from "react"
 import { Card, CardContent, CardHeader, CardTitle } from "@/src/lib/components/ui/card"
 import { MessageSquare, TrendingUp, Activity, Target, Calendar, BarChart3, Zap } from "lucide-react"
 import Link from "next/link"
 import { useDashboardStore } from "@/src/lib/store"
 import { useDashboardMetrics } from "@/src/lib/features/dashboard/hooks/use-dashboard-metrics"
-import { useUsageStats } from "@/src/lib/features/dashboard/hooks/use-usage-stats"
+import { triggerLeadSearch } from "@/src/lib/actions/leads/trigger-lead-search"
 
 export function Dashboard() {
   const { user } = useUser()
@@ -18,14 +18,41 @@ export function Dashboard() {
     fetchDashboardData 
   } = useDashboardStore()
   
+  const [isSearching, setIsSearching] = useState(false)
+  const [searchMessage, setSearchMessage] = useState("")
+  
   const metrics = useDashboardMetrics(posts)
-  const { stats: usageStats, isLoading: usageLoading } = useUsageStats()
 
   useEffect(() => {
     if (user?.id) {
       fetchDashboardData()
     }
   }, [user?.id, fetchDashboardData])
+
+  const handleTriggerLeadSearch = async () => {
+    if (!user?.id) return
+    
+    setIsSearching(true)
+    setSearchMessage("")
+    
+    try {
+      const result = await triggerLeadSearch({ userId: user.id })
+      
+      if (result.success) {
+        setSearchMessage("Lead search triggered successfully! Check back in a few minutes for new leads.")
+        // Refresh data after a delay
+        setTimeout(() => {
+          fetchDashboardData()
+        }, 30000) // 30 seconds
+      } else {
+        setSearchMessage(result.message)
+      }
+    } catch (error) {
+      setSearchMessage("Failed to trigger lead search. Please try again.")
+    } finally {
+      setIsSearching(false)
+    }
+  }
 
   if (!user) {
     return (
@@ -118,6 +145,62 @@ export function Dashboard() {
               </CardContent>
             </Card>
           </div>
+
+          {/* Manual Lead Search Trigger */}
+          <Card className="border-0 shadow-sm bg-gradient-to-r from-blue-50 to-blue-100">
+            <CardContent className="p-6">
+              <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+                <div className="flex-1">
+                  <div className="flex items-center gap-3 mb-2">
+                    <div className="h-10 w-10 bg-blue-600 rounded-lg flex items-center justify-center">
+                      <Zap className="h-5 w-5 text-white" />
+                    </div>
+                    <div>
+                      <h3 className="text-lg font-semibold text-slate-900">Search for New Leads</h3>
+                      <p className="text-sm text-slate-600">Trigger an immediate search for fresh leads across all your products</p>
+                    </div>
+                  </div>
+                  {searchMessage && (
+                    <div className={`mt-3 p-3 rounded-lg text-sm ${
+                      searchMessage.includes("successfully") 
+                        ? "bg-green-50 text-green-700 border border-green-200" 
+                        : "bg-red-50 text-red-700 border border-red-200"
+                    }`}>
+                      {searchMessage}
+                    </div>
+                  )}
+                </div>
+                <div className="flex-shrink-0">
+                  <button
+                    onClick={handleTriggerLeadSearch}
+                    disabled={isSearching || configs.length === 0}
+                    className={`inline-flex items-center gap-2 px-6 py-3 rounded-lg font-medium transition-all duration-200 ${
+                      isSearching || configs.length === 0
+                        ? "bg-slate-200 text-slate-500 cursor-not-allowed"
+                        : "bg-blue-600 hover:bg-blue-700 text-white shadow-lg hover:shadow-xl"
+                    }`}
+                  >
+                    {isSearching ? (
+                      <>
+                        <div className="animate-spin rounded-full h-4 w-4 border-2 border-slate-300 border-t-slate-600"></div>
+                        Searching...
+                      </>
+                    ) : (
+                      <>
+                        <Zap className="h-4 w-4" />
+                        Find New Leads
+                      </>
+                    )}
+                  </button>
+                  {configs.length === 0 && (
+                    <p className="text-xs text-slate-500 mt-2 text-center">
+                      Create a product first
+                    </p>
+                  )}
+                </div>
+              </div>
+            </CardContent>
+          </Card>
 
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6">
             <Card className="border-0 shadow-sm bg-white">

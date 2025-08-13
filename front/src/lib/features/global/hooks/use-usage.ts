@@ -4,11 +4,15 @@ import { useState, useEffect } from 'react'
 import { useUser } from '@/src/lib/features/auth/hooks/use-user'
 import { checkLeadLimit } from '@/src/lib/actions/config/check-lead-limit'
 import { getUserUsage } from '@/src/lib/actions/usage/get-user-usage'
+import { checkSubscription } from '@/src/lib/actions/payment/check-subscription'
+import env from '@/src/lib/env'
 
 interface UsageData {
     repliesGenerated: number
+    leadsQualified: number
     leadCount: number
-    limit: number
+    limit: number | null  // lead limit (null for premium)
+    replyLimit: number | null  // reply limit (null for premium)
     isAtLimit: boolean
     isSubscribed: boolean
 }
@@ -26,15 +30,20 @@ export function useUsage() {
             }
 
             try {
-                const [leadData, usageData] = await Promise.all([
+                const [leadData, usageData, subscription] = await Promise.all([
                     checkLeadLimit(),
-                    getUserUsage()
+                    getUserUsage(),
+                    checkSubscription()
                 ])
+
+                const replyLimit = subscription.isSubscribed ? null : env.FREE_REPLY_LIMIT
 
                 setUsage({
                     repliesGenerated: usageData.repliesGenerated,
+                    leadsQualified: usageData.leadsQualified,
                     leadCount: leadData.leadCount,
                     limit: leadData.limit,
+                    replyLimit,
                     isAtLimit: leadData.isAtLimit,
                     isSubscribed: leadData.isSubscribed
                 })

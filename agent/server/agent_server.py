@@ -14,7 +14,20 @@ from shared.models.server_models import (
     GenerateReplyRequest,
     GenerateReplyResponse,
 )
+from pydantic import BaseModel
+from typing import Optional
 from server.utils.parse_page import fetch_html, parse_html_content
+
+
+class TriggerLeadSearchRequest(BaseModel):
+    user_id: Optional[str] = None
+    limit: Optional[int] = 50
+
+
+class TriggerLeadSearchResponse(BaseModel):
+    success: bool
+    message: str
+    leads_found: int
 
 
 app = FastAPI(title="Keyword Generation API", version="1.0.0")
@@ -87,6 +100,34 @@ async def generate_reply_endpoint(request: GenerateReplyRequest):
     except Exception as e:
         raise HTTPException(
             status_code=500, detail=f"Failed to generate reply: {str(e)}"
+        )
+
+
+@app.post("/api/trigger-lead-search", response_model=TriggerLeadSearchResponse)
+async def trigger_lead_search_endpoint(request: TriggerLeadSearchRequest):
+    try:
+        db_manager = ServerDatabaseManager()
+        
+        # Trigger manual collection by setting a system flag
+        success = db_manager.set_system_flag("manual_collection_requested", True)
+        if request.user_id:
+            db_manager.set_system_flag("manual_collection_user_id", request.user_id)
+        if request.limit:
+            db_manager.set_system_flag("manual_collection_limit", str(request.limit))
+        
+        if not success:
+            raise HTTPException(
+                status_code=500, detail="Failed to trigger lead search"
+            )
+        
+        return TriggerLeadSearchResponse(
+            success=True,
+            message="Lead search triggered successfully. Results will be available shortly.",
+            leads_found=0  # Will be updated by the scraper
+        )
+    except Exception as e:
+        raise HTTPException(
+            status_code=500, detail=f"Failed to trigger lead search: {str(e)}"
         )
 
 

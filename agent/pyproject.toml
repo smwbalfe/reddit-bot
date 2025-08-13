@@ -17,7 +17,9 @@ dependencies = [
     "aiohttp",
     "beautifulsoup4",
     "lxml",
-    "upstash-redis"
+    "upstash-redis",
+    "openai",
+    "numpy"
 ]
 
 requires-python = ">=3.10"

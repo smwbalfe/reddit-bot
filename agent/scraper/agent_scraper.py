@@ -5,6 +5,7 @@ from scraper.db.db import ScraperDatabaseManager
 from shared.reddit.client import RedditClient
 from shared.models.db_models import ICPModel
 from scraper.lead_scoring.lead_scoring_service import score_lead_intent_two_stage
+from scraper.embeddings.openai_embeddings_service import embeddings_service
 from asyncpraw.models import Submission
 
 import logging
@@ -15,7 +16,7 @@ logger = logging.getLogger("agent_scraper")
 
 def get_scraper_config() -> dict:
     return {
-        "collection_interval": 1,
+        "polling_interval": 300,  # 5 minutes default polling
         "confidence_threshold": 30,
         "initial_seeding_posts_per_subreddit": 50,
         "error_retry_delay": 60,
@@ -134,6 +135,28 @@ def should_process_post(post: Submission, db_manager: ScraperDatabaseManager) ->
     return not exists
 
 
+def embeddings_prefilter(post: Submission, icp: ICPModel, threshold: float = 35.0) -> tuple[bool, float]:
+    """Use OpenAI embeddings to prefilter posts before expensive LLM scoring"""
+    try:
+        post_text = f"{post.title} {post.selftext or ''}".strip()
+        icp_description = icp.data.description if icp.data and icp.data.description else ""
+        
+        if not post_text or not icp_description:
+            logger.warning(f"Missing text for embeddings check: post={bool(post_text)}, icp={bool(icp_description)}")
+            return False, 0.0
+        
+        passes_filter, similarity_score = embeddings_service.check_similarity(
+            post_text, icp_description, threshold
+        )
+        
+        logger.info(f"Post {post.id} embeddings similarity: {similarity_score:.1f}% (threshold: {threshold}%)")
+        return passes_filter, similarity_score
+        
+    except Exception as e:
+        logger.warning(f"Error in embeddings prefilter for post {post.id}: {e}")
+        return True, 0.0  # Fall back to LLM scoring on error
+
+
 async def process_post_for_icp(
     post: Submission,
     icp: ICPModel,
@@ -141,6 +164,15 @@ async def process_post_for_icp(
     threshold: int = None,
 ):
     try:
+        # First, apply embeddings prefilter
+        passes_embeddings, similarity_score = embeddings_prefilter(post, icp)
+        if not passes_embeddings:
+            logger.info(
+                f"Post {post.id} filtered out by embeddings prefilter (similarity: {similarity_score:.1f}%)"
+            )
+            return
+
+        # If passes embeddings filter, proceed with LLM scoring
         result = await score_post(post, icp)
         config = get_scraper_config()
         threshold = threshold or config["confidence_threshold"]
@@ -157,7 +189,8 @@ async def process_post_for_icp(
             return
 
         post_data = build_post_data(post, icp, result)
-        logger.info(f"Inserting post {post.id} with lead_quality {result.final_score}")
+        post_data["embeddings_similarity"] = similarity_score  # Store embeddings score
+        logger.info(f"Inserting post {post.id} with lead_quality {result.final_score}, embeddings_similarity {similarity_score:.1f}%")
         db_manager.insert_reddit_post(post_data)
         db_manager.increment_user_qualified_leads(icp.userId)
 
@@ -266,12 +299,13 @@ async def collect_new_posts(
     subreddits: Set[str],
     reddit_client: RedditClient,
     db_manager: ScraperDatabaseManager,
+    limit: int = 25,  # Default limit for polling
 ):
-    logger.info(f"Collecting new posts for ICP {icp.id}")
+    logger.info(f"Collecting new posts for ICP {icp.id} (polling mode, limit={limit})")
 
     if not db_manager.can_user_add_lead(icp.userId):
         logger.info(
-            f"User {icp.userId} has reached lead limit - skipping stream for ICP {icp.id}"
+            f"User {icp.userId} has reached lead limit - skipping collection for ICP {icp.id}"
         )
         return
 
@@ -279,7 +313,8 @@ async def collect_new_posts(
     current_subreddit = await reddit_client.get_subreddit(subreddit_string)
 
     try:
-        async for submission in current_subreddit.new(limit=None):
+        posts_processed = 0
+        async for submission in current_subreddit.new(limit=limit * 2):  # Get more to account for duplicates
             try:
                 if asyncio.current_task().cancelled():
                     logger.info(f"Task cancelled for ICP {icp.id}")
@@ -287,13 +322,18 @@ async def collect_new_posts(
 
                 if db_manager.get_system_flag("scraper_refresh_needed"):
                     logger.info(
-                        f"Refresh flag detected - cancelling stream for ICP {icp.id}"
+                        f"Refresh flag detected - stopping collection for ICP {icp.id}"
                     )
+                    break
+
+                if posts_processed >= limit:
+                    logger.info(f"Reached limit of {limit} posts for ICP {icp.id}")
                     break
 
                 if should_process_post(submission, db_manager):
                     logger.info(f"Processing post {submission.id} for ICP {icp.id}")
                     await process_post_for_icp(submission, icp, db_manager)
+                    posts_processed += 1
 
             except asyncio.CancelledError:
                 logger.info(f"Collection task cancelled for ICP {icp.id}")
@@ -303,6 +343,8 @@ async def collect_new_posts(
                     f"Exception processing submission {getattr(submission, 'id', 'unknown')} for ICP {icp.id}: {e}"
                 )
                 continue
+
+        logger.info(f"Processed {posts_processed} new posts for ICP {icp.id}")
 
     except asyncio.CancelledError:
         logger.info(f"Collection cancelled for ICP {icp.id}")
@@ -327,13 +369,61 @@ async def run_collection_cycle(
 
 async def sleep_until_next_cycle() -> None:
     config = get_scraper_config()
-    logger.info(f"Waiting {config['collection_interval']} seconds until next cycle")
-    await asyncio.sleep(config["collection_interval"])
+    logger.info(f"Waiting {config['polling_interval']} seconds until next cycle")
+    await asyncio.sleep(config["polling_interval"])
 
 
 async def handle_main_loop_error(error: Exception) -> None:
     logger.warning(f"Exception in main loop: {error}")
     await asyncio.sleep(get_scraper_config()["error_retry_delay"])
+
+
+async def collect_leads_on_demand(
+    db_manager: ScraperDatabaseManager, user_id: str = None, limit: int = 50
+) -> dict:
+    """Manually trigger lead collection for specific user or all users"""
+    logger.info(f"Starting on-demand collection (user_id={user_id}, limit={limit})")
+    
+    if user_id:
+        icps = db_manager.get_icps_for_user(user_id)
+    else:
+        icps = db_manager.get_icps()
+    
+    if not icps:
+        return {"success": True, "message": "No ICPs found", "leads_found": 0}
+    
+    total_leads_found = 0
+    
+    for icp in icps:
+        if not db_manager.can_user_add_lead(icp.userId):
+            logger.info(f"User {icp.userId} has reached lead limit - skipping ICP {icp.id}")
+            continue
+            
+        subreddits = get_subreddits_for_icp(icp)
+        if not subreddits:
+            continue
+            
+        reddit_client = RedditClient()
+        
+        try:
+            leads_before = db_manager.get_user_qualified_leads_count(icp.userId)
+            await collect_new_posts(icp, subreddits, reddit_client, db_manager, limit=limit)
+            leads_after = db_manager.get_user_qualified_leads_count(icp.userId)
+            leads_found = leads_after - leads_before
+            total_leads_found += leads_found
+            
+            logger.info(f"Found {leads_found} new leads for ICP {icp.id}")
+            
+        except Exception as e:
+            logger.warning(f"Error in on-demand collection for ICP {icp.id}: {e}")
+            continue
+    
+    logger.info(f"On-demand collection completed. Total leads found: {total_leads_found}")
+    return {
+        "success": True, 
+        "message": f"Collection completed for {len(icps)} ICPs",
+        "leads_found": total_leads_found
+    }
 
 
 async def main():
@@ -344,6 +434,25 @@ async def main():
 
     while True:
         try:
+            # Check for manual collection trigger
+            if db_manager.get_system_flag("manual_collection_requested"):
+                logger.info("Manual collection requested")
+                db_manager.set_system_flag("manual_collection_requested", False)
+                
+                # Get optional parameters
+                user_id = db_manager.get_system_string_flag("manual_collection_user_id")
+                limit_str = db_manager.get_system_string_flag("manual_collection_limit")
+                limit = int(limit_str) if limit_str else 50
+                
+                result = await collect_leads_on_demand(db_manager, user_id, limit)
+                logger.info(f"Manual collection result: {result}")
+                
+                # Clear the parameter flags
+                if user_id:
+                    db_manager.set_system_flag("manual_collection_user_id", "")
+                if limit_str:
+                    db_manager.set_system_flag("manual_collection_limit", "")
+            
             icps = await run_collection_cycle(db_manager, icps, current_tasks)
             await sleep_until_next_cycle()
         except Exception as e:

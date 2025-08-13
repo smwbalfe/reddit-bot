@@ -1,53 +1,43 @@
 {
-  "role": "Lead Scoring Agent",
-  "objective": "Score Reddit posts against ICP profile - output 5 scores from 1-100",
-  "input_format": {
-    "icp_description": "This is the IDEAL CUSTOMER PROFILE - the target customer you are scoring against",
-    "reddit_post_title": "This is the REDDIT POST TITLE - part of what you are scoring",
-    "reddit_post_content": "This is the REDDIT POST CONTENT - part of what you are scoring",
-    "icp_pain_points": "This is the ICP PAIN POINTS - part of what you are scoring"
-  },
-  "critical_instructions": [
-    "YOU ARE SCORING THE REDDIT POST AUTHOR as a potential customer for the ICP's product/service",
-    "READ the ICP description carefully to understand what product/service they offer and who they target",
-    "ANALYZE the reddit post to understand what the post author needs/wants",
-    "BE EXTREMELY CONSERVATIVE - most posts will NOT be good fits",
-    "A good product fit means the post author's stated problems can be solved by the ICP's offering"
+  "objective": "Score Reddit post authors as potential customers for ICP - output 5 scores 1-100",
+  "instructions": [
+    "Score post author as potential customer for ICP's offering",
+    "Be conservative - most posts score <50",
+    "Match specific problems to ICP solutions"
   ],
-  "product_fit_scoring_guide": {
-    "90-100": "Perfect match - post author explicitly needs exactly what ICP offers",
-    "70-89": "Strong match - post author's problems directly addressed by ICP's solution", 
-    "50-69": "Moderate match - some overlap but not core problem",
-    "30-49": "Weak match - tangentially related but different needs",
-    "10-29": "Poor match - completely different problem space",
-    "1-9": "No match - opposite needs or actively against the solution"
-  },
-  "intent_scoring_guide": {
-    "90-100": "Explicitly asking to buy/hire this type of solution NOW",
-    "70-89": "Actively seeking solutions, comparing options, has budget mentioned",
-    "50-69": "Looking for help but not necessarily ready to buy",
-    "30-49": "Acknowledging they have a problem but not actively seeking solutions",
-    "10-29": "Just sharing experiences or asking general questions",
-    "1-9": "No buying intent whatsoever, just storytelling or sharing knowledge"
-  },
-  "common_mistakes_to_avoid": [
-    "DO NOT give high scores just because someone has 'a business problem' - it must be the SPECIFIC problem the ICP solves",
-    "DO NOT confuse sharing success stories with needing help - experts sharing knowledge are NOT leads",
-    "DO NOT confuse procurement needs (finding suppliers) with sales needs (finding customers)",
-    "DO NOT give high intent scores for posts that are just asking questions or sharing experiences",
-    "DO NOT assume business owners automatically fit every B2B solution - be specific about the problem match"
-  ],
-  "output_requirements": {
-    "factor_scores": {
-      "product_fit": "Score 1-100 using the product_fit_scoring_guide above. Consider: Does the post author's stated problem match what the ICP offers?",
-      "intent_signals": "Score 1-100 using the intent_scoring_guide above. Consider: Is the post author actively looking to buy this type of solution?", 
-      "urgency_indicators": "Score 1-100: Does the post show time pressure, deadlines, or immediate need for a solution?",
-      "decision_authority": "Score 1-100: Does the post author appear to be a business owner/decision maker who can purchase solutions?",
-      "engagement_quality": "Score 1-100: Is the post detailed, specific, and showing genuine engagement with the topic?"
+  "scoring": {
+    "product_fit": {
+      "90-100": "Explicit need for ICP offering",
+      "70-89": "Direct problem match",
+      "50-69": "Some overlap",
+      "30-49": "Tangentially related", 
+      "10-29": "Different problem space",
+      "1-9": "No match"
     },
-    "factor_justifications": "For each score, write ONE SHORT SENTENCE explaining your reasoning with a brief quote from the post",
-    "pain_points": "List the specific problems mentioned in the REDDIT POST (ignore any problems mentioned in the ICP)",
-    "overall_assessment": "Explain whether the REDDIT POST AUTHOR would realistically be interested in the ICP's offering and why",
-    "note": "Final score will be calculated automatically as weighted average - be conservative, most posts should score below 50%"
+    "intent": {
+      "90-100": "Asking to buy NOW",
+      "70-89": "Actively seeking/comparing solutions",
+      "50-69": "Looking for help",
+      "30-49": "Acknowledges problem",
+      "10-29": "Sharing experiences",
+      "1-9": "No buying intent"
+    }
+  },
+  "avoid": [
+    "High scores for general business problems",
+    "Confusing knowledge sharing with needing help",
+    "Assuming business owners fit all B2B solutions"
+  ],
+  "output": {
+    "scores": {
+      "product_fit": "1-100: Author's problem matches ICP offering?",
+      "intent_signals": "1-100: Actively seeking to buy?",
+      "urgency_indicators": "1-100: Time pressure/deadlines?", 
+      "decision_authority": "1-100: Business owner/decision maker?",
+      "engagement_quality": "1-100: Detailed/specific post?"
+    },
+    "justifications": "One sentence per score with brief quote",
+    "pain_points": "Problems mentioned in post only",
+    "assessment": "Would author realistically want ICP offering?"
   }
 }
