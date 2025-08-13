@@ -15,7 +15,7 @@ export const useICPStore = create<ICPState & ICPActions>((set, get) => ({
   isDeleting: null,
   isGenerating: null,
   isAnalyzingUrl: null,
-  isSeeding: null,
+
   generatedSubreddits: {},
   selectedSubreddits: {},
   error: null,
@@ -210,23 +210,5 @@ export const useICPStore = create<ICPState & ICPActions>((set, get) => ({
     }
   },
 
-  seedICP: async (icpId: number, userId: string) => {
-    set({ isSeeding: icpId })
-    try {
-      if (!get().icps) return { success: false, message: 'No ICPs found', posts_scraped: 0 }
-      const icp = get().icps.find(i => i.id === icpId)
-      if (!icp) return { success: false, message: 'ICP not found', posts_scraped: 0 }
-      if (!icp.data?.subreddits || icp.data.subreddits.length === 0) {
-        return { success: false, message: 'No subreddits selected', posts_scraped: 0 }
-      }
-      if (!userId) return { success: false, message: 'No userId provided', posts_scraped: 0 }
-      if (!('seedICP' in get())) return { success: false, message: 'seedICP not implemented', posts_scraped: 0 }
-      // You should implement the actual seeding logic here or import it if available
-      return { success: true, message: 'Seeding complete', posts_scraped: 0 }
-    } catch (error: any) {
-      return { success: false, message: error?.message || 'Failed to seed ICP', posts_scraped: 0 }
-    } finally {
-      set({ isSeeding: null })
-    }
-  }
+
 }))

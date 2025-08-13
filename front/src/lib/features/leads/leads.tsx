@@ -543,7 +543,7 @@ export function LeadsPage() {
                                                 }}
                                                 variant="outline"
                                                 size="sm"
-                                                className="text-xs"
+                           cd                     className="text-xs"
                                               >
                                                 Copy & Go to Reddit
                                               </Button>

@@ -5,18 +5,16 @@ import { useEffect, useState } from "react"
 import { Card, CardContent, CardHeader, CardTitle } from "@/src/lib/components/ui/card"
 import { MessageSquare, TrendingUp, Activity, Target, Calendar, BarChart3, Zap } from "lucide-react"
 import Link from "next/link"
-import { useDashboardStore } from "@/src/lib/store"
+import { getUserConfigs } from "@/src/lib/actions/config/get-user-configs"
+import { getUserPosts } from "@/src/lib/actions/config/get-user-posts"
 import { useDashboardMetrics } from "@/src/lib/features/dashboard/hooks/use-dashboard-metrics"
 
 
 export function Dashboard() {
   const { user } = useUser()
-  const { 
-    configs, 
-    posts, 
-    isLoading: loading, 
-    fetchDashboardData 
-  } = useDashboardStore()
+  const [configs, setConfigs] = useState([])
+  const [posts, setPosts] = useState([])
+  const [loading, setLoading] = useState(true)
   
   const [isSearching, setIsSearching] = useState(false)
   const [searchMessage, setSearchMessage] = useState("")
@@ -25,9 +23,25 @@ export function Dashboard() {
 
   useEffect(() => {
     if (user?.id) {
-      fetchDashboardData()
+      fetchData()
     }
-  }, [user?.id, fetchDashboardData])
+  }, [user?.id])
+
+  const fetchData = async () => {
+    setLoading(true)
+    try {
+      const [configsData, postsData] = await Promise.all([
+        getUserConfigs(),
+        getUserPosts()
+      ])
+      setConfigs(configsData || [])
+      setPosts(postsData || [])
+    } catch (error) {
+      console.error('Error fetching dashboard data:', error)
+    } finally {
+      setLoading(false)
+    }
+  }
 
   
 
