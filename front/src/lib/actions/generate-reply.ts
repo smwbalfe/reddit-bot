@@ -5,6 +5,7 @@ import { icps, usageTracking } from '@/src/lib/db/schema'
 import { eq, and } from 'drizzle-orm'
 import { checkSubscription } from '@/src/lib/actions/payment/check-subscription'
 import { makeServerClient } from '@/src/lib/services/supabase/server'
+import env from '../env'
 
 interface GenerateReplyRequest {
   icpId: number
@@ -82,13 +83,13 @@ export async function generateReplyAction(
     const product = icp[0]
     const productDescription = product.data?.description || `Product: ${product.name} (${product.website})`
 
-    const fastApiUrl = process.env.FASTAPI_SERVER_URL
+
     
     const fetchBody = {
       reddit_post: request.redditPost,
       product_description: productDescription
     }
-    const response = await fetch(`${fastApiUrl}/api/generate-reply`, {
+    const response = await fetch(`${env.FASTAPI_SERVER_URL}/api/generate-reply`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',

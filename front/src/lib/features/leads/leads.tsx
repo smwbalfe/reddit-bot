@@ -142,12 +142,17 @@ export function LeadsPage() {
       })
      
       const newReplies = new Map(replies)
-      newReplies.set(post.id, result.reply)
-      setReplies(newReplies)
       
-      const newExpanded = new Set(expandedRows)
-      newExpanded.add(post.id)
-      setExpandedRows(newExpanded)
+      if (result.success && result.reply) {
+        newReplies.set(post.id, result.reply)
+        const newExpanded = new Set(expandedRows)
+        newExpanded.add(post.id)
+        setExpandedRows(newExpanded)
+      } else {
+        newReplies.set(post.id, result.error || 'Failed to generate reply. Please try again.')
+      }
+      
+      setReplies(newReplies)
       
     } catch (error) {
       console.error('Error generating reply:', error)
@@ -417,15 +422,7 @@ export function LeadsPage() {
                                     >
                                       Copy & Go to Reddit
                                     </Button>
-                                    <Button
-                                      onClick={() => generateReply(post)}
-                                      disabled={isGenerating}
-                                      variant="outline"
-                                      size="sm"
-                                      className="text-xs"
-                                    >
-                                      Regenerate
-                                    </Button>
+                                   
                                   </div>
                                 </div>
                               ) : (
@@ -443,19 +440,19 @@ export function LeadsPage() {
               })}
             </div>
 
-            <div className="max-w-6xl">
+            <div className="w-full">
               <Card className="border border-slate-200 shadow-sm bg-white hidden md:block">
                 <CardContent className="p-0">
                   <div className="overflow-x-auto">
-                    <Table className="border-separate border-spacing-0">
+                    <Table className="border-separate border-spacing-0 w-full">
                     <TableHeader>
                       <TableRow className="bg-slate-50/50">
-                        <TableHead className="font-semibold border-b border-slate-200 py-4 px-6 w-24">Subreddit</TableHead>
-                        <TableHead className="font-semibold border-b border-slate-200 py-4 px-6 w-32">Product</TableHead>
-                        <TableHead className="font-semibold border-b border-slate-200 py-4 px-6 w-20">Interest</TableHead>
-                        <TableHead className="font-semibold border-b border-slate-200 py-4 px-6 max-w-sm">Title</TableHead>
-                        <TableHead className="font-semibold border-b border-slate-200 py-4 px-6 w-24">Posted</TableHead>
-                        <TableHead className="font-semibold text-center border-b border-slate-200 py-4 px-6 w-40">Actions</TableHead>
+                        <TableHead className="font-semibold border-b border-slate-200 py-4 px-6 w-32">Subreddit</TableHead>
+                        <TableHead className="font-semibold border-b border-slate-200 py-4 px-6 w-40">Product</TableHead>
+                        <TableHead className="font-semibold border-b border-slate-200 py-4 px-6 w-24">Interest</TableHead>
+                        <TableHead className="font-semibold border-b border-slate-200 py-4 px-6">Title</TableHead>
+                        <TableHead className="font-semibold border-b border-slate-200 py-4 px-6 w-28">Posted</TableHead>
+                        <TableHead className="font-semibold text-center border-b border-slate-200 py-4 px-6 w-48">Actions</TableHead>
                       </TableRow>
                     </TableHeader>
                     <TableBody>
@@ -468,34 +465,34 @@ export function LeadsPage() {
                         return (
                           <React.Fragment key={post.id}>
                             <TableRow className="hover:bg-slate-50/50 border-b border-slate-100">
-                              <TableCell className="py-4 px-6 w-24">
+                              <TableCell className="py-4 px-6 w-32">
                                 <Badge variant="secondary" className="text-xs font-medium bg-slate-100 text-slate-700 hover:bg-slate-200">
                                   r/{post.subreddit}
                                 </Badge>
                               </TableCell>
-                              <TableCell className="py-4 px-6 w-32">
+                              <TableCell className="py-4 px-6 w-40">
                                 <Badge variant="secondary" className="text-xs font-medium bg-blue-100 text-blue-700 hover:bg-blue-200 flex items-center gap-1 w-fit">
                                   <Package className="w-3 h-3" />
                                   {config?.name || 'Unknown Product'}
                                 </Badge>
                               </TableCell>
-                              <TableCell className="py-4 px-6 w-20">
+                              <TableCell className="py-4 px-6 w-24">
                                 <InterestLabel leadQuality={post.leadQuality ?? null} />
                               </TableCell>
-                              <TableCell className="py-4 px-6 max-w-sm">
+                              <TableCell className="py-4 px-6">
                                 <a 
                                   href={post.url} 
                                   target="_blank" 
                                   rel="noopener noreferrer"
-                                  className="font-medium text-slate-900 hover:text-slate-700 cursor-pointer transition-colors line-clamp-2 block"
+                                  className="font-medium text-slate-900 hover:text-slate-700 cursor-pointer transition-colors block"
                                 >
                                   {post.title}
                                 </a>
                               </TableCell>
-                              <TableCell className="text-slate-500 text-sm py-4 px-6 w-24">
+                              <TableCell className="text-slate-500 text-sm py-4 px-6 w-28">
                                 {getRelativeTime(post.redditCreatedAt || post.createdAt)}
                               </TableCell>
-                              <TableCell className="py-4 px-6 w-40">
+                              <TableCell className="py-4 px-6 w-48">
                                 <div className="flex items-center gap-2">
                                   <Button
                                     onClick={() => generateReply(post)}
@@ -550,15 +547,7 @@ export function LeadsPage() {
                                               >
                                                 Copy & Go to Reddit
                                               </Button>
-                                              <Button
-                                                onClick={() => generateReply(post)}
-                                                disabled={isGenerating}
-                                                variant="outline"
-                                                size="sm"
-                                                className="text-xs"
-                                              >
-                                                Regenerate
-                                              </Button>
+                                              
                                             </div>
                                           </div>
                                         ) : (

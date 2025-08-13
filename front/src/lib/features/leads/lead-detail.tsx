@@ -50,35 +50,7 @@ export function LeadDetailPage() {
     }
   }
 
-  const generateReply = async () => {
-    if (!post || !config) return
-    
-    setIsGeneratingReply(true)
-    try {
-      const response = await fetch('http://localhost:8000/api/generate-reply', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          reddit_post: `${post.title}\n\n${post.content}`,
-          product_description: config.data?.description || config.name
-        }),
-      })
-      
-      if (!response.ok) {
-        throw new Error('Failed to generate reply')
-      }
-      
-      const data = await response.json()
-      setGeneratedReply(data.reply)
-    } catch (error) {
-      console.error('Error generating reply:', error)
-      setGeneratedReply('Failed to generate reply. Please try again.')
-    } finally {
-      setIsGeneratingReply(false)
-    }
-  }
+  
 
 
   if (!user) {
@@ -262,14 +234,6 @@ export function LeadDetailPage() {
                   size="sm"
                 >
                   Copy & Go to Reddit
-                </Button>
-                <Button
-                  onClick={generateReply}
-                  disabled={isGeneratingReply}
-                  variant="outline"
-                  size="sm"
-                >
-                  Regenerate
                 </Button>
               </div>
             </CardContent>

@@ -21,16 +21,13 @@ export function IcpsPage() {
     isLoading,
     isDeleting,
     isGenerating,
-    isSeeding,
     generatedSubreddits,
     selectedSubreddits,
     fetchICPs,
     deleteICP,
     updateICP,
-    analyzeWebsite,
     regenerateSuggestions,
     updateSelectedSubreddits,
-    seedICP
   } = useICPStore()
 
   useEffect(() => {
