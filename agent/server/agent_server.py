@@ -1,14 +1,11 @@
 from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
-from server.db.db import ServerDatabaseManager
 from server.services.find_subreddits import find_relevant_subreddits_by_keywords
 from server.services.generate_descriptions import generate_icp_and_pain_points_combined
 from server.services.generate_reply import generate_reddit_reply
 from shared.models.server_models import (
     AnalyzeUrlRequest,
     AnalyzeUrlResponse,
-    ICPConfigChangeRequest,
-    ICPConfigChangeResponse,
     GenerateSuggestionsRequest,
     GenerateSuggestionsResponse,
     GenerateReplyRequest,
@@ -71,23 +68,7 @@ async def generate_suggestions_endpoint(request: GenerateSuggestionsRequest):
         )
 
 
-@app.post("/api/icp-config-change", response_model=ICPConfigChangeResponse)
-async def icp_config_change_endpoint(request: ICPConfigChangeRequest):
-    try:
-        db_manager = ServerDatabaseManager()
-        success = db_manager.trigger_scraper_refresh()
-        if not success:
-            raise HTTPException(
-                status_code=500, detail="Failed to trigger scraper refresh"
-            )
-        return ICPConfigChangeResponse(
-            success=True,
-            message=f"ICP configuration refresh triggered for {request.action} action",
-        )
-    except Exception as e:
-        raise HTTPException(
-            status_code=500, detail=f"Failed to handle ICP config change: {str(e)}"
-        )
+
 
 
 @app.post("/api/generate-reply", response_model=GenerateReplyResponse)
@@ -101,35 +82,6 @@ async def generate_reply_endpoint(request: GenerateReplyRequest):
         raise HTTPException(
             status_code=500, detail=f"Failed to generate reply: {str(e)}"
         )
-
-
-@app.post("/api/trigger-lead-search", response_model=TriggerLeadSearchResponse)
-async def trigger_lead_search_endpoint(request: TriggerLeadSearchRequest):
-    try:
-        db_manager = ServerDatabaseManager()
-        
-        # Trigger manual collection by setting a system flag
-        success = db_manager.set_system_flag("manual_collection_requested", True)
-        if request.user_id:
-            db_manager.set_system_flag("manual_collection_user_id", request.user_id)
-        if request.limit:
-            db_manager.set_system_flag("manual_collection_limit", str(request.limit))
-        
-        if not success:
-            raise HTTPException(
-                status_code=500, detail="Failed to trigger lead search"
-            )
-        
-        return TriggerLeadSearchResponse(
-            success=True,
-            message="Lead search triggered successfully. Results will be available shortly.",
-            leads_found=0  # Will be updated by the scraper
-        )
-    except Exception as e:
-        raise HTTPException(
-            status_code=500, detail=f"Failed to trigger lead search: {str(e)}"
-        )
-
 
 @app.get("/health")
 async def health_check():

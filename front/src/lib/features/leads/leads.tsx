@@ -8,12 +8,14 @@ import { Card, CardContent, CardHeader, CardDescription } from "@/src/lib/compon
 import { Button } from "@/src/lib/components/ui/button"
 import { Badge } from "@/src/lib/components/ui/badge"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/src/lib/components/ui/table"
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/src/lib/components/ui/tooltip"
 import { getUserConfigs } from "@/src/lib/actions/config/get-user-configs"
 import { getUserPosts } from "@/src/lib/actions/config/get-user-posts"
 import { generateReplyAction } from "@/src/lib/actions/generate-reply"
+import { resetPollPeriod, getScraperStatus } from "@/src/lib/actions/system/set-system-flag"
 import { ICP } from "@/src/lib/db/schema"
 import { PostWithConfigId } from "@/src/lib/types"
-import { MessageSquare, TrendingUp, ExternalLink, Package, Bot, ChevronDown, ChevronUp } from "lucide-react"
+import { MessageSquare, TrendingUp, ExternalLink, Package, Bot, ChevronDown, ChevronUp, RefreshCw, RotateCcw, Pause, Play } from "lucide-react"
 import DashboardLayout from '@/src/lib/features/global/dashboard-layout'
 import Link from 'next/link'
 import { InterestLabel } from "@/src/lib/features/leads/components/interest-label"
@@ -27,6 +29,9 @@ export function LeadsPage() {
   const [expandedRows, setExpandedRows] = useState<Set<number>>(new Set())
   const [generatingReply, setGeneratingReply] = useState<Set<number>>(new Set())
   const [replies, setReplies] = useState<Map<number, string>>(new Map())
+  const [refreshing, setRefreshing] = useState(false)
+  const [fetching, setFetching] = useState(false)
+  const [scraperPaused, setScraperPaused] = useState(false)
 
 
   const getRelativeTime = (date: Date | null): string => {
@@ -54,7 +59,18 @@ export function LeadsPage() {
     if (user?.id) {
       fetchConfigs()
       fetchPosts()
+      fetchScraperStatus()
     }
+  }, [user?.id])
+
+  useEffect(() => {
+    if (!user?.id) return
+
+    const interval = setInterval(() => {
+      fetchScraperStatus()
+    }, 30000) // Check status every 30 seconds
+
+    return () => clearInterval(interval)
   }, [user?.id])
 
   const fetchConfigs = async () => {
@@ -89,6 +105,15 @@ export function LeadsPage() {
     } catch (error) {
       console.error('Error fetching posts:', error)
       setPosts([])
+    }
+  }
+
+  const fetchScraperStatus = async () => {
+    try {
+      const status = await getScraperStatus()
+      setScraperPaused(status.isPaused)
+    } catch (error) {
+      console.error('Error fetching scraper status:', error)
     }
   }
 
@@ -136,6 +161,34 @@ export function LeadsPage() {
     }
   }
 
+  const handleScanNow = async () => {
+    setRefreshing(true)
+    try {
+      await resetPollPeriod()
+      setScraperPaused(false)
+      setTimeout(() => {
+        fetchPosts()
+        fetchScraperStatus()
+      }, 3000)
+    } catch (error) {
+      console.error('Error triggering scanner:', error)
+    } finally {
+      setRefreshing(false)
+    }
+  }
+
+  const handleRefreshPage = async () => {
+    setFetching(true)
+    try {
+      await fetchPosts()
+      await fetchScraperStatus()
+    } catch (error) {
+      console.error('Error refreshing page:', error)
+    } finally {
+      setFetching(false)
+    }
+  }
+
 
   if (!user) {
     return (
@@ -155,7 +208,7 @@ export function LeadsPage() {
             <div className="flex justify-between items-start flex-wrap gap-4">
               <div className="space-y-3">
                 <CardDescription className="text-base text-slate-600">View leads with detailed AI insights and manage your products (ideal customer profiles)</CardDescription>
-                <div className="flex items-center gap-6">
+                <div className="flex items-center gap-6 flex-wrap">
                   <div className="flex items-center gap-2">
                     <TrendingUp className="w-5 h-5 text-slate-500" />
                     <span className="text-base font-medium text-slate-700">{configs.length}</span>
@@ -176,18 +229,78 @@ export function LeadsPage() {
                       )}
                     </span>
                   </div>
+                  <div className="flex items-center gap-2">
+                    {scraperPaused ? (
+                      <Pause className="w-5 h-5 text-orange-500" />
+                    ) : (
+                      <Play className="w-5 h-5 text-green-500" />
+                    )}
+                    <span className="text-base font-medium text-slate-700">
+                      {scraperPaused ? 'Paused' : 'Active'}
+                    </span>
+                    <span className="text-base text-slate-500">scanner</span>
+                  </div>
                 </div>
               </div>
-              <Link href="/icps">
-                <Button 
-                  variant="default"
-                  className="bg-slate-900 hover:bg-slate-800 text-white"
-                  size="default"
-                >
-                  <ExternalLink className="w-5 h-5" />
-                  Manage Products
-                </Button>
-              </Link>
+              <TooltipProvider delayDuration={300}>
+                <div className="flex gap-2 flex-wrap">
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <Button
+                        onClick={handleRefreshPage}
+                        disabled={fetching}
+                        variant="ghost"
+                        className="text-slate-600 hover:bg-slate-100"
+                        size="default"
+                      >
+                        <RotateCcw className={`w-4 h-4 ${fetching ? 'animate-spin' : ''}`} />
+                        {fetching ? 'Loading...' : 'Refresh'}
+                      </Button>
+                    </TooltipTrigger>
+                    <TooltipContent side="bottom" align="center" className="bg-slate-900 text-white border-slate-800">
+                      <p>Reload leads from database</p>
+                    </TooltipContent>
+                  </Tooltip>
+                  
+                  {scraperPaused && (
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <Button
+                          onClick={handleScanNow}
+                          disabled={refreshing}
+                          variant="default"
+                          className="bg-orange-600 hover:bg-orange-700 text-white"
+                          size="default"
+                        >
+                          <RefreshCw className={`w-4 h-4 ${refreshing ? 'animate-spin' : ''}`} />
+                          {refreshing ? 'Waking Scanner...' : 'Wake Scanner'}
+                        </Button>
+                      </TooltipTrigger>
+                      <TooltipContent side="bottom" align="center" className="bg-slate-900 text-white border-slate-800">
+                        <p>Wake up the scanner to find new leads immediately</p>
+                      </TooltipContent>
+                    </Tooltip>
+                  )}
+                  
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <Link href="/icps">
+                        <Button 
+                          variant="default"
+                          className="bg-slate-900 hover:bg-slate-800 text-white"
+                          size="default"
+                        >
+                          <ExternalLink className="w-4 h-4" />
+                          Manage Products
+                        </Button>
+                      </Link>
+                    </TooltipTrigger>
+                    <TooltipContent side="bottom" align="center" className="bg-slate-900 text-white border-slate-800">
+                      <p>Manage your products & targeting</p>
+                    </TooltipContent>
+                  </Tooltip>
+                </div>
+              </TooltipProvider>
             </div>
           </CardHeader>
 

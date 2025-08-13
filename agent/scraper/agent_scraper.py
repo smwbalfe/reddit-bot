@@ -356,6 +356,8 @@ async def collect_new_posts(
 async def run_collection_cycle(
     db_manager: ScraperDatabaseManager, icps: list, current_tasks: list
 ) -> list:
+    db_manager.set_system_flag("scraper_paused", False)
+    
     if db_manager.get_system_flag("scraper_refresh_needed") or not icps:
         logger.info("Scraper refresh flag detected - stopping all current tasks")
         await cancel_all_tasks(current_tasks)
@@ -367,14 +369,55 @@ async def run_collection_cycle(
     return icps
 
 
-async def sleep_until_next_cycle() -> None:
+async def monitor_skip_flag(db_manager: ScraperDatabaseManager) -> None:
+    """Monitor skip_poll_period flag and return when detected"""
+    while True:
+        if db_manager.get_system_flag("skip_poll_period"):
+            logger.info("Skip poll period flag detected - interrupting sleep")
+            db_manager.set_system_flag("skip_poll_period", False)
+            db_manager.set_system_flag("scraper_paused", False)
+            return
+        await asyncio.sleep(1)  
+
+
+async def sleep_until_next_cycle(db_manager: ScraperDatabaseManager) -> None:
     config = get_scraper_config()
-    logger.info(f"Waiting {config['polling_interval']} seconds until next cycle")
-    await asyncio.sleep(config["polling_interval"])
+    polling_interval = config["polling_interval"]
+    
+    logger.info(f"Waiting {polling_interval} seconds until next cycle")
+    db_manager.set_system_flag("scraper_paused", True)
+    
+    sleep_task = asyncio.create_task(asyncio.sleep(polling_interval))
+    flag_task = asyncio.create_task(monitor_skip_flag(db_manager))
+    
+    try:
+        done, pending = await asyncio.wait(
+            [sleep_task, flag_task], 
+            return_when=asyncio.FIRST_COMPLETED
+        )
+        for task in pending:
+            task.cancel()
+            try:
+                await task
+            except asyncio.CancelledError:
+                pass
+                
+    except Exception as e:
+        sleep_task.cancel()
+        flag_task.cancel()
+        try:
+            await asyncio.gather(sleep_task, flag_task, return_exceptions=True)
+        except:
+            pass
+        raise e
+    finally:
+        db_manager.set_system_flag("scraper_paused", False)
 
 
-async def handle_main_loop_error(error: Exception) -> None:
+async def handle_main_loop_error(error: Exception, db_manager: ScraperDatabaseManager = None) -> None:
     logger.warning(f"Exception in main loop: {error}")
+    if db_manager:
+        db_manager.set_system_flag("scraper_paused", True)
     await asyncio.sleep(get_scraper_config()["error_retry_delay"])
 
 
@@ -429,34 +472,16 @@ async def collect_leads_on_demand(
 async def main():
     logger.info("Starting periodic collection loop")
     db_manager = ScraperDatabaseManager()
+    db_manager.set_system_flag("scraper_paused", False)
     icps = []
     current_tasks = []
 
     while True:
         try:
-            # Check for manual collection trigger
-            if db_manager.get_system_flag("manual_collection_requested"):
-                logger.info("Manual collection requested")
-                db_manager.set_system_flag("manual_collection_requested", False)
-                
-                # Get optional parameters
-                user_id = db_manager.get_system_string_flag("manual_collection_user_id")
-                limit_str = db_manager.get_system_string_flag("manual_collection_limit")
-                limit = int(limit_str) if limit_str else 50
-                
-                result = await collect_leads_on_demand(db_manager, user_id, limit)
-                logger.info(f"Manual collection result: {result}")
-                
-                # Clear the parameter flags
-                if user_id:
-                    db_manager.set_system_flag("manual_collection_user_id", "")
-                if limit_str:
-                    db_manager.set_system_flag("manual_collection_limit", "")
-            
             icps = await run_collection_cycle(db_manager, icps, current_tasks)
-            await sleep_until_next_cycle()
+            await sleep_until_next_cycle(db_manager)
         except Exception as e:
-            await handle_main_loop_error(e)
+            await handle_main_loop_error(e, db_manager)
 
 
 if __name__ == "__main__":
