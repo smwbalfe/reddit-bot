@@ -8,12 +8,14 @@ import Link from "next/link"
 import { getUserConfigs } from "@/src/lib/actions/config/get-user-configs"
 import { getUserPosts } from "@/src/lib/actions/config/get-user-posts"
 import { useDashboardMetrics } from "@/src/lib/features/dashboard/hooks/use-dashboard-metrics"
+import { ICP } from "@/src/lib/db/schema"
+import { PostWithConfigId } from "@/src/lib/types"
 
 
 export function Dashboard() {
   const { user } = useUser()
-  const [configs, setConfigs] = useState([])
-  const [posts, setPosts] = useState([])
+  const [configs, setConfigs] = useState<ICP[]>([])
+  const [posts, setPosts] = useState<PostWithConfigId[]>([])
   const [loading, setLoading] = useState(true)
   
   const [isSearching, setIsSearching] = useState(false)

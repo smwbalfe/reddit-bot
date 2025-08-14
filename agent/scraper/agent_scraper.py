@@ -136,7 +136,7 @@ def should_process_post(post: Submission, db_manager: ScraperDatabaseManager) ->
 
 
 def embeddings_prefilter(
-    post: Submission, icp: ICPModel, threshold: float = 35.0
+    post: Submission, icp: ICPModel, threshold: float = 25.0
 ) -> tuple[bool, float]:
     """Use OpenAI embeddings to prefilter posts before expensive LLM scoring"""
     try:
@@ -254,6 +254,50 @@ def build_post_data(post: Submission, icp: ICPModel, result) -> dict:
     }
 
 
+async def get_posts_from_various_sorts(subreddit, posts_per_sort: int):
+    """Get posts from various Reddit sorting methods and time periods"""
+    all_posts = []
+    
+    sort_methods = [
+        ("hot", None),
+        ("new", None),
+        ("rising", None),
+        ("top", "day"),
+        ("top", "week"),
+        ("top", "month"),
+        ("controversial", "day"),
+        ("controversial", "week")
+    ]
+    
+    for sort_method, time_filter in sort_methods:
+        try:
+            posts_from_method = []
+            if sort_method == "hot":
+                async for post in subreddit.hot(limit=posts_per_sort):
+                    posts_from_method.append(post)
+            elif sort_method == "new":
+                async for post in subreddit.new(limit=posts_per_sort):
+                    posts_from_method.append(post)
+            elif sort_method == "rising":
+                async for post in subreddit.rising(limit=posts_per_sort):
+                    posts_from_method.append(post)
+            elif sort_method == "top":
+                async for post in subreddit.top(time_filter=time_filter, limit=posts_per_sort):
+                    posts_from_method.append(post)
+            elif sort_method == "controversial":
+                async for post in subreddit.controversial(time_filter=time_filter, limit=posts_per_sort):
+                    posts_from_method.append(post)
+            
+            all_posts.extend(posts_from_method)
+            logger.info(f"Collected {len(posts_from_method)} posts from {sort_method}" + (f" ({time_filter})" if time_filter else ""))
+            
+        except Exception as e:
+            logger.warning(f"Error collecting from {sort_method}" + (f" ({time_filter})" if time_filter else "") + f": {e}")
+            continue
+    
+    return all_posts
+
+
 async def collect_initial_posts(
     icp: ICPModel,
     subreddits: Set[str],
@@ -261,7 +305,7 @@ async def collect_initial_posts(
     db_manager: ScraperDatabaseManager,
 ):
     logger.info(
-        f"Initial seeding for ICP {icp.id} - collecting {get_scraper_config()['initial_seeding_posts_per_subreddit']} posts per subreddit"
+        f"Initial seeding for ICP {icp.id} - collecting {get_scraper_config()['initial_seeding_posts_per_subreddit']} posts per subreddit from various sorts"
     )
 
     for subreddit_name in subreddits:
@@ -271,9 +315,11 @@ async def collect_initial_posts(
         try:
             individual_subreddit = await reddit_client.get_subreddit(subreddit_name)
             config = get_scraper_config()
-            async for submission in individual_subreddit.hot(
-                limit=config["initial_seeding_posts_per_subreddit"] * 2
-            ):
+            
+            posts_per_sort = max(1, config["initial_seeding_posts_per_subreddit"] // 8)
+            all_posts = await get_posts_from_various_sorts(individual_subreddit, posts_per_sort)
+            
+            for submission in all_posts:
                 if posts_collected >= config["initial_seeding_posts_per_subreddit"]:
                     break
 
@@ -309,7 +355,7 @@ async def collect_new_posts(
     db_manager: ScraperDatabaseManager,
     limit: int = 25,
 ):
-    logger.info(f"Collecting new posts for ICP {icp.id} (polling mode, limit={limit})")
+    logger.info(f"Collecting posts for ICP {icp.id} from various sorts (polling mode, limit={limit})")
 
     if not db_manager.can_user_add_lead(icp.userId):
         logger.info(
@@ -322,45 +368,75 @@ async def collect_new_posts(
 
     try:
         posts_processed = 0
-        async for submission in current_subreddit.new(
-            limit=limit * 2
-        ):  # Get more to account for duplicates
+        posts_per_sort = max(1, limit // 4)
+        
+        sort_methods = [
+            ("new", None),
+            ("rising", None),
+            ("hot", None),
+            ("top", "hour")
+        ]
+        
+        for sort_method, time_filter in sort_methods:
+            if posts_processed >= limit:
+                break
+                
             try:
-                if asyncio.current_task().cancelled():
-                    logger.info(f"Task cancelled for ICP {icp.id}")
-                    break
+                posts_from_method = []
+                if sort_method == "new":
+                    async for post in current_subreddit.new(limit=posts_per_sort):
+                        posts_from_method.append(post)
+                elif sort_method == "rising":
+                    async for post in current_subreddit.rising(limit=posts_per_sort):
+                        posts_from_method.append(post)
+                elif sort_method == "hot":
+                    async for post in current_subreddit.hot(limit=posts_per_sort):
+                        posts_from_method.append(post)
+                elif sort_method == "top":
+                    async for post in current_subreddit.top(time_filter=time_filter, limit=posts_per_sort):
+                        posts_from_method.append(post)
+                
+                for submission in posts_from_method:
+                    try:
+                        if asyncio.current_task().cancelled():
+                            logger.info(f"Task cancelled for ICP {icp.id}")
+                            return
 
-                if db_manager.get_system_flag("scraper_refresh_needed"):
-                    logger.info(
-                        f"Refresh flag detected - stopping collection for ICP {icp.id}"
-                    )
-                    break
+                        if db_manager.get_system_flag("scraper_refresh_needed"):
+                            logger.info(
+                                f"Refresh flag detected - stopping collection for ICP {icp.id}"
+                            )
+                            return
 
-                if posts_processed >= limit:
-                    logger.info(f"Reached limit of {limit} posts for ICP {icp.id}")
-                    break
+                        if posts_processed >= limit:
+                            logger.info(f"Reached limit of {limit} posts for ICP {icp.id}")
+                            break
 
-                if should_process_post(submission, db_manager):
-                    logger.info(f"Processing post {submission.id} for ICP {icp.id}")
-                    await process_post_for_icp(submission, icp, db_manager)
-                    posts_processed += 1
+                        if should_process_post(submission, db_manager):
+                            logger.info(f"Processing post {submission.id} for ICP {icp.id}")
+                            await process_post_for_icp(submission, icp, db_manager)
+                            posts_processed += 1
 
-            except asyncio.CancelledError:
-                logger.info(f"Collection task cancelled for ICP {icp.id}")
-                raise
+                    except asyncio.CancelledError:
+                        logger.info(f"Collection task cancelled for ICP {icp.id}")
+                        raise
+                    except Exception as e:
+                        logger.warning(
+                            f"Exception processing submission {getattr(submission, 'id', 'unknown')} for ICP {icp.id}: {e}"
+                        )
+                        continue
+                        
             except Exception as e:
-                logger.warning(
-                    f"Exception processing submission {getattr(submission, 'id', 'unknown')} for ICP {icp.id}: {e}"
-                )
+                logger.warning(f"Error collecting from {sort_method}" + (f" ({time_filter})" if time_filter else "") + f": {e}")
                 continue
 
-        logger.info(f"Processed {posts_processed} new posts for ICP {icp.id}")
+        logger.info(f"Processed {posts_processed} posts for ICP {icp.id}")
 
     except asyncio.CancelledError:
         logger.info(f"Collection cancelled for ICP {icp.id}")
         raise
     except Exception as e:
-        logger.warning(f"Exception collecting new posts for ICP {icp.id}: {e}")
+        logger.warning(f"Exception collecting posts for ICP {icp.id}: {e}")
 
 
 async def run_collection_cycle(

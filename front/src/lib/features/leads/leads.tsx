@@ -440,19 +440,19 @@ export function LeadsPage() {
               })}
             </div>
 
-            <div className="w-full">
+            <div className="w-full max-w-[100vw] mx-auto">
               <Card className="border border-slate-200 shadow-sm bg-white hidden md:block">
                 <CardContent className="p-0">
                   <div className="overflow-x-auto">
-                    <Table className="border-separate border-spacing-0 w-full">
+                    <Table className="border-separate border-spacing-0 w-full min-w-[900px]">
                     <TableHeader>
                       <TableRow className="bg-slate-50/50">
-                        <TableHead className="font-semibold border-b border-slate-200 py-4 px-6 w-32">Subreddit</TableHead>
-                        <TableHead className="font-semibold border-b border-slate-200 py-4 px-6 w-40">Product</TableHead>
-                        <TableHead className="font-semibold border-b border-slate-200 py-4 px-6 w-24">Interest</TableHead>
-                        <TableHead className="font-semibold border-b border-slate-200 py-4 px-6">Title</TableHead>
-                        <TableHead className="font-semibold border-b border-slate-200 py-4 px-6 w-28">Posted</TableHead>
-                        <TableHead className="font-semibold text-center border-b border-slate-200 py-4 px-6 w-48">Actions</TableHead>
+                        <TableHead className="font-semibold border-b border-slate-200 py-3 px-4 w-[140px]">Subreddit</TableHead>
+                        <TableHead className="font-semibold border-b border-slate-200 py-3 px-4 w-[160px]">Product</TableHead>
+                        <TableHead className="font-semibold border-b border-slate-200 py-3 px-4 w-[100px]">Interest</TableHead>
+                        <TableHead className="font-semibold border-b border-slate-200 py-3 px-4 min-w-[300px] max-w-[400px]">Title</TableHead>
+                        <TableHead className="font-semibold border-b border-slate-200 py-3 px-4 w-[100px]">Posted</TableHead>
+                        <TableHead className="font-semibold text-center border-b border-slate-200 py-3 px-4 w-[200px]">Actions</TableHead>
                       </TableRow>
                     </TableHeader>
                     <TableBody>
@@ -465,35 +465,38 @@ export function LeadsPage() {
                         return (
                           <React.Fragment key={post.id}>
                             <TableRow className="hover:bg-slate-50/50 border-b border-slate-100">
-                              <TableCell className="py-4 px-6 w-32">
-                                <Badge variant="secondary" className="text-xs font-medium bg-slate-100 text-slate-700 hover:bg-slate-200">
+                              <TableCell className="py-3 px-4 w-[140px]">
+                                <Badge variant="secondary" className="text-xs font-medium bg-slate-100 text-slate-700 hover:bg-slate-200 truncate max-w-full">
                                   r/{post.subreddit}
                                 </Badge>
                               </TableCell>
-                              <TableCell className="py-4 px-6 w-40">
-                                <Badge variant="secondary" className="text-xs font-medium bg-blue-100 text-blue-700 hover:bg-blue-200 flex items-center gap-1 w-fit">
-                                  <Package className="w-3 h-3" />
-                                  {config?.name || 'Unknown Product'}
+                              <TableCell className="py-3 px-4 w-[160px]">
+                                <Badge variant="secondary" className="text-xs font-medium bg-blue-100 text-blue-700 hover:bg-blue-200 flex items-center gap-1 w-fit max-w-full">
+                                  <Package className="w-3 h-3 flex-shrink-0" />
+                                  <span className="truncate">{config?.name || 'Unknown Product'}</span>
                                 </Badge>
                               </TableCell>
-                              <TableCell className="py-4 px-6 w-24">
+                              <TableCell className="py-3 px-4 w-[100px]">
                                 <InterestLabel leadQuality={post.leadQuality ?? null} />
                               </TableCell>
-                              <TableCell className="py-4 px-6">
+                              <TableCell className="py-3 px-4 min-w-[300px] max-w-[400px]">
                                 <a 
                                   href={post.url} 
                                   target="_blank" 
                                   rel="noopener noreferrer"
-                                  className="font-medium text-slate-900 hover:text-slate-700 cursor-pointer transition-colors block"
+                                  className="font-medium text-slate-900 hover:text-slate-700 cursor-pointer transition-colors block line-clamp-2 leading-5 max-h-[2.5rem] overflow-hidden"
+                                  title={post.title}
                                 >
                                   {post.title}
                                 </a>
                               </TableCell>
-                              <TableCell className="text-slate-500 text-sm py-4 px-6 w-28">
-                                {getRelativeTime(post.redditCreatedAt || post.createdAt)}
+                              <TableCell className="text-slate-500 text-sm py-3 px-4 w-[100px]">
+                                <span className="whitespace-nowrap">
+                                  {getRelativeTime(post.redditCreatedAt || post.createdAt)}
+                                </span>
                               </TableCell>
-                              <TableCell className="py-4 px-6 w-48">
-                                <div className="flex items-center gap-2">
+                              <TableCell className="py-3 px-4 w-[200px]">
+                                <div className="flex items-center gap-1 justify-center">
                                   <Button
                                     onClick={() => generateReply(post)}
                                     disabled={isGenerating}
@@ -508,12 +511,12 @@ export function LeadsPage() {
                                     onClick={() => toggleRowExpansion(post.id)}
                                     variant="ghost"
                                     size="sm"
-                                    className="text-slate-500 hover:text-slate-700 hover:bg-slate-100 px-2"
+                                    className="text-slate-500 hover:text-slate-700 hover:bg-slate-100 px-2 flex-shrink-0"
                                   >
                                     {isExpanded ? <ChevronUp className="w-3 h-3" /> : <ChevronDown className="w-3 h-3" />}
                                   </Button>
                                   <Link href={`/leads/${post.id}`}>
-                                    <Button variant="ghost" size="sm" className="text-slate-600 hover:text-slate-700 hover:bg-slate-100 text-xs">
+                                    <Button variant="ghost" size="sm" className="text-slate-600 hover:text-slate-700 hover:bg-slate-100 text-xs flex-shrink-0">
                                       Details
                                     </Button>
                                   </Link>
@@ -522,40 +525,37 @@ export function LeadsPage() {
                             </TableRow>
                             {isExpanded && (
                               <TableRow className="bg-slate-50/30">
-                                <TableCell colSpan={6} className="py-4 px-6">
-                                  <div className="max-w-4xl">
+                                <TableCell colSpan={6} className="py-4 px-4">
+                                  <div className="w-full max-w-none">
                                     <div>
-                                      <div>
-                                        <h4 className="font-semibold text-slate-900 mb-2 text-sm flex items-center gap-2">
-                                          <Bot className="w-4 h-4 text-green-600" />
-                                          Generated Reply
-                                        </h4>
-                                        {reply ? (
-                                          <div className="space-y-2">
-                                            <div className="p-4 bg-green-50 rounded-lg border border-green-200 text-sm text-slate-700 leading-relaxed min-h-24 max-h-48 overflow-y-auto break-words whitespace-pre-wrap">
-                                              {reply}
-                                            </div>
-                                            <div className="flex gap-2">
-                                              <Button
-                                                onClick={async () => {
-                                                  await navigator.clipboard.writeText(reply)
-                                                  window.open(post.url, '_blank')
-                                                }}
-                                                variant="outline"
-                                                size="sm"
-                           cd                     className="text-xs"
-                                              >
-                                                Copy & Go to Reddit
-                                              </Button>
-                                              
-                                            </div>
+                                      <h4 className="font-semibold text-slate-900 mb-2 text-sm flex items-center gap-2">
+                                        <Bot className="w-4 h-4 text-green-600" />
+                                        Generated Reply
+                                      </h4>
+                                      {reply ? (
+                                        <div className="space-y-2">
+                                          <div className="p-4 bg-green-50 rounded-lg border border-green-200 text-sm text-slate-700 leading-relaxed min-h-24 max-h-48 overflow-y-auto break-words whitespace-pre-wrap">
+                                            {reply}
                                           </div>
-                                        ) : (
-                                          <div className="p-3 bg-slate-100 rounded-lg border border-slate-200 text-xs text-slate-500 flex items-center justify-center">
-                                            Click "Reply" to generate an AI response
+                                          <div className="flex gap-2">
+                                            <Button
+                                              onClick={async () => {
+                                                await navigator.clipboard.writeText(reply)
+                                                window.open(post.url, '_blank')
+                                              }}
+                                              variant="outline"
+                                              size="sm"
+                                              className="text-xs"
+                                            >
+                                              Copy & Go to Reddit
+                                            </Button>
                                           </div>
-                                        )}
-                                      </div>
+                                        </div>
+                                      ) : (
+                                        <div className="p-3 bg-slate-100 rounded-lg border border-slate-200 text-xs text-slate-500 flex items-center justify-center">
+                                          Click "Reply" to generate an AI response
+                                        </div>
+                                      )}
                                     </div>
                                   </div>
                                 </TableCell>

@@ -15,7 +15,7 @@ class OpenAIEmbeddingsService:
             raise ValueError("OPENAI_API_KEY environment variable not set")
         self.client = OpenAI(api_key=api_key)
 
-    def get_embeddings(self, texts, model="text-embedding-3-large"):
+    def get_embeddings(self, texts, model="text-embedding-3-small"):
         """Get embeddings for a list of texts"""
         try:
             response = self.client.embeddings.create(input=texts, model=model)
