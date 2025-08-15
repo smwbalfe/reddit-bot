@@ -121,6 +121,55 @@ class ScraperDatabaseManager:
             print(f"Error checking if post exists: {e}")
             return False
 
+    def post_processed_for_icp(self, icp_id: int, submission_id: str) -> bool:
+        try:
+            with self._get_connection() as conn:
+                with conn.cursor() as cur:
+                    cur.execute(
+                        'SELECT COUNT(*) as count FROM "ProcessedPost" WHERE "icpId" = %s AND "submissionId" = %s',
+                        (icp_id, submission_id),
+                    )
+                    result = cur.fetchone()
+                    return result["count"] > 0 if result else False
+        except Exception as e:
+            print(f"Error checking if post processed for ICP {icp_id}: {e}")
+            return False
+
+    def mark_post_processed(self, icp_id: int, submission_id: str) -> bool:
+        try:
+            with self._get_connection() as conn:
+                with conn.cursor() as cur:
+                    cur.execute(
+                        """INSERT INTO "ProcessedPost" ("icpId", "submissionId") 
+                           VALUES (%s, %s)
+                           ON CONFLICT DO NOTHING""",
+                        (icp_id, submission_id),
+                    )
+                    conn.commit()
+                    return True
+        except Exception as e:
+            print(f"Error marking post {submission_id} as processed for ICP {icp_id}: {e}")
+            return False
+
+    def batch_check_processed_posts(self, icp_id: int, submission_ids: list) -> set:
+        """Check which posts have already been processed for an ICP. Returns set of processed submission IDs."""
+        try:
+            if not submission_ids:
+                return set()
+            
+            with self._get_connection() as conn:
+                with conn.cursor() as cur:
+                    placeholders = ','.join(['%s'] * len(submission_ids))
+                    cur.execute(
+                        f'SELECT "submissionId" FROM "ProcessedPost" WHERE "icpId" = %s AND "submissionId" IN ({placeholders})',
+                        [icp_id] + submission_ids,
+                    )
+                    results = cur.fetchall()
+                    return {row["submissionId"] for row in results}
+        except Exception as e:
+            print(f"Error batch checking processed posts for ICP {icp_id}: {e}")
+            return set()
+
     def get_system_flag(self, key: str) -> bool:
         try:
             with self._get_connection() as conn:

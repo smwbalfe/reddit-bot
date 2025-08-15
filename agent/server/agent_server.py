@@ -1,5 +1,8 @@
+import datetime
 from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
+from contextlib import asynccontextmanager
+from apscheduler.schedulers.background import BackgroundScheduler
 from server.services.find_subreddits import find_relevant_subreddits_by_keywords
 from server.services.generate_descriptions import generate_icp_and_pain_points_combined
 from server.services.generate_reply import generate_reddit_reply
@@ -27,7 +30,19 @@ class TriggerLeadSearchResponse(BaseModel):
     leads_found: int
 
 
-app = FastAPI(title="Keyword Generation API", version="1.0.0")
+def printit():
+    print(datetime.datetime.now())
+
+
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    scheduler = BackgroundScheduler()
+    scheduler.add_job(printit, "interval", minutes=1)
+    scheduler.start()
+    yield
+
+
+app = FastAPI(title="Keyword Generation API", version="1.0.0", lifespan=lifespan)
 
 app.add_middleware(
     CORSMiddleware,
@@ -84,6 +99,11 @@ async def generate_reply_endpoint(request: GenerateReplyRequest):
 @app.get("/health")
 async def health_check():
     return {"status": "healthy"}
+
+
+@app.get("/")
+async def test():
+    return "Ok"
 
 
 if __name__ == "__main__":

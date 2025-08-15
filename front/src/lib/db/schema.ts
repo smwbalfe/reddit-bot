@@ -83,6 +83,22 @@ export const usageTracking = pgTable('UsageTracking', {
   },
 }))
 
+export const processedPosts = pgTable('ProcessedPost', {
+  id: serial('id').primaryKey(),
+  icpId: integer('icpId').notNull(),
+  submissionId: varchar('submissionId').notNull(),
+  createdAt: timestamp('createdAt').defaultNow().notNull(),
+}, (table) => ({
+  icpReference: foreignKey({
+    columns: [table.icpId],
+    foreignColumns: [icps.id]
+  }),
+  uniqueIcpSubmission: {
+    columns: [table.icpId, table.submissionId],
+    unique: true,
+  },
+}))
+
 export type Account = typeof accounts.$inferSelect
 export type NewAccount = typeof accounts.$inferInsert
 
@@ -94,3 +110,5 @@ export type SystemFlag = typeof systemFlags.$inferSelect
 export type NewSystemFlag = typeof systemFlags.$inferInsert
 export type UsageTracking = typeof usageTracking.$inferSelect
 export type NewUsageTracking = typeof usageTracking.$inferInsert
+export type ProcessedPost = typeof processedPosts.$inferSelect
+export type NewProcessedPost = typeof processedPosts.$inferInsert

@@ -128,11 +128,11 @@ async def collect_posts_for_icp(
         await collect_new_posts(icp, subreddits, reddit_client, db_manager)
 
 
-def should_process_post(post: Submission, db_manager: ScraperDatabaseManager) -> bool:
-    exists = db_manager.post_exists(post.id)
-    if exists:
-        logger.info(f"Post {post.id} already exists, skipping")
-    return not exists
+def should_process_post(post: Submission, icp: ICPModel, db_manager: ScraperDatabaseManager) -> bool:
+    processed = db_manager.post_processed_for_icp(icp.id, post.id)
+    if processed:
+        logger.info(f"Post {post.id} already processed for ICP {icp.id}, skipping")
+    return not processed
 
 
 def embeddings_prefilter(
@@ -165,47 +165,65 @@ def embeddings_prefilter(
         return True, 0.0  # Fall back to LLM scoring on error
 
 
-async def process_post_for_icp(
+async def process_post_for_icp_safe(
     post: Submission,
     icp: ICPModel,
     db_manager: ScraperDatabaseManager,
     threshold: int = None,
 ):
     try:
-        passes_embeddings, similarity_score = embeddings_prefilter(post, icp)
-        if not passes_embeddings:
-            logger.info(
-                f"Post {post.id} filtered out by embeddings prefilter (similarity: {similarity_score:.1f}%)"
-            )
-            return
-
-        result = await score_post(post, icp)
-        config = get_scraper_config()
-        threshold = threshold or config["confidence_threshold"]
-        if result.final_score <= threshold:
-            logger.info(
-                f"Post {post.id} scored {result.final_score}, skipping (<={threshold})"
-            )
-            return
-
-        if not db_manager.can_user_add_lead(icp.userId):
-            logger.info(
-                f"User {icp.userId} has reached lead limit for this month, skipping post {post.id}"
-            )
-            return
-
-        post_data = build_post_data(post, icp, result)
-        post_data["embeddings_similarity"] = similarity_score  # Store embeddings score
-        logger.info(
-            f"Inserting post {post.id} with lead_quality {result.final_score}, embeddings_similarity {similarity_score:.1f}%"
-        )
-        db_manager.insert_reddit_post(post_data)
-        db_manager.increment_user_qualified_leads(icp.userId)
-
+        await process_post_for_icp(post, icp, db_manager, threshold)
+    except asyncio.CancelledError:
+        logger.info(f"Processing cancelled for post {getattr(post, 'id', 'unknown')} for ICP {icp.id}")
+        raise
     except Exception as e:
         logger.warning(
-            f"Exception processing post {getattr(post, 'id', None)} for ICP {icp.id}: {e}"
+            f"Exception processing post {getattr(post, 'id', 'unknown')} for ICP {icp.id}: {e}"
         )
+
+
+async def process_post_for_icp(
+    post: Submission,
+    icp: ICPModel,
+    db_manager: ScraperDatabaseManager,
+    threshold: int = None,
+):
+    db_manager.mark_post_processed(icp.id, post.id)
+    
+    # Run embeddings check and LLM scoring in parallel
+    embeddings_task = asyncio.create_task(asyncio.to_thread(embeddings_prefilter, post, icp))
+    scoring_task = asyncio.create_task(score_post(post, icp))
+    
+    # Wait for embeddings first to potentially skip expensive LLM call
+    passes_embeddings, similarity_score = await embeddings_task
+    if not passes_embeddings:
+        logger.info(
+            f"Post {post.id} filtered out by embeddings prefilter (similarity: {similarity_score:.1f}%)"
+        )
+        scoring_task.cancel()  # Cancel the LLM scoring since we don't need it
+        try:
+            await scoring_task
+        except asyncio.CancelledError:
+            pass
+        return
+
+    # Get the scoring result
+    result = await scoring_task
+    config = get_scraper_config()
+    threshold = threshold or config["confidence_threshold"]
+    if result.final_score <= threshold:
+        logger.info(
+            f"Post {post.id} scored {result.final_score}, skipping (<={threshold})"
+        )
+        return
+
+    post_data = build_post_data(post, icp, result)
+    post_data["embeddings_similarity"] = similarity_score
+    logger.info(
+        f"Inserting post {post.id} with lead_quality {result.final_score}, embeddings_similarity {similarity_score:.1f}%"
+    )
+    db_manager.insert_reddit_post(post_data)
+    db_manager.increment_user_qualified_leads(icp.userId)
 
 
 async def score_post(post: Submission, icp: ICPModel):
@@ -319,6 +337,11 @@ async def collect_initial_posts(
             posts_per_sort = max(1, config["initial_seeding_posts_per_subreddit"] // 8)
             all_posts = await get_posts_from_various_sorts(individual_subreddit, posts_per_sort)
             
+            # Batch check which posts are already processed
+            submission_ids = [post.id for post in all_posts]
+            already_processed = db_manager.batch_check_processed_posts(icp.id, submission_ids)
+            
+            processing_tasks = []
             for submission in all_posts:
                 if posts_collected >= config["initial_seeding_posts_per_subreddit"]:
                     break
@@ -329,14 +352,23 @@ async def collect_initial_posts(
                     )
                     return
 
-                if should_process_post(submission, db_manager):
-                    await process_post_for_icp(
-                        submission,
-                        icp,
-                        db_manager,
-                        threshold=get_scraper_config()["confidence_threshold"],
+                if submission.id not in already_processed:
+                    task = asyncio.create_task(
+                        process_post_for_icp_safe(
+                            submission,
+                            icp,
+                            db_manager,
+                            threshold=get_scraper_config()["confidence_threshold"],
+                        )
                     )
+                    processing_tasks.append(task)
                     posts_collected += 1
+                else:
+                    logger.info(f"Post {submission.id} already processed for ICP {icp.id}, skipping")
+
+            if processing_tasks:
+                logger.info(f"Processing {len(processing_tasks)} initial seeding posts in parallel for ICP {icp.id}")
+                await asyncio.gather(*processing_tasks, return_exceptions=True)
 
         except Exception as e:
             logger.warning(
@@ -357,7 +389,9 @@ async def collect_new_posts(
 ):
     logger.info(f"Collecting posts for ICP {icp.id} from various sorts (polling mode, limit={limit})")
 
-    if not db_manager.can_user_add_lead(icp.userId):
+    # Check user lead limit once at the start
+    user_can_add_leads = db_manager.can_user_add_lead(icp.userId)
+    if not user_can_add_leads:
         logger.info(
             f"User {icp.userId} has reached lead limit - skipping collection for ICP {icp.id}"
         )
@@ -396,35 +430,40 @@ async def collect_new_posts(
                     async for post in current_subreddit.top(time_filter=time_filter, limit=posts_per_sort):
                         posts_from_method.append(post)
                 
+                # Batch check which posts are already processed
+                submission_ids = [post.id for post in posts_from_method]
+                already_processed = db_manager.batch_check_processed_posts(icp.id, submission_ids)
+                
+                processing_tasks = []
                 for submission in posts_from_method:
-                    try:
-                        if asyncio.current_task().cancelled():
-                            logger.info(f"Task cancelled for ICP {icp.id}")
-                            return
+                    if posts_processed >= limit:
+                        logger.info(f"Reached limit of {limit} posts for ICP {icp.id}")
+                        break
 
-                        if db_manager.get_system_flag("scraper_refresh_needed"):
-                            logger.info(
-                                f"Refresh flag detected - stopping collection for ICP {icp.id}"
-                            )
-                            return
+                    if asyncio.current_task().cancelled():
+                        logger.info(f"Task cancelled for ICP {icp.id}")
+                        return
 
-                        if posts_processed >= limit:
-                            logger.info(f"Reached limit of {limit} posts for ICP {icp.id}")
-                            break
-
-                        if should_process_post(submission, db_manager):
-                            logger.info(f"Processing post {submission.id} for ICP {icp.id}")
-                            await process_post_for_icp(submission, icp, db_manager)
-                            posts_processed += 1
-
-                    except asyncio.CancelledError:
-                        logger.info(f"Collection task cancelled for ICP {icp.id}")
-                        raise
-                    except Exception as e:
-                        logger.warning(
-                            f"Exception processing submission {getattr(submission, 'id', 'unknown')} for ICP {icp.id}: {e}"
+                    # Check refresh flag once per batch instead of per post
+                    if db_manager.get_system_flag("scraper_refresh_needed"):
+                        logger.info(
+                            f"Refresh flag detected - stopping collection for ICP {icp.id}"
                         )
-                        continue
+                        return
+
+                    if submission.id not in already_processed:
+                        logger.info(f"Queueing post {submission.id} for processing for ICP {icp.id}")
+                        task = asyncio.create_task(
+                            process_post_for_icp_safe(submission, icp, db_manager)
+                        )
+                        processing_tasks.append(task)
+                        posts_processed += 1
+                    else:
+                        logger.info(f"Post {submission.id} already processed for ICP {icp.id}, skipping")
+
+                if processing_tasks:
+                    logger.info(f"Processing {len(processing_tasks)} posts in parallel for ICP {icp.id}")
+                    await asyncio.gather(*processing_tasks, return_exceptions=True)
                         
             except Exception as e:
                 logger.warning(f"Error collecting from {sort_method}" + (f" ({time_filter})" if time_filter else "") + f": {e}")
