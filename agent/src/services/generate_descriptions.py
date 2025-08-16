@@ -1,5 +1,5 @@
-from server.agents.agents import icp_pain_points_combined_agent
-from shared.agent.agent_services import run_agent
+from ..agent.agent_services import run_agent
+from ..agents.agents import icp_pain_points_combined_agent
 import logging
 
 logger = logging.getLogger(__name__)

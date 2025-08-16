@@ -1,6 +1,6 @@
-from shared.agent.agent_utils import load_agent_config
-from shared.agent.agent_models import gemini_flash_lite_model, gemini_flash_model
-from shared.models.agent_models import LeadIntentResponse
+from ..agent.agent_utils import load_agent_config
+from ..agent.agent_models import gemini_flash_lite_model, gemini_flash_model
+from ..models.agent_models import LeadIntentResponse
 from pydantic_ai import Agent
 
 lead_score_agent_weak = Agent(

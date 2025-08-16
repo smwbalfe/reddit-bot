@@ -6,12 +6,6 @@ class KeywordResponse(BaseModel):
     keywords: List[str]
 
 
-class SubredditResponse(BaseModel):
-    subreddits: List[str]
-
-
-class ICPResponse(BaseModel):
-    icp_description: str
 
 
 class PainPointsResponse(BaseModel):

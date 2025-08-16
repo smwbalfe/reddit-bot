@@ -19,7 +19,6 @@ export const icps = pgTable('ICP', {
     painPoints?: string,
     description?: string,
   }>().notNull().default({}),
-  monitoringEnabled: boolean('monitoringEnabled').default(true).notNull(),
   leadLimit: integer('leadLimit').default(100).notNull(),
   seeded: boolean('seeded').default(false).notNull(),
   createdAt: timestamp('createdAt').defaultNow().notNull(),

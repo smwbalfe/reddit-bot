@@ -1,6 +1,6 @@
 from pydantic_ai import Agent
-from shared.agent.agent_models import gemini_flash_model
-from server.models.models import (
+from ..agent.agent_models import gemini_flash_model
+from ..models.models import (
     KeywordResponse,
     SubredditRelevanceResponse,
     ICPPainPointsResponse,
