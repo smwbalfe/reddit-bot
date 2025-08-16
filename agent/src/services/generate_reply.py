@@ -1,7 +1,7 @@
 import json
 import logging
-from server.agents.agents import reply_generation_agent
-from shared.agent.agent_services import run_agent
+from ..agents.agents import reply_generation_agent
+from ..agent.agent_services import run_agent
 
 logger = logging.getLogger(__name__)
 

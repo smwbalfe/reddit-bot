@@ -1,30 +1,35 @@
 import json
-from shared.models.agent_models import (
-    FactorJustifications,
-    FactorScores,
+from typing import Optional
+from ..models.agent_models import (
     LeadIntentResponse,
+    FactorScores,
+    FactorJustifications,
 )
-from scraper.lead_scoring.lead_scoring_agent import (
+from src.lead_scoring.lead_scoring_agent import (
     lead_score_agent_weak,
     lead_score_agent_strong,
 )
-from shared.agent.agent_services import run_agent
+from ..agent.agent_services import run_agent
 
 
 async def score_lead_intent_two_stage(
-    post_title: str, post_content: str, icp_description: str, icp_pain_points: str
-) -> LeadIntentResponse:
+    post_title: str,
+    post_content: str,
+    icp_description: str,
+    icp_pain_points: str,
+    weak_agent_threshold: int = 35,
+) -> Optional[LeadIntentResponse]:
     initial_result = await score_lead_intent_initial(
         post_title, post_content, icp_description, icp_pain_points
     )
 
-    if initial_result.final_score > 30:
-        detailed_result = await score_lead_intent_detailed(
-            post_title, post_content, icp_description
-        )
-        return detailed_result
-    else:
-        return initial_result
+    if not initial_result.final_score > weak_agent_threshold:
+        return None
+
+    detailed_result = await score_lead_intent_detailed(
+        post_title, post_content, icp_description
+    )
+    return detailed_result
 
 
 async def score_lead_intent_initial(
@@ -35,7 +40,6 @@ async def score_lead_intent_initial(
         "icp_pain_points": icp_pain_points,
         "reddit_post_title": post_title,
         "reddit_post_content": post_content,
-        "icp_pain_points": icp_pain_points,
     }
     prompt = json.dumps(prompt_data)
 

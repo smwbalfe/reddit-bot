@@ -13,8 +13,4 @@ class ICPModel(BaseModel):
     id: int
     userId: str
     name: str
-    website: str
     data: Optional[ICPDataModel] = None
-    monitoringEnabled: bool = True
-    leadLimit: int = 100
-    seeded: bool = False

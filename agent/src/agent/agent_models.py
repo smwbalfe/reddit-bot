@@ -7,7 +7,9 @@ from dotenv import load_dotenv
 
 load_dotenv()
 
-logfire.configure()
+logfire.configure(
+    console=False,
+)
 logfire.instrument_pydantic_ai()
 
 openrouter_api_key = os.getenv("OPENROUTER_API_KEY")

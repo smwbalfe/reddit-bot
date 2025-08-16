@@ -169,6 +169,20 @@
       "when": 1754832597341,
       "tag": "0023_public_cardiac",
       "breakpoints": true
+    },
+    {
+      "idx": 24,
+      "version": "7",
+      "when": 1755262107077,
+      "tag": "0024_loving_odin",
+      "breakpoints": true
+    },
+    {
+      "idx": 25,
+      "version": "7",
+      "when": 1755354909589,
+      "tag": "0025_loose_shinko_yamashiro",
+      "breakpoints": true
     }
   ]
 }
