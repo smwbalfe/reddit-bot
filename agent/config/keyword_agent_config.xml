@@ -1,0 +1,3 @@
+<agent_config>
+  <task>Generate &lt;count&gt; specific 1-2 word keywords for subreddits where this ICP is active. Use specific roles, tools, industries, problems - not generic business terms.</task>
+</agent_config>
