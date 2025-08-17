@@ -12,7 +12,7 @@ export async function GET(request: Request) {
     console.log('All search params:', Object.fromEntries(searchParams.entries()))
     
     const code = searchParams.get('code')
-    const next = searchParams.get('next') ?? '/'
+    const next = searchParams.get('next') ?? '/icps'
     
     console.log('Auth callback parameters:', { code: code ? 'present' : 'missing', next })
     

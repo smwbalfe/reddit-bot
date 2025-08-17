@@ -1,6 +1,6 @@
 "use client"
 
-import { useUser } from "@/src/lib/features/auth/hooks/use-user"
+import { useAuth } from "@/src/lib/features/auth/context/auth-context"
 import { useEffect, useState } from "react"
 import { Card, CardContent, CardHeader, CardTitle } from "@/src/lib/components/ui/card"
 import { MessageSquare, TrendingUp, Activity, Target, Calendar, BarChart3, Zap } from "lucide-react"
@@ -13,13 +13,10 @@ import { PostWithConfigId } from "@/src/lib/types"
 
 
 export function Dashboard() {
-  const { user } = useUser()
+  const { user } = useAuth()
   const [configs, setConfigs] = useState<ICP[]>([])
   const [posts, setPosts] = useState<PostWithConfigId[]>([])
   const [loading, setLoading] = useState(true)
-  
-  const [isSearching, setIsSearching] = useState(false)
-  const [searchMessage, setSearchMessage] = useState("")
   
   const metrics = useDashboardMetrics(posts)
 

@@ -39,7 +39,7 @@ def get_scraper_config() -> dict:
     return {
         "polling_interval": 300,
         "confidence_threshold": 30,
-        "initial_seeding_posts_per_subreddit": 60,
+        "initial_seeding_posts_per_subreddit": 25,
         "error_retry_delay": 60,
     }
 
@@ -253,24 +253,24 @@ async def process_initial_subreddit_posts(subreddit_name: str, icp: ICPModel, re
     
     hot_posts = max(1, limit // 3)
     top_week_posts = max(1, limit // 3)
-    top_month_posts = max(1, limit // 4)
-    top_year_posts = max(1, limit // 6)
-    top_all_posts = max(1, limit // 12)
+    top_month_posts = max(1, limit // 3)
     
+    logger.info(f"Building batch for r/{subreddit_name} - fetching {hot_posts} hot posts")
     category_posts = await fetch_posts_from_time_period(subreddit, "hot", hot_posts, icp, db_manager)
     posts_to_process.extend(category_posts)
+    logger.info(f"Added {len(category_posts)} hot posts to batch")
     
+    logger.info(f"Building batch for r/{subreddit_name} - fetching {top_week_posts} top week posts")
     category_posts = await fetch_posts_from_time_period(subreddit, "week", top_week_posts, icp, db_manager)
     posts_to_process.extend(category_posts)
+    logger.info(f"Added {len(category_posts)} week posts to batch")
     
+    logger.info(f"Building batch for r/{subreddit_name} - fetching {top_month_posts} top month posts")
     category_posts = await fetch_posts_from_time_period(subreddit, "month", top_month_posts, icp, db_manager)
     posts_to_process.extend(category_posts)
+    logger.info(f"Added {len(category_posts)} month posts to batch")
     
-    category_posts = await fetch_posts_from_time_period(subreddit, "year", top_year_posts, icp, db_manager)
-    posts_to_process.extend(category_posts)
-    
-    category_posts = await fetch_posts_from_time_period(subreddit, "all", top_all_posts, icp, db_manager)
-    posts_to_process.extend(category_posts)
+    logger.info(f"Batch complete for r/{subreddit_name} - total {len(posts_to_process)} posts to process")
     
     await process_posts_in_batches(posts_to_process, icp, db_manager)
 
