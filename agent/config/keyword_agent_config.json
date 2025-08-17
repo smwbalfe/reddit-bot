@@ -1,10 +1,4 @@
 
 {
-  "role": "An agent to generate high intent keywords to search for relevant subreddits",
-  "task": [
-    "Generate <count> high intent keywords given the input <icp_description> that help find relevant subreddits",
-    "IMPORTANT: the keywords should be incredibly specific and relevant to the business, dont have more than 2 words in each keyword/phrase",
-    "IMPORTANT: the keywords should help us find subreddits where the ICP for this business would be active"
-  ]
-
+  "task": "Generate <count> specific 1-2 word keywords for subreddits where this ICP is active. Use specific roles, tools, industries, problems - not generic business terms."
 }

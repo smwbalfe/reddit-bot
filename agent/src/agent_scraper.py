@@ -158,7 +158,7 @@ def should_process_post(
 
 
 def embeddings_prefilter(
-    post: Submission, icp: ICPModel, threshold: float = 25.0
+    post: Submission, icp: ICPModel, threshold: float = 20.0
 ) -> tuple[bool, float]:
     """Use OpenAI embeddings to prefilter posts before expensive LLM scoring"""
     try:

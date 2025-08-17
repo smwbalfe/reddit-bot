@@ -140,7 +140,7 @@ async def trigger_initial_seeding(request: InitialSeedingRequest):
 async def trigger_scrape():
     try:
         logger.info("Manual scrape collection cycle trigger requested")
-        scheduler.modify_job("reddit_scraper", next_run_time=datetime.now())
+        asyncio.create_task(asyncio.to_thread(run_collection_cycle_sync))
         return {
             "message": "Scrape collection cycle triggered",
             "status": "started",
