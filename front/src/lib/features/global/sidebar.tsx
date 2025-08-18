@@ -19,7 +19,7 @@ import {
   DropdownMenuTrigger,
 } from '@/src/lib/components/ui/dropdown-menu'
 import { checkSubscription } from '@/src/lib/actions/payment/check-subscription'
-import { useUser } from '@/src/lib/features/auth/hooks/use-user'
+import { useAuth } from '@/src/lib/features/auth/context/auth-context'
 import { useUsage } from '@/src/lib/features/global/hooks/use-usage'
 
 const navigationItems = [
@@ -47,7 +47,7 @@ interface SidebarProps {
 
 export default function Sidebar({ isOpen, onClose }: SidebarProps) {
   const pathname = usePathname()
-  const { user, loading } = useUser()
+  const { user, loading } = useAuth()
   const { handleCheckout, isLoading } = useCheckout(user?.id)
   const [isSubscribed, setIsSubscribed] = useState<boolean | null>(null)
   const { usage, loading: usageLoading } = useUsage()
@@ -60,14 +60,16 @@ export default function Sidebar({ isOpen, onClose }: SidebarProps) {
     }
   }, [user])
 
+  const { signOut } = useAuth()
+  
   const handleSignOut = async () => {
-    await supabaseBrowserClient.auth.signOut()
+    await signOut()
   }
 
   const handleDeleteAccount = async () => {
     if (confirm('Are you sure you want to delete your account? This action cannot be undone.')) {
       await deleteCurrentUser(user?.id!)
-      await supabaseBrowserClient.auth.signOut()
+      await signOut()
     }
   }
 

@@ -140,7 +140,7 @@ async def trigger_initial_seeding(request: InitialSeedingRequest):
 async def trigger_scrape():
     try:
         logger.info("Manual scrape collection cycle trigger requested")
-        scheduler.modify_job("reddit_scraper", next_run_time=datetime.now())
+        asyncio.create_task(asyncio.to_thread(run_collection_cycle_sync))
         return {
             "message": "Scrape collection cycle triggered",
             "status": "started",
@@ -148,6 +148,27 @@ async def trigger_scrape():
     except Exception as e:
         raise HTTPException(
             status_code=500, detail=f"Failed to trigger scrape: {str(e)}"
+        )
+
+
+@app.get("/scheduler/next-scrape-time")
+async def get_next_scrape_time():
+    try:
+        job = scheduler.get_job("reddit_scraper")
+        if job is None:
+            raise HTTPException(status_code=404, detail="Scraper job not found")
+        
+        next_run_time = job.next_run_time
+        if next_run_time is None:
+            raise HTTPException(status_code=500, detail="No next run time scheduled")
+        
+        return {
+            "next_run_time": next_run_time.isoformat(),
+            "seconds_until_next_run": (next_run_time - datetime.now(next_run_time.tzinfo)).total_seconds(),
+        }
+    except Exception as e:
+        raise HTTPException(
+            status_code=500, detail=f"Failed to get next scrape time: {str(e)}"
         )
 
 

@@ -4,6 +4,7 @@ import { updateConfig } from '@/src/lib/actions/config/update-config'
 import { deleteConfig } from '@/src/lib/actions/config/delete-config'
 import { getUserConfigs } from '@/src/lib/actions/config/get-user-configs'
 import { createConfig } from '@/src/lib/actions/config/create-config'
+import { triggerInitialSeeding } from '@/src/lib/actions/config/trigger-initial-seeding'
 
 import { generateSuggestions } from '@/src/lib/actions/content/generate-suggestions'
 import { analyzeUrl } from '@/src/lib/actions/content/analyze-url'
@@ -45,6 +46,17 @@ export const useICPStore = create<ICPState & ICPActions>((set, get) => ({
       const result = await createConfig(formData)
       if (result.success) {
         await get().fetchICPs()
+        
+        // Trigger initial seeding for the newly created ICP
+        if (result.data?.id) {
+          try {
+            await triggerInitialSeeding(result.data.id)
+          } catch (seedingError) {
+            // Don't fail the creation if seeding fails, just log it
+            console.warn('Failed to trigger initial seeding:', seedingError)
+          }
+        }
+        
         return true
       } else {
         const errorMsg = Array.isArray(result.error)

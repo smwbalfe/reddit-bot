@@ -80,7 +80,7 @@ async def find_relevant_subreddits_by_keywords(description: str) -> List[str]:
         reddit_client = RedditClient()
 
         subreddit_pool = await find_relevant_subreddits_from_keywords(
-            reddit_client, keywords, limit=20
+            reddit_client, keywords, limit=50
         )
 
         prompt_data = {

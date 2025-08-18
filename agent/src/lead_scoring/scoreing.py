@@ -20,5 +20,5 @@ async def score_post(post: Submission, icp: ICPModel) -> Optional[LeadIntentResp
         post_content=condensed_content,
         icp_description=icp_description,
         icp_pain_points=icp_pain_points,
-        weak_agent_threshold=35,
+        weak_agent_threshold=30,
     )

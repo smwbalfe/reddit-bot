@@ -13,9 +13,10 @@ import { getUserConfigs } from "@/src/lib/actions/config/get-user-configs"
 import { getUserPosts } from "@/src/lib/actions/config/get-user-posts"
 import { generateReplyAction } from "@/src/lib/actions/generate-reply"
 import { resetPollPeriod, getScraperStatus } from "@/src/lib/actions/system/set-system-flag"
+import { getNextScrapeTime } from "@/src/lib/actions/config/get-next-scrape-time"
 import { ICP } from "@/src/lib/db/schema"
 import { PostWithConfigId } from "@/src/lib/types"
-import { MessageSquare, TrendingUp, ExternalLink, Package, Bot, ChevronDown, ChevronUp, RefreshCw, RotateCcw, Pause, Play } from "lucide-react"
+import { MessageSquare, TrendingUp, ExternalLink, Package, Bot, ChevronDown, ChevronUp, RefreshCw, RotateCcw, Pause, Play, Clock } from "lucide-react"
 import DashboardLayout from '@/src/lib/features/global/dashboard-layout'
 import Link from 'next/link'
 import { InterestLabel } from "@/src/lib/features/leads/components/interest-label"
@@ -32,6 +33,7 @@ export function LeadsPage() {
   const [refreshing, setRefreshing] = useState(false)
   const [fetching, setFetching] = useState(false)
   const [scraperPaused, setScraperPaused] = useState(false)
+  const [nextScrapeData, setNextScrapeData] = useState<{next_run_time: string, seconds_until_next_run: number} | null>(null)
 
 
   const getRelativeTime = (date: Date | null): string => {
@@ -60,6 +62,7 @@ export function LeadsPage() {
       fetchConfigs()
       fetchPosts()
       fetchScraperStatus()
+      fetchNextScrapeTime()
     }
   }, [user?.id])
 
@@ -68,7 +71,8 @@ export function LeadsPage() {
 
     const interval = setInterval(() => {
       fetchScraperStatus()
-    }, 30000) // Check status every 30 seconds
+      fetchNextScrapeTime()
+    }, 10000) // Check status every 10 seconds
 
     return () => clearInterval(interval)
   }, [user?.id])
@@ -115,6 +119,30 @@ export function LeadsPage() {
     } catch (error) {
       console.error('Error fetching scraper status:', error)
     }
+  }
+
+  const fetchNextScrapeTime = async () => {
+    if (!user?.id) return
+    try {
+      const result = await getNextScrapeTime()
+      if (result.success && result.data) {
+        setNextScrapeData(result.data)
+      }
+    } catch (error) {
+      console.error('Error fetching next scrape time:', error)
+    }
+  }
+
+  const formatTimeUntilNext = (seconds: number): string => {
+    if (seconds <= 0) return 'Running now'
+    
+    const minutes = Math.floor(seconds / 60)
+    const remainingSeconds = Math.floor(seconds % 60)
+    
+    if (minutes > 0) {
+      return `${minutes}m ${remainingSeconds}s`
+    }
+    return `${remainingSeconds}s`
   }
 
   const toggleRowExpansion = (postId: number) => {
@@ -244,6 +272,13 @@ export function LeadsPage() {
                       {scraperPaused ? 'Paused' : 'Active'}
                     </span>
                     <span className="text-base text-slate-500">scanner</span>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <Clock className="w-5 h-5 text-purple-500" />
+                    <span className="text-base font-medium text-slate-700">
+                      {nextScrapeData ? formatTimeUntilNext(nextScrapeData.seconds_until_next_run) : 'N/A'}
+                    </span>
+                    <span className="text-base text-slate-500">next scan</span>
                   </div>
                 </div>
               </div>

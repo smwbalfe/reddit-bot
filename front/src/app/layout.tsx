@@ -2,6 +2,7 @@ import type { Metadata } from 'next'
 import '@/src/globals.css'
 import { PostHogProvider } from '@/src/lib/providers'
 import dynamic from 'next/dynamic'
+import { AuthProvider } from '@/src/lib/features/auth/context/auth-context'
 
 import { Navbar } from '@/src/lib/features/global/navbar'
 
@@ -32,9 +33,11 @@ export default function RootLayout({
     <html lang="en" suppressHydrationWarning>
       <body suppressHydrationWarning className='font-primary'>
         <PostHogProvider>
+          <AuthProvider>
             <CrispWithNoSSR />
             <Navbar/>
             {children}
+          </AuthProvider>
         </PostHogProvider>
       </body>
     </html>
