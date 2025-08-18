@@ -8,6 +8,7 @@ import Link from "next/link"
 import { getUserConfigs } from "@/src/lib/actions/config/get-user-configs"
 import { getUserPosts } from "@/src/lib/actions/config/get-user-posts"
 import { useDashboardMetrics } from "@/src/lib/features/dashboard/hooks/use-dashboard-metrics"
+
 import { ICP } from "@/src/lib/db/schema"
 import { PostWithConfigId } from "@/src/lib/types"
 
@@ -19,6 +20,7 @@ export function Dashboard() {
   const [loading, setLoading] = useState(true)
   
   const metrics = useDashboardMetrics(posts)
+
 
   useEffect(() => {
     if (user?.id) {
@@ -64,7 +66,7 @@ export function Dashboard() {
         </div>
       ) : (
         <>
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4 sm:gap-6">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-4 sm:gap-6">
             <Card className="border-0 shadow-sm bg-white">
               <CardContent className="p-4 sm:p-6">
                 <div className="flex items-center justify-between">
@@ -134,6 +136,8 @@ export function Dashboard() {
                 </div>
               </CardContent>
             </Card>
+
+
           </div>
 
 

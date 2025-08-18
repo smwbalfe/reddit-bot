@@ -37,7 +37,7 @@ def get_shared_reddit_client() -> RedditClient:
 
 def get_scraper_config() -> dict:
     return {
-        "polling_interval": 300,
+        "polling_interval": 120,
         "confidence_threshold": 30,
         "initial_seeding_posts_per_subreddit": 25,
         "error_retry_delay": 60,
@@ -67,12 +67,15 @@ async def handle_regular_collection(
         logger.info("No ICPs found")
         return
 
+    tasks = []
     for icp in icps:
-        try:
-            await collect_new_posts_for_icp(icp, db_manager)
-        except Exception as e:
-            logger.error(f"Error during collection for ICP {icp.id}: {e}")
-            continue
+        task = asyncio.create_task(collect_new_posts_for_icp(icp, db_manager))
+        tasks.append(task)
+    
+    results = await asyncio.gather(*tasks, return_exceptions=True)
+    for i, result in enumerate(results):
+        if isinstance(result, Exception):
+            logger.error(f"Error during collection for ICP {icps[i].id}: {result}")
 
     logger.info("Collection cycle completed")
 
@@ -93,15 +96,21 @@ async def process_subreddit_posts(subreddit_name: str, icp: ICPModel, db_manager
     reddit_client = get_shared_reddit_client()
     subreddit = await reddit_client.get_subreddit(subreddit_name)
     
+    can_add_lead = db_manager.can_user_add_lead(icp.userId)
+    if not can_add_lead:
+        logger.info(f"SKIPPED: User {icp.userId} has reached their lead limit")
+        return
+    
     posts_to_process = []
     async for post in subreddit.new(limit=limit):
-        if should_process_post(post, icp, db_manager):
+        processed = db_manager.post_processed_for_icp(icp.id, post.id)
+        if not processed:
             posts_to_process.append(post)
     
     await process_posts_in_batches(posts_to_process, icp, db_manager)
 
 
-async def process_posts_in_batches(posts: List, icp: ICPModel, db_manager: ScraperDatabaseManager, batch_size: int = 10):
+async def process_posts_in_batches(posts: List[Submission], icp: ICPModel, db_manager: ScraperDatabaseManager, batch_size: int = 25):
     for i in range(0, len(posts), batch_size):
         batch = posts[i:i + batch_size]
         tasks = []
@@ -158,7 +167,7 @@ def should_process_post(
 
 
 def embeddings_prefilter(
-    post: Submission, icp: ICPModel, threshold: float = 20.0
+    post: Submission, icp: ICPModel, threshold: float = 25.0
 ) -> tuple[bool, float]:
     """Use OpenAI embeddings to prefilter posts before expensive LLM scoring"""
     try:
@@ -293,15 +302,7 @@ async def run_collection_cycle() -> None:
     db_manager = get_shared_db_manager()
     try:
         icps = get_active_icps(db_manager)
-        if not icps:
-            logger.info("No ICPs found")
-            return
-        for icp in icps:
-            try:
-                await collect_new_posts_for_icp(icp, db_manager)
-            except Exception as e:
-                logger.error(f"Error during collection for ICP {icp.id}: {e}")
-                continue
+        await handle_regular_collection(icps, db_manager)
     except Exception as e:
         logger.error(f"Error in collection cycle: {e}")
         raise
