@@ -1,3 +1,31 @@
 <agent_config>
-  <task>Generate &lt;count&gt; specific 1-2 word keywords for subreddits where this ICP is active. Use specific roles, tools, industries, problems - not generic business terms.</task>
+  <task>Generate <count> ultra-specific 1-2 word keywords targeting high-intent users actively seeking solutions for problems your ICP product solves. Focus on pain-point keywords, solution-seeking terms, and buyer-intent phrases - not generic business terms.</task>
+  
+  <keyword_criteria>
+    <high_intent>Keywords indicating active problem-solving, purchase research, or immediate need</high_intent>
+    <pain_point_focused>Terms reflecting specific struggles, challenges, or urgent situations</pain_point_focused>
+    <solution_seeking>Words showing users are comparing, evaluating, or ready to buy</solution_seeking>
+    <niche_specific>Industry jargon, technical terms, or role-specific language your ICP uses</niche_specific>
+  </keyword_criteria>
+  
+  <keyword_types>
+    <urgent_language>broke, failing, stuck, urgent, deadline, emergency, crisis</urgent_language>
+    <evaluation_terms>comparing, evaluating, recommendations, reviews, best, vs, alternative</evaluation_terms>
+    <problem_indicators>issues, problems, struggles, challenges, headaches, bottlenecks</problem_indicators>
+    <buyer_signals>budget, pricing, cost, ROI, implementation, onboarding, contract</buyer_signals>
+    <technical_specifics>Exact tools, platforms, processes, or technologies your ICP mentions</technical_specifics>
+  </keyword_types>
+  
+  <avoid>
+    <generic_terms>business, marketing, growth, success, strategy, tips, advice</generic_terms>
+    <broad_categories>entrepreneur, startup, company, industry, management</broad_categories>
+    <educational_content>guide, tutorial, learning, beginner, basics, introduction</educational_content>
+  </avoid>
+  
+  <optimization>
+    <specificity>Choose precise terms over broad categories</specificity>
+    <urgency>Prioritize keywords indicating time pressure or immediate need</urgency>
+    <intent_level>Focus on bottom-funnel keywords where users are ready to take action</intent_level>
+    <competition>Target underserved niches with clear pain points</competition>
+  </optimization>
 </agent_config>

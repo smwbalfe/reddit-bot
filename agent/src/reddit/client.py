@@ -1,6 +1,7 @@
 import asyncpraw
 import os
 import logging
+import asyncio
 from dotenv import load_dotenv
 
 load_dotenv()
@@ -11,15 +12,32 @@ class RedditClient:
         self.client_id = os.getenv("REDDIT_CLIENT_ID") or ""
         self.client_secret = os.getenv("REDDIT_CLIENT_SECRET") or ""
         self._reddit = None
+        self._current_loop = None
 
     def get_client(self) -> asyncpraw.Reddit:
-        if self._reddit is None:
+        current_loop = asyncio.get_event_loop()
+        
+        if self._reddit is None or self._current_loop != current_loop:
+            if self._reddit is not None:
+                try:
+                    asyncio.create_task(self._reddit.close())
+                except:
+                    pass
+            
             self._reddit = asyncpraw.Reddit(
                 client_id=self.client_id,
                 client_secret=self.client_secret,
                 user_agent="RedditBot1/1.0",
             )
+            self._current_loop = current_loop
+        
         return self._reddit
+
+    async def close(self):
+        if self._reddit is not None:
+            await self._reddit.close()
+            self._reddit = None
+            self._current_loop = None
 
     async def get_subreddit(self, subreddit_name: str):
         if not subreddit_name or not subreddit_name.strip():

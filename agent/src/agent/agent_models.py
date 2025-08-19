@@ -26,3 +26,8 @@ gemini_flash_model = OpenAIModel(
     "google/gemini-2.5-flash",
     provider=OpenRouterProvider(api_key=openrouter_api_key),
 )
+
+gemini_pro_model = OpenAIModel(
+    "google/gemini-2.5-pro",
+    provider=OpenRouterProvider(api_key=openrouter_api_key),
+)

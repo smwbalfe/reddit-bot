@@ -13,6 +13,7 @@ import { getUserConfigs } from "@/src/lib/actions/config/get-user-configs"
 import { getUserPosts } from "@/src/lib/actions/config/get-user-posts"
 import { generateReplyAction } from "@/src/lib/actions/generate-reply"
 import { resetPollPeriod, getScraperStatus } from "@/src/lib/actions/system/set-system-flag"
+import { forceScrape } from "@/src/lib/actions/system/force-scrape"
 import { getNextScrapeTime } from "@/src/lib/actions/config/get-next-scrape-time"
 import { ICP } from "@/src/lib/db/schema"
 import { PostWithConfigId } from "@/src/lib/types"
@@ -34,6 +35,7 @@ export function LeadsPage() {
   const [fetching, setFetching] = useState(false)
   const [scraperPaused, setScraperPaused] = useState(false)
   const [nextScrapeData, setNextScrapeData] = useState<{next_run_time: string, seconds_until_next_run: number} | null>(null)
+  const [forcingScrape, setForcingScrape] = useState(false)
 
 
   const getRelativeTime = (date: Date | null): string => {
@@ -222,6 +224,26 @@ export function LeadsPage() {
     }
   }
 
+  const handleForceScrape = async () => {
+    setForcingScrape(true)
+    try {
+      const result = await forceScrape()
+      if (result.success) {
+        setTimeout(() => {
+          fetchPosts()
+          fetchScraperStatus()
+          fetchNextScrapeTime()
+        }, 3000)
+      } else {
+        console.error('Error forcing scrape:', result.error)
+      }
+    } catch (error) {
+      console.error('Error triggering force scrape:', error)
+    } finally {
+      setForcingScrape(false)
+    }
+  }
+
 
   if (!user) {
     return (
@@ -321,6 +343,24 @@ export function LeadsPage() {
                       </TooltipContent>
                     </Tooltip>
                   )}
+                  
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <Button
+                        onClick={handleForceScrape}
+                        disabled={forcingScrape}
+                        variant="default"
+                        className="bg-purple-600 hover:bg-purple-700 text-white"
+                        size="default"
+                      >
+                        <RefreshCw className={`w-4 h-4 ${forcingScrape ? 'animate-spin' : ''}`} />
+                        {forcingScrape ? 'Scraping...' : 'Force Scrape Now'}
+                      </Button>
+                    </TooltipTrigger>
+                    <TooltipContent side="bottom" align="center" className="bg-slate-900 text-white border-slate-800">
+                      <p>Force a new scrape cycle to run immediately, bypassing the timer</p>
+                    </TooltipContent>
+                  </Tooltip>
                   
                   <Tooltip>
                     <TooltipTrigger asChild>
