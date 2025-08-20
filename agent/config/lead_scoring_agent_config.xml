@@ -1,43 +1,86 @@
 <agent_config>
-  <objective>Score Reddit post authors as potential customers for ICP - output 5 scores 1-100</objective>
+  <objective>Score Reddit post authors as potential customers for [ICP_DESCRIPTION / BUSINESS_DESCRIPTION / PAIN POINTS] - output 3 scores 1-100</objective>
+  
   <instructions>
-    <instruction>Score post author as potential customer for ICP's offering</instruction>
-    <instruction>Be conservative - most posts score &lt;50</instruction>
-    <instruction>Match specific problems to ICP solutions</instruction>
+    <instruction>Score post author as potential customer for the specified product/solution</instruction>
+    <instruction>Be highly conservative - most posts should score &lt;40 overall</instruction>
+    <instruction>Match specific stated problems to the product's solutions only</instruction>
+    <instruction>Distinguish between sharing success stories vs. seeking help</instruction>
+    <instruction>Don't assume business owners need all B2B tools</instruction>
+    <instruction>Only score based on problems explicitly mentioned in the post</instruction>
   </instructions>
+
   <scoring>
     <product_fit>
-      <score_range score="90-100">Explicit need for ICP offering</score_range>
-      <score_range score="70-89">Direct problem match</score_range>
-      <score_range score="50-69">Some overlap</score_range>
-      <score_range score="30-49">Tangentially related</score_range>
-      <score_range score="10-29">Different problem space</score_range>
-      <score_range score="1-9">No match</score_range>
+      <score_range score="90-100">Explicitly asking for solutions that match your product</score_range>
+      <score_range score="70-89">Directly mentions problems your product solves</score_range>
+      <score_range score="50-69">Has related challenges but unclear if your solution fits</score_range>
+      <score_range score="30-49">General problems in your product's domain</score_range>
+      <score_range score="10-29">Problems unrelated to your product's solutions</score_range>
+      <score_range score="1-9">No relevant problems mentioned</score_range>
     </product_fit>
+    
     <intent>
-      <score_range score="90-100">Asking to buy NOW</score_range>
-      <score_range score="70-89">Actively seeking/comparing solutions</score_range>
-      <score_range score="50-69">Looking for help</score_range>
-      <score_range score="30-49">Acknowledges problem</score_range>
-      <score_range score="10-29">Sharing experiences</score_range>
-      <score_range score="1-9">No buying intent</score_range>
+      <score_range score="90-100">Looking for tools/solutions like yours or direct requests for help</score_range>
+      <score_range score="70-89">Actively researching solutions in your product category</score_range>
+      <score_range score="50-69">Asking how to solve problems your product addresses</score_range>
+      <score_range score="30-49">Expressing frustration with problems your product solves</score_range>
+      <score_range score="10-29">Discussing challenges without seeking solutions</score_range>
+      <score_range score="1-9">No help-seeking language, just sharing experiences</score_range>
     </intent>
+    
+    <authority>
+      <score_range score="90-100">Founder/CEO/Owner with clear decision-making authority</score_range>
+      <score_range score="70-89">Manager/Director with purchasing authority or strong influence</score_range>
+      <score_range score="50-69">Team lead or senior role with input on purchasing decisions</score_range>
+      <score_range score="30-49">Individual contributor who may influence or recommend solutions</score_range>
+      <score_range score="10-29">Employee/junior role with limited influence</score_range>
+      <score_range score="1-9">Student/hobbyist/personal use context only</score_range>
+    </authority>
   </scoring>
+
+  <red_flags>
+    <flag reduction="20-30">Success story sharing (not seeking help)</flag>
+    <flag reduction="20-30">Problems outside your product's scope</flag>
+    <flag reduction="20-30">Already using competing solutions successfully</flag>
+    <flag reduction="20-30">Budget constraints explicitly mentioned</flag>
+    <flag reduction="20-30">Focus on areas your product doesn't address</flag>
+    <flag reduction="10-20">Vague or indirect problem statements</flag>
+  </red_flags>
+
   <avoid>
-    <item>High scores for general business problems</item>
+    <item>High scores for problems your product doesn't solve</item>
     <item>Confusing knowledge sharing with needing help</item>
-    <item>Assuming business owners fit all B2B solutions</item>
+    <item>Assuming all business owners need your solution</item>
+    <item>Scoring unrelated technical or operational problems</item>
+    <item>Over-interpreting weak signals of interest</item>
   </avoid>
+
   <output>
     <scores>
-      <product_fit>1-100: Author's problem matches ICP offering?</product_fit>
-      <intent_signals>1-100: Actively seeking to buy?</intent_signals>
-      <urgency_indicators>1-100: Time pressure/deadlines?</urgency_indicators>
-      <decision_authority>1-100: Business owner/decision maker?</decision_authority>
-      <engagement_quality>1-100: Detailed/specific post?</engagement_quality>
+      <product_fit>1-100: Does their stated problem match what your product solves?</product_fit>
+      <intent>1-100: Are they actively seeking to buy solutions like yours?</intent>
+      <authority>1-100: Can they make or influence purchasing decisions?</authority>
     </scores>
-    <justifications>One sentence per score with brief quote</justifications>
-    <pain_points>Problems mentioned in post only</pain_points>
-    <assessment>Would author realistically want ICP offering?</assessment>
+    <justifications>One sentence per score with brief quote from post supporting the score</justifications>
+    <pain_points>List only specific problems explicitly mentioned in the post</pain_points>
+    <assessment>Would this author realistically want your product based on their actual stated needs?</assessment>
   </output>
+
+  <quality_checks>
+    <check>Did I avoid assuming they need your product just because they're in business?</check>
+    <check>Did I distinguish between sharing success vs. seeking help?</check>
+    <check>Are my scores conservative (most posts should score &lt;40 overall)?</check>
+    <check>Did I only score based on problems explicitly stated in the post?</check>
+    <check>Would this person actually pay for your specific product solution?</check>
+    <check>Do the stated problems actually match what your product solves?</check>
+  </quality_checks>
+
+  <usage_instructions>
+    <step>1. Replace [PRODUCT_NAME] with your actual product name</step>
+    <step>2. Replace the problems list with 3-5 specific problems your product solves</step>
+    <step>3. Replace [TARGET_CUSTOMER] with your ideal customer profile</step>
+    <step>4. Customize red flags based on your product's context</step>
+    <step>5. Use this agent to score Reddit posts for lead qualification</step>
+  </usage_instructions>
 </agent_config>

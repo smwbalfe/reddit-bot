@@ -90,16 +90,12 @@ def _create_error_response(reason: str) -> LeadIntentResponse:
         factor_scores=FactorScores(
             product_fit=1,
             intent_signals=1,
-            urgency_indicators=1,
             decision_authority=1,
-            engagement_quality=1,
         ),
         factor_justifications=FactorJustifications(
             product_fit="Error occurred during analysis",
             intent_signals="Error occurred during analysis",
-            urgency_indicators="Error occurred during analysis",
             decision_authority="Error occurred during analysis",
-            engagement_quality="Error occurred during analysis",
         ),
     )
 
@@ -111,15 +107,11 @@ def _create_response_from_result(result) -> LeadIntentResponse:
         factor_scores=FactorScores(
             product_fit=result.output.factor_scores.product_fit,
             intent_signals=result.output.factor_scores.intent_signals,
-            urgency_indicators=result.output.factor_scores.urgency_indicators,
             decision_authority=result.output.factor_scores.decision_authority,
-            engagement_quality=result.output.factor_scores.engagement_quality,
         ),
         factor_justifications=FactorJustifications(
             product_fit=result.output.factor_justifications.product_fit,
             intent_signals=result.output.factor_justifications.intent_signals,
-            urgency_indicators=result.output.factor_justifications.urgency_indicators,
             decision_authority=result.output.factor_justifications.decision_authority,
-            engagement_quality=result.output.factor_justifications.engagement_quality,
         ),
     )
