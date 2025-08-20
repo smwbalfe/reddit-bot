@@ -1,5 +1,5 @@
 import { PostWithConfigId } from "@/src/lib/types"
-import { Clock, Star, Target, UserCheck, Zap } from "lucide-react"
+import { Target, UserCheck, Zap } from "lucide-react"
 
 export function CompactScoreBreakdown({ post }: { post: PostWithConfigId }) {
     const factors = [
@@ -18,25 +18,11 @@ export function CompactScoreBreakdown({ post }: { post: PostWithConfigId }) {
             color: '#10b981'
         },
         {
-            name: 'Urgency',
-            score: post.analysisData?.urgencyIndicatorsScore,
-            justification: post.analysisData?.urgencyIndicatorsJustification,
-            icon: <Clock className="w-3 h-3 sm:w-4 sm:h-4" />,
-            color: '#f59e0b'
-        },
-        {
             name: 'Authority',
             score: post.analysisData?.decisionAuthorityScore,
             justification: post.analysisData?.decisionAuthorityJustification,
             icon: <UserCheck className="w-3 h-3 sm:w-4 sm:h-4" />,
             color: '#8b5cf6'
-        },
-        {
-            name: 'Engagement',
-            score: post.analysisData?.engagementQualityScore,
-            justification: post.analysisData?.engagementQualityJustification,
-            icon: <Star className="w-3 h-3 sm:w-4 sm:h-4" />,
-            color: '#ef4444'
         }
     ]
 
@@ -120,7 +106,7 @@ export function CompactScoreBreakdown({ post }: { post: PostWithConfigId }) {
                 </div>
             )}
 
-            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-3 sm:gap-3">
+            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3 sm:gap-3">
                 {factors.map((factor, index) => {
                     if (factor.score == null) return null;
 
