@@ -1,7 +1,7 @@
 'use client'
 
 import React from "react"
-import { useUser } from "@/src/lib/features/auth/hooks/use-user"
+import { useSession } from "@/src/lib/features/auth/hooks/use-session"
 import { useState, useEffect } from "react"
 import { useUsage } from "@/src/lib/features/global/hooks/use-usage"
 import { Card, CardContent, CardHeader, CardDescription } from "@/src/lib/components/ui/card"
@@ -23,7 +23,7 @@ import Link from 'next/link'
 import { InterestLabel } from "@/src/lib/features/leads/components/interest-label"
 
 export function LeadsPage() {
-  const { user } = useUser()
+  const { user } = useSession()
   const { usage } = useUsage()
   const [configs, setConfigs] = useState<ICP[]>([])
   const [posts, setPosts] = useState<PostWithConfigId[]>([])
@@ -74,7 +74,7 @@ export function LeadsPage() {
     const interval = setInterval(() => {
       fetchScraperStatus()
       fetchNextScrapeTime()
-    }, 10000) // Check status every 10 seconds
+    }, 10000) 
 
     return () => clearInterval(interval)
   }, [user?.id])

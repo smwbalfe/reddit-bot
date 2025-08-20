@@ -63,8 +63,8 @@ async def find_relevant_subreddits_from_keywords(
             (name, count, subreddit_subscribers[name], subreddit_descriptions[name])
             for name, count in subreddit_counts.most_common(25)
         ]
-        top_5 = top_subreddits[:5]
-        print("Top 5 subreddits found:")
+        top_5 = top_subreddits[:20]
+     
         for name, count, subscribers, description in top_5:
             print(f"r/{name} - {subscribers} subscribers ({count} keyword matches)")
         return sorted(top_subreddits, key=lambda x: x[1], reverse=True)

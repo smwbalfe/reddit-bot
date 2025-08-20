@@ -14,7 +14,6 @@ const env = {
     SUPABASE_SERVICE_ROLE_KEY: process.env.SUPABASE_SERVICE_ROLE_KEY!,
 
     OPENROUTER_API_KEY: process.env.OPENROUTER_API_KEY!,
-
     
     STRIPE_SECRET_KEY: process.env.STRIPE_SECRET_KEY!,
     NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY: process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY!,
@@ -32,8 +31,9 @@ const env = {
     RESEND_FROM: process.env.RESEND_FROM!,
     NEXT_PUBLIC_STRIPE_PRICE_ID: process.env.NEXT_PUBLIC_STRIPE_PRICE_ID!,
     
-    FREE_LEAD_LIMIT: parseInt(process.env.FREE_LEAD_LIMIT || '500'),
+    FREE_LEAD_LIMIT: parseInt(process.env.FREE_LEAD_LIMIT || '100'),
     FREE_REPLY_LIMIT: parseInt(process.env.FREE_REPLY_LIMIT || '15'),
+    MAX_SUBREDDITS: parseInt(process.env.MAX_SUBREDDITS || '5'),
 }
 
 // console.log('Environment Variables:', {

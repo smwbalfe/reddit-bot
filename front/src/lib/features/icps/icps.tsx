@@ -7,6 +7,7 @@ import { useICPStore } from '@/src/lib/store'
 import { Card, CardContent, CardHeader, CardTitle } from '@/src/lib/components/ui/card'
 import { Button } from '@/src/lib/components/ui/button'
 import { ExternalLink, Trash2, Globe, RefreshCw, Plus, X, Edit2, Package, ChevronDown, ChevronRight, Database } from 'lucide-react'
+import env from '@/src/lib/env'
 
 export function IcpsPage() {
   const [showCreateForm, setShowCreateForm] = useState(false)
@@ -95,7 +96,7 @@ export function IcpsPage() {
     
     if (currentSelected.includes(subreddit)) {
       newSelected = currentSelected.filter(s => s !== subreddit)
-    } else if (currentSelected.length < 5) {
+    } else if (currentSelected.length < env.MAX_SUBREDDITS) {
       newSelected = [...currentSelected, subreddit]
     } else {
       return
@@ -109,7 +110,7 @@ export function IcpsPage() {
     const cleanSubreddit = subreddit.replace(/^r\//, '').trim()
     const currentSelected = selectedSubreddits[icpId] || []
     
-    if (!cleanSubreddit || currentSelected.includes(cleanSubreddit) || currentSelected.length >= 5) return
+    if (!cleanSubreddit || currentSelected.includes(cleanSubreddit) || currentSelected.length >= env.MAX_SUBREDDITS) return
     
     const newSelected = [...currentSelected, cleanSubreddit]
     updateSelectedSubreddits(icpId, newSelected)
@@ -238,7 +239,7 @@ export function IcpsPage() {
                       </div>
                       <div>
                         <span className="font-medium text-gray-600">Subreddits:</span>
-                        <p className="text-gray-800 mt-1">{(selectedSubreddits[icp.id] || []).length}/5 selected</p>
+                        <p className="text-gray-800 mt-1">{(selectedSubreddits[icp.id] || []).length}/{env.MAX_SUBREDDITS} selected</p>
                       </div>
                     </div>
                     
@@ -380,7 +381,7 @@ export function IcpsPage() {
                             <ChevronRight className="w-4 h-4 text-gray-500" />
                           )}
                           <span className="font-medium text-gray-900">Target Communities</span>
-                          <span className="text-sm text-gray-500">({(selectedSubreddits[icp.id] || []).length}/5)</span>
+                          <span className="text-sm text-gray-500">({(selectedSubreddits[icp.id] || []).length}/{env.MAX_SUBREDDITS})</span>
                         </div>
                         <Edit2 className="w-4 h-4 text-gray-400" />
                       </button>
@@ -392,7 +393,7 @@ export function IcpsPage() {
                             {/* Currently Selected */}
                             {(selectedSubreddits[icp.id] || []).length > 0 ? (
                               <div>
-                                <h5 className="text-sm font-semibold text-gray-900 mb-3">Currently Monitoring ({(selectedSubreddits[icp.id] || []).length}/5)</h5>
+                                <h5 className="text-sm font-semibold text-gray-900 mb-3">Currently Monitoring ({(selectedSubreddits[icp.id] || []).length}/{env.MAX_SUBREDDITS})</h5>
                                 <div className="flex flex-wrap gap-2">
                                   {(selectedSubreddits[icp.id] || []).map((subreddit, index) => (
                                     <div
@@ -430,7 +431,7 @@ export function IcpsPage() {
                             )}
 
                             {/* Add More Section */}
-                            {(selectedSubreddits[icp.id] || []).length < 5 && (
+                            {(selectedSubreddits[icp.id] || []).length < env.MAX_SUBREDDITS && (
                               <div>
                                 <div className="flex items-center justify-between mb-4">
                                   <h5 className="text-sm font-semibold text-gray-900">Add More Communities</h5>
@@ -499,9 +500,9 @@ export function IcpsPage() {
                             )}
 
                             {/* Max reached message */}
-                            {(selectedSubreddits[icp.id] || []).length >= 5 && (
+                            {(selectedSubreddits[icp.id] || []).length >= env.MAX_SUBREDDITS && (
                               <div className="text-center py-4 px-4 bg-amber-50 border border-amber-200 rounded-lg">
-                                <p className="text-sm text-amber-700 font-medium">Maximum 5 communities reached</p>
+                                <p className="text-sm text-amber-700 font-medium">Maximum {env.MAX_SUBREDDITS} communities reached</p>
                                 <p className="text-xs text-amber-600 mt-1">Remove some to add different ones</p>
                               </div>
                             )}

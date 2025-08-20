@@ -260,24 +260,13 @@ async def process_initial_subreddit_posts(subreddit_name: str, icp: ICPModel, re
     
     posts_to_process = []
     
-    hot_posts = max(1, limit // 3)
-    top_week_posts = max(1, limit // 3)
-    top_month_posts = max(1, limit // 3)
+    # Simplified initial seeding: scrape top 30 hot posts from the past month
+    hot_posts_limit = 30
     
-    logger.info(f"Building batch for r/{subreddit_name} - fetching {hot_posts} hot posts")
-    category_posts = await fetch_posts_from_time_period(subreddit, "hot", hot_posts, icp, db_manager)
+    logger.info(f"Building batch for r/{subreddit_name} - fetching top {hot_posts_limit} hot posts from past month")
+    category_posts = await fetch_posts_from_time_period(subreddit, "month", hot_posts_limit, icp, db_manager)
     posts_to_process.extend(category_posts)
-    logger.info(f"Added {len(category_posts)} hot posts to batch")
-    
-    logger.info(f"Building batch for r/{subreddit_name} - fetching {top_week_posts} top week posts")
-    category_posts = await fetch_posts_from_time_period(subreddit, "week", top_week_posts, icp, db_manager)
-    posts_to_process.extend(category_posts)
-    logger.info(f"Added {len(category_posts)} week posts to batch")
-    
-    logger.info(f"Building batch for r/{subreddit_name} - fetching {top_month_posts} top month posts")
-    category_posts = await fetch_posts_from_time_period(subreddit, "month", top_month_posts, icp, db_manager)
-    posts_to_process.extend(category_posts)
-    logger.info(f"Added {len(category_posts)} month posts to batch")
+    logger.info(f"Added {len(category_posts)} hot posts from past month to batch")
     
     logger.info(f"Batch complete for r/{subreddit_name} - total {len(posts_to_process)} posts to process")
     

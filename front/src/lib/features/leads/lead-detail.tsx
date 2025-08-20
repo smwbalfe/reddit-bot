@@ -1,6 +1,6 @@
 'use client'
 
-import { useUser } from "@/src/lib/features/auth/hooks/use-user"
+import { useSession } from "@/src/lib/features/auth/hooks/use-session"
 import { useState, useEffect } from "react"
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/src/lib/components/ui/card"
 import { Button } from "@/src/lib/components/ui/button"
@@ -17,7 +17,7 @@ import { getUserPosts } from "@/src/lib/actions/config/get-user-posts"
 import { CompactScoreBreakdown } from "@/src/lib/features/leads/components/compact-score-breakdown"
 
 export function LeadDetailPage() {
-  const { user } = useUser()
+  const { user } = useSession()
   const params = useParams()
   const leadId = parseInt(params.id as string)
   
