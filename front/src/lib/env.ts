@@ -33,7 +33,6 @@ const env = {
     
     FREE_LEAD_LIMIT: parseInt(process.env.FREE_LEAD_LIMIT || '100'),
     FREE_REPLY_LIMIT: parseInt(process.env.FREE_REPLY_LIMIT || '15'),
-    MAX_SUBREDDITS: parseInt(process.env.MAX_SUBREDDITS || '5'),
 }
 
 // console.log('Environment Variables:', {

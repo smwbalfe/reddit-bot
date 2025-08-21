@@ -11,7 +11,7 @@ import os
 load_dotenv()
 
 
-FREE_LEAD_LIMIT = int(os.getenv("FREE_LEAD_LIMIT", 500))
+FREE_LEAD_LIMIT = int(os.getenv("FREE_LEAD_LIMIT", 100))
 
 
 class ScraperDatabaseManager:

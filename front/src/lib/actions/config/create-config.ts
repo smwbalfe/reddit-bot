@@ -6,6 +6,7 @@ import { makeServerClient } from '@/src/lib/services/supabase/server'
 import { z } from 'zod'
 import { notifyConfigChange } from '@/src/lib/actions/notifications/notify-config-change'
 import { checkSubscription } from '@/src/lib/actions/payment/check-subscription'
+import env from '@/src/lib/env'
 
 const createIcpSchema = z.object({
   name: z.string().min(1, 'Name is required'),
@@ -44,7 +45,7 @@ export async function createConfig(formData: FormData) {
 
     const validatedData = createIcpSchema.parse(rawData)
     const subscription = await checkSubscription()
-    const leadLimit = subscription.isSubscribed ? 500 : 100
+    const leadLimit = subscription.isSubscribed ? 9999 : env.FREE_LEAD_LIMIT
 
     const [config] = await db.insert(icps).values({
       userId: user.id,

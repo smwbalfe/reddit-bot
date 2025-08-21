@@ -4,6 +4,7 @@ import { icps, redditPosts } from "@/src/lib/db/schema"
 import { eq, desc } from "drizzle-orm"
 import { makeServerClient } from '@/src/lib/services/supabase/server'
 import { checkSubscription } from '@/src/lib/actions/payment/check-subscription'
+import env from '@/src/lib/env'
 
 export async function getUserPosts() {
   try {
@@ -16,8 +17,8 @@ export async function getUserPosts() {
 
     // Check subscription status to determine lead limit
     const subscription = await checkSubscription()
-    // Premium users have unlimited leads, free users are capped at 500
-    const leadLimit = subscription.isSubscribed ? undefined : 500
+    // Premium users have unlimited leads, free users are capped at env limit
+    const leadLimit = subscription.isSubscribed ? undefined : env.FREE_LEAD_LIMIT
 
     const baseQuery = db.select({
       id: redditPosts.id,

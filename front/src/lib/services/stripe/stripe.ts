@@ -124,7 +124,7 @@ async function updateLeadLimitForCustomer(customerId: string, isActive: boolean)
             return;
         }
 
-        const leadLimit = isActive ? 9999 : 100;
+        const leadLimit = isActive ? 9999 : env.FREE_LEAD_LIMIT;
         
         await db.update(icps)
             .set({ leadLimit })
