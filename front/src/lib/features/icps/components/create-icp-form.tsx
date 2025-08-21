@@ -5,7 +5,6 @@ import { updateConfig } from '@/src/lib/actions/config/update-config'
 import { useFormStore, useICPStore } from '@/src/lib/store'
 import { CreateIcpFormProps } from '@/src/lib/features/icps/types'
 import { ChevronLeft, ChevronRight, Check } from 'lucide-react'
-import env from '@/src/lib/env'
 
 const STEPS = [
     { id: 1, title: 'Basic Info', description: 'Product name and website' },
@@ -239,7 +238,7 @@ export default function CreateIcpForm({ onSuccess, editingIcp }: CreateIcpFormPr
                         <div>
                             <div className="flex items-center justify-between mb-4">
                                 <h4 className="text-sm font-medium text-gray-700">Target Communities</h4>
-                                <span className="text-sm text-gray-500">{selectedSubreddits.length}/{env.MAX_SUBREDDITS} selected</span>
+                                <span className="text-sm text-gray-500">{selectedSubreddits.length}/5 selected</span>
                             </div>
 
                             <div className="mb-4">
@@ -252,7 +251,7 @@ export default function CreateIcpForm({ onSuccess, editingIcp }: CreateIcpFormPr
                                             if (e.key === 'Enter') {
                                                 e.preventDefault()
                                                 const target = e.target as HTMLInputElement
-                                                if (selectedSubreddits.length < env.MAX_SUBREDDITS) {
+                                                if (selectedSubreddits.length < 5) {
                                                     if (handleAddSubreddit(target.value)) {
                                                         target.value = ''
                                                     }
@@ -264,13 +263,13 @@ export default function CreateIcpForm({ onSuccess, editingIcp }: CreateIcpFormPr
                                         type="button"
                                         onClick={(e) => {
                                             const input = e.currentTarget.parentElement?.querySelector('input') as HTMLInputElement
-                                            if (input?.value && selectedSubreddits.length < env.MAX_SUBREDDITS) {
+                                            if (input?.value && selectedSubreddits.length < 5) {
                                                 if (handleAddSubreddit(input.value)) {
                                                     input.value = ''
                                                 }
                                             }
                                         }}
-                                        disabled={selectedSubreddits.length >= env.MAX_SUBREDDITS}
+                                        disabled={selectedSubreddits.length >= 5}
                                         className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed text-sm font-medium"
                                     >
                                         Add
@@ -313,8 +312,8 @@ export default function CreateIcpForm({ onSuccess, editingIcp }: CreateIcpFormPr
                                                 className={`p-3 text-sm rounded-lg border transition-all font-medium text-left ${selectedSubreddits.includes(subreddit)
                                                         ? 'border-blue-500 bg-blue-50 text-blue-700'
                                                         : 'border-gray-200 bg-gray-50 text-gray-700 hover:border-blue-300 hover:bg-blue-50'
-                                                    } ${selectedSubreddits.length >= env.MAX_SUBREDDITS && !selectedSubreddits.includes(subreddit) ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer'}`}
-                                                disabled={selectedSubreddits.length >= env.MAX_SUBREDDITS && !selectedSubreddits.includes(subreddit)}
+                                                    } ${selectedSubreddits.length >= 5 && !selectedSubreddits.includes(subreddit) ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer'}`}
+                                                disabled={selectedSubreddits.length >= 5 && !selectedSubreddits.includes(subreddit)}
                                             >
                                                 r/{subreddit}
                                             </button>

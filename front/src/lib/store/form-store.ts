@@ -2,7 +2,6 @@ import { create } from 'zustand'
 import { FormState, FormActions } from '@/src/lib/store/types'
 import { generateSuggestions } from '../actions/content/generate-suggestions'
 import { analyzeUrl } from '../actions/content/analyze-url'
-import env from '@/src/lib/env'
 
 const initialState: FormState = {
   generatedSubreddits: [],
@@ -50,7 +49,7 @@ export const useFormStore = create<FormState & FormActions>((set, get) => ({
       return false
     }
     
-    if (!selectedSubreddits.includes(cleanSubreddit) && selectedSubreddits.length < env.MAX_SUBREDDITS) {
+    if (!selectedSubreddits.includes(cleanSubreddit) && selectedSubreddits.length < 5) {
       set({ 
         selectedSubreddits: [...selectedSubreddits, cleanSubreddit],
         error: null
@@ -78,7 +77,7 @@ export const useFormStore = create<FormState & FormActions>((set, get) => ({
       set({
         selectedSubreddits: selectedSubreddits.filter(s => s !== subreddit)
       })
-    } else if (selectedSubreddits.length < env.MAX_SUBREDDITS) {
+    } else if (selectedSubreddits.length < 5) {
       set({
         selectedSubreddits: [...selectedSubreddits, subreddit]
       })
@@ -104,13 +103,13 @@ export const useFormStore = create<FormState & FormActions>((set, get) => ({
         const suggestions = await generateSuggestions(result.icp_description, result.pain_points)
         set({
           generatedSubreddits: suggestions.subreddits,
-          selectedSubreddits: suggestions.subreddits.slice(0, env.MAX_SUBREDDITS)
+          selectedSubreddits: suggestions.subreddits.slice(0, 5)
         })
       } else {
     
         set({
           generatedSubreddits: result.subreddits,
-          selectedSubreddits: result.subreddits.slice(0, env.MAX_SUBREDDITS)
+          selectedSubreddits: result.subreddits.slice(0, 5)
         })
       }
     } catch (error) {
@@ -134,7 +133,7 @@ export const useFormStore = create<FormState & FormActions>((set, get) => ({
       const result = await generateSuggestions(icpDescription, painPoints)
       set({
         generatedSubreddits: result.subreddits,
-        selectedSubreddits: result.subreddits.slice(0, env.MAX_SUBREDDITS)
+        selectedSubreddits: result.subreddits.slice(0, 5)
       })
     } catch (error) {
       set({ error: 'Failed to generate suggestions' })
