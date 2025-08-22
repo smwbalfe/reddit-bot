@@ -260,7 +260,6 @@ async def process_initial_subreddit_posts(subreddit_name: str, icp: ICPModel, re
     
     posts_to_process = []
     
-    # Simplified initial seeding: scrape top 30 hot posts from the past month
     hot_posts_limit = 30
     
     logger.info(f"Building batch for r/{subreddit_name} - fetching top {hot_posts_limit} hot posts from past month")
