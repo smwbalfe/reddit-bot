@@ -12,7 +12,7 @@ export const useCheckout = (userId: string | undefined) => {
     const [isLoading, setIsLoading] = useState(false)
     const handleCheckout = async () => {
         if (!userId) {
-            alert('User ID is required')
+            alert('User ID  is required')
             return
         }
         setIsLoading(true)
