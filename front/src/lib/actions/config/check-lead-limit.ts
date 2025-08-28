@@ -7,8 +7,8 @@ export async function checkLeadLimit() {
   try {
     const subscription = await checkSubscription()
     const leadCount = await getUserLeadCount()
-    const limit = subscription.isSubscribed ? null : env.FREE_LEAD_LIMIT // Premium users have no limit, free users have env limit
-    const isAtLimit = subscription.isSubscribed ? false : leadCount >= (limit || env.FREE_LEAD_LIMIT)
+    const limit = subscription.isSubscribed ? null : env.NEXT_PUBLIC_FREE_LEAD_LIMIT // Premium users have no limit, free users have env limit
+    const isAtLimit = subscription.isSubscribed ? false : leadCount >= (limit || env.NEXT_PUBLIC_FREE_LEAD_LIMIT)
     
     return {
       leadCount,

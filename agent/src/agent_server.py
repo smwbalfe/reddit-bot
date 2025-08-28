@@ -157,14 +157,16 @@ async def get_next_scrape_time():
         job = scheduler.get_job("reddit_scraper")
         if job is None:
             raise HTTPException(status_code=404, detail="Scraper job not found")
-        
+
         next_run_time = job.next_run_time
         if next_run_time is None:
             raise HTTPException(status_code=500, detail="No next run time scheduled")
-        
+
         return {
             "next_run_time": next_run_time.isoformat(),
-            "seconds_until_next_run": (next_run_time - datetime.now(next_run_time.tzinfo)).total_seconds(),
+            "seconds_until_next_run": (
+                next_run_time - datetime.now(next_run_time.tzinfo)
+            ).total_seconds(),
         }
     except Exception as e:
         raise HTTPException(

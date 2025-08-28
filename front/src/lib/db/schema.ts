@@ -34,6 +34,7 @@ export const redditPosts = pgTable('RedditPost', {
   content: text('content').notNull(),
   url: text('url').notNull(),
   leadQuality: integer('leadQuality'),
+  leadStatus: varchar('leadStatus').notNull().default('new'),
   analysisData: jsonb('analysisData').$type<{
     painPoints?: string;
     productFitScore?: number;

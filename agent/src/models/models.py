@@ -6,8 +6,6 @@ class KeywordResponse(BaseModel):
     keywords: List[str]
 
 
-
-
 class PainPointsResponse(BaseModel):
     pain_points: str
 

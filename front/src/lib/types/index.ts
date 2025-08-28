@@ -6,6 +6,7 @@ export type PostWithConfigId = {
   content: string
   url: string
   leadQuality?: number | null
+  leadStatus: 'new' | 'seen' | 'responded'
   analysisData: {
     painPoints?: string
     productFitScore?: number

@@ -16,9 +16,10 @@ import { generateReplyAction } from "@/src/lib/actions/generate-reply"
 import { resetPollPeriod, getScraperStatus } from "@/src/lib/actions/system/set-system-flag"
 import { forceScrape } from "@/src/lib/actions/system/force-scrape"
 import { getNextScrapeTime } from "@/src/lib/actions/config/get-next-scrape-time"
+import { updateLeadStatus } from "@/src/lib/actions/config/update-lead-status"
 import { ICP } from "@/src/lib/db/schema"
 import { PostWithConfigId } from "@/src/lib/types"
-import { MessageSquare, TrendingUp, ExternalLink, Package, Bot, ChevronDown, ChevronUp, RefreshCw, RotateCcw, Pause, Play, Clock } from "lucide-react"
+import { MessageSquare, TrendingUp, ExternalLink, Package, Bot, ChevronDown, ChevronUp, RefreshCw, RotateCcw, Pause, Play, Clock, Eye, EyeOff, MessageCircle, CheckCircle } from "lucide-react"
 import DashboardLayout from '@/src/lib/features/global/dashboard-layout'
 import Link from 'next/link'
 import { InterestLabel } from "@/src/lib/features/leads/components/interest-label"
@@ -37,7 +38,9 @@ export function LeadsPage() {
   const [scraperPaused, setScraperPaused] = useState(false)
   const [nextScrapeData, setNextScrapeData] = useState<{next_run_time: string, seconds_until_next_run: number} | null>(null)
   const [forcingScrape, setForcingScrape] = useState(false)
-  const [activeTab, setActiveTab] = useState<string>('all')
+  const [activeProductTab, setActiveProductTab] = useState<string>('all')
+  const [activeStatusTab, setActiveStatusTab] = useState<string>('all')
+  const [updatingStatus, setUpdatingStatus] = useState<Set<number>>(new Set())
 
 
   const getRelativeTime = (date: Date | null): string => {
@@ -150,10 +153,81 @@ export function LeadsPage() {
   }
 
   const getFilteredPosts = () => {
-    if (activeTab === 'all') {
-      return posts
+    let filteredPosts = posts
+
+    if (activeProductTab !== 'all') {
+      filteredPosts = filteredPosts.filter(post => post.configId.toString() === activeProductTab)
     }
-    return posts.filter(post => post.configId.toString() === activeTab)
+
+    if (activeStatusTab !== 'all') {
+      filteredPosts = filteredPosts.filter(post => post.leadStatus === activeStatusTab)
+    }
+
+    return filteredPosts
+  }
+
+  const updatePostStatus = async (postId: number, status: 'new' | 'seen' | 'responded') => {
+    const newUpdating = new Set(updatingStatus)
+    newUpdating.add(postId)
+    setUpdatingStatus(newUpdating)
+
+    try {
+      const result = await updateLeadStatus(postId, status)
+      if (result.success) {
+        setPosts(prevPosts => 
+          prevPosts.map(post => 
+            post.id === postId ? { ...post, leadStatus: status } : post
+          )
+        )
+      } else {
+        console.error('Failed to update status:', result.error)
+      }
+    } catch (error) {
+      console.error('Error updating lead status:', error)
+    } finally {
+      const newUpdating2 = new Set(updatingStatus)
+      newUpdating2.delete(postId)
+      setUpdatingStatus(newUpdating2)
+    }
+  }
+
+  const getStatusBadge = (status: 'new' | 'seen' | 'responded') => {
+    switch (status) {
+      case 'new':
+        return (
+          <Badge variant="secondary" className="text-xs font-medium bg-blue-100 text-blue-700 flex items-center gap-1">
+            <MessageSquare className="w-3 h-3" />
+            New
+          </Badge>
+        )
+      case 'seen':
+        return (
+          <Badge variant="secondary" className="text-xs font-medium bg-orange-100 text-orange-700 flex items-center gap-1">
+            <Eye className="w-3 h-3" />
+            Seen
+          </Badge>
+        )
+      case 'responded':
+        return (
+          <Badge variant="secondary" className="text-xs font-medium bg-green-100 text-green-700 flex items-center gap-1">
+            <CheckCircle className="w-3 h-3" />
+            Responded
+          </Badge>
+        )
+    }
+  }
+
+  const getStatusCounts = () => {
+    const relevantPosts = activeProductTab === 'all' 
+      ? posts 
+      : posts.filter(post => post.configId.toString() === activeProductTab)
+    
+    return {
+      total: relevantPosts.length,
+      new: relevantPosts.filter(p => p.leadStatus === 'new').length,
+      seen: relevantPosts.filter(p => p.leadStatus === 'seen').length,
+      responded: relevantPosts.filter(p => p.leadStatus === 'responded').length
+    }
   }
 
   const toggleRowExpansion = (postId: number) => {
@@ -416,8 +490,11 @@ export function LeadsPage() {
             </CardContent>
           </Card>
         ) : (
-          <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-            <TabsList className="mb-6">
+          <Tabs value={activeProductTab} onValueChange={(value) => {
+            setActiveProductTab(value)
+            setActiveStatusTab('all')
+          }} className="w-full">
+            <TabsList className="mb-4 flex-wrap">
               <TabsTrigger value="all">All Products ({posts.length})</TabsTrigger>
               {configs.map(config => {
                 const postCount = posts.filter(post => post.configId === config.id).length
@@ -429,12 +506,21 @@ export function LeadsPage() {
               })}
             </TabsList>
 
-            <TabsContent value={activeTab}>
+            <TabsContent value={activeProductTab}>
+              <Tabs value={activeStatusTab} onValueChange={setActiveStatusTab} className="w-full mb-6">
+                <TabsList className="mb-6 flex-wrap">
+                  <TabsTrigger value="all">All ({getStatusCounts().total})</TabsTrigger>
+                  <TabsTrigger value="new">New ({getStatusCounts().new})</TabsTrigger>
+                  <TabsTrigger value="seen">Seen ({getStatusCounts().seen})</TabsTrigger>
+                  <TabsTrigger value="responded">Responded ({getStatusCounts().responded})</TabsTrigger>
+                </TabsList>
+                <TabsContent value={activeStatusTab}>
               <div className="block md:hidden space-y-4">
                 {getFilteredPosts().map(post => {
                 const config = configs.find(c => c.id === post.configId)
                 const isExpanded = expandedRows.has(post.id)
                 const isGenerating = generatingReply.has(post.id)
+                const isUpdatingStatus = updatingStatus.has(post.id)
                 const reply = replies.get(post.id)
                 
                 return (
@@ -442,7 +528,7 @@ export function LeadsPage() {
                     <CardContent className="p-4">
                       <div className="space-y-3">
                         <div className="flex items-start justify-between">
-                          <div className="flex items-center gap-2">
+                          <div className="flex items-center gap-2 flex-wrap">
                             <Badge variant="secondary" className="text-xs font-medium bg-slate-100 text-slate-700">
                               r/{post.subreddit}
                             </Badge>
@@ -450,6 +536,7 @@ export function LeadsPage() {
                               <Package className="w-3 h-3" />
                               {config?.name || 'Unknown'}
                             </Badge>
+                            {getStatusBadge(post.leadStatus)}
                           </div>
                           <InterestLabel leadQuality={post.leadQuality ?? null} />
                         </div>
@@ -468,7 +555,29 @@ export function LeadsPage() {
                           <div className="text-slate-500 text-sm">
                             {getRelativeTime(post.redditCreatedAt || post.createdAt)}
                           </div>
-                          <div className="flex items-center gap-2">
+                          <div className="flex items-center gap-1 flex-wrap">
+                            {post.leadStatus !== 'seen' && (
+                              <Button
+                                onClick={() => updatePostStatus(post.id, 'seen')}
+                                disabled={isUpdatingStatus}
+                                variant="ghost"
+                                size="sm"
+                                className="text-orange-700 hover:text-orange-800 hover:bg-orange-50 text-xs px-2"
+                              >
+                                <Eye className="w-3 h-3" />
+                              </Button>
+                            )}
+                            {post.leadStatus !== 'responded' && (
+                              <Button
+                                onClick={() => updatePostStatus(post.id, 'responded')}
+                                disabled={isUpdatingStatus}
+                                variant="ghost"
+                                size="sm"
+                                className="text-green-700 hover:text-green-800 hover:bg-green-50 text-xs px-2"
+                              >
+                                <MessageCircle className="w-3 h-3" />
+                              </Button>
+                            )}
                             <Button
                               onClick={() => generateReply(post)}
                               disabled={isGenerating}
@@ -546,10 +655,11 @@ export function LeadsPage() {
                       <TableRow className="bg-slate-50/50">
                         <TableHead className="font-semibold border-b border-slate-200 py-3 px-4 w-[140px]">Subreddit</TableHead>
                         <TableHead className="font-semibold border-b border-slate-200 py-3 px-4 w-[160px]">Product</TableHead>
+                        <TableHead className="font-semibold border-b border-slate-200 py-3 px-4 w-[100px]">Status</TableHead>
                         <TableHead className="font-semibold border-b border-slate-200 py-3 px-4 w-[100px]">Interest</TableHead>
                         <TableHead className="font-semibold border-b border-slate-200 py-3 px-4 min-w-[300px] max-w-[400px]">Title</TableHead>
                         <TableHead className="font-semibold border-b border-slate-200 py-3 px-4 w-[100px]">Posted</TableHead>
-                        <TableHead className="font-semibold text-center border-b border-slate-200 py-3 px-4 w-[200px]">Actions</TableHead>
+                        <TableHead className="font-semibold text-center border-b border-slate-200 py-3 px-4 w-[240px]">Actions</TableHead>
                       </TableRow>
                     </TableHeader>
                     <TableBody>
@@ -557,6 +667,7 @@ export function LeadsPage() {
                         const config = configs.find(c => c.id === post.configId)
                         const isExpanded = expandedRows.has(post.id)
                         const isGenerating = generatingReply.has(post.id)
+                        const isUpdatingStatus = updatingStatus.has(post.id)
                         const reply = replies.get(post.id)
                         
                         return (
@@ -572,6 +683,9 @@ export function LeadsPage() {
                                   <Package className="w-3 h-3 flex-shrink-0" />
                                   <span className="truncate">{config?.name || 'Unknown Product'}</span>
                                 </Badge>
+                              </TableCell>
+                              <TableCell className="py-3 px-4 w-[100px]">
+                                {getStatusBadge(post.leadStatus)}
                               </TableCell>
                               <TableCell className="py-3 px-4 w-[100px]">
                                 <InterestLabel leadQuality={post.leadQuality ?? null} />
@@ -592,8 +706,30 @@ export function LeadsPage() {
                                   {getRelativeTime(post.redditCreatedAt || post.createdAt)}
                                 </span>
                               </TableCell>
-                              <TableCell className="py-3 px-4 w-[200px]">
-                                <div className="flex items-center gap-1 justify-center">
+                              <TableCell className="py-3 px-4 w-[240px]">
+                                <div className="flex items-center gap-1 justify-center flex-wrap">
+                                  {post.leadStatus !== 'seen' && (
+                                    <Button
+                                      onClick={() => updatePostStatus(post.id, 'seen')}
+                                      disabled={isUpdatingStatus}
+                                      variant="ghost"
+                                      size="sm"
+                                      className="text-orange-700 hover:text-orange-800 hover:bg-orange-50 text-xs px-2 flex-shrink-0"
+                                    >
+                                      <Eye className="w-3 h-3" />
+                                    </Button>
+                                  )}
+                                  {post.leadStatus !== 'responded' && (
+                                    <Button
+                                      onClick={() => updatePostStatus(post.id, 'responded')}
+                                      disabled={isUpdatingStatus}
+                                      variant="ghost"
+                                      size="sm"
+                                      className="text-green-700 hover:text-green-800 hover:bg-green-50 text-xs px-2 flex-shrink-0"
+                                    >
+                                      <MessageCircle className="w-3 h-3" />
+                                    </Button>
+                                  )}
                                   <Button
                                     onClick={() => generateReply(post)}
                                     disabled={isGenerating}
@@ -622,7 +758,7 @@ export function LeadsPage() {
                             </TableRow>
                             {isExpanded && (
                               <TableRow className="bg-slate-50/30">
-                                <TableCell colSpan={6} className="py-4 px-4">
+                                <TableCell colSpan={7} className="py-4 px-4">
                                   <div className="w-full max-w-none">
                                     <div>
                                       <h4 className="font-semibold text-slate-900 mb-2 text-sm flex items-center gap-2">
@@ -667,6 +803,8 @@ export function LeadsPage() {
               </CardContent>
             </Card>
             </div>
+                </TabsContent>
+              </Tabs>
             </TabsContent>
           </Tabs>
         )}
