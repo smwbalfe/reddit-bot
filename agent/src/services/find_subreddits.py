@@ -28,7 +28,7 @@ async def extract_keywords(page_description: str, count: int = 10) -> List[str]:
         return []
 
     logger.info(
-        f"Extracted {len(result.output.keywords)} keywords  from content: {page_description[:100]}..."
+        f"Extracted {len(result.output.keywords)} keywords from content: {page_description[:100]}..."
     )
 
     return result.output.keywords
