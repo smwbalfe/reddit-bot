@@ -9,6 +9,7 @@ import { Button } from "@/src/lib/components/ui/button"
 import { Badge } from "@/src/lib/components/ui/badge"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/src/lib/components/ui/table"
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/src/lib/components/ui/tooltip"
+import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/src/lib/components/ui/tabs"
 import { getUserConfigs } from "@/src/lib/actions/config/get-user-configs"
 import { getUserPosts } from "@/src/lib/actions/config/get-user-posts"
 import { generateReplyAction } from "@/src/lib/actions/generate-reply"
@@ -36,6 +37,7 @@ export function LeadsPage() {
   const [scraperPaused, setScraperPaused] = useState(false)
   const [nextScrapeData, setNextScrapeData] = useState<{next_run_time: string, seconds_until_next_run: number} | null>(null)
   const [forcingScrape, setForcingScrape] = useState(false)
+  const [activeTab, setActiveTab] = useState<string>('all')
 
 
   const getRelativeTime = (date: Date | null): string => {
@@ -145,6 +147,13 @@ export function LeadsPage() {
       return `${minutes}m ${remainingSeconds}s`
     }
     return `${remainingSeconds}s`
+  }
+
+  const getFilteredPosts = () => {
+    if (activeTab === 'all') {
+      return posts
+    }
+    return posts.filter(post => post.configId.toString() === activeTab)
   }
 
   const toggleRowExpansion = (postId: number) => {
@@ -407,9 +416,22 @@ export function LeadsPage() {
             </CardContent>
           </Card>
         ) : (
-          <>
-            <div className="block md:hidden space-y-4">
-              {posts.map(post => {
+          <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
+            <TabsList className="mb-6">
+              <TabsTrigger value="all">All Products ({posts.length})</TabsTrigger>
+              {configs.map(config => {
+                const postCount = posts.filter(post => post.configId === config.id).length
+                return (
+                  <TabsTrigger key={config.id} value={config.id.toString()}>
+                    {config.name} ({postCount})
+                  </TabsTrigger>
+                )
+              })}
+            </TabsList>
+
+            <TabsContent value={activeTab}>
+              <div className="block md:hidden space-y-4">
+                {getFilteredPosts().map(post => {
                 const config = configs.find(c => c.id === post.configId)
                 const isExpanded = expandedRows.has(post.id)
                 const isGenerating = generatingReply.has(post.id)
@@ -531,7 +553,7 @@ export function LeadsPage() {
                       </TableRow>
                     </TableHeader>
                     <TableBody>
-                      {posts.map(post => {
+                      {getFilteredPosts().map(post => {
                         const config = configs.find(c => c.id === post.configId)
                         const isExpanded = expandedRows.has(post.id)
                         const isGenerating = generatingReply.has(post.id)
@@ -645,7 +667,8 @@ export function LeadsPage() {
               </CardContent>
             </Card>
             </div>
-          </>
+            </TabsContent>
+          </Tabs>
         )}
         
        
