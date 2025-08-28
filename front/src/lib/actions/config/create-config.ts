@@ -45,7 +45,7 @@ export async function createConfig(formData: FormData) {
 
     const validatedData = createIcpSchema.parse(rawData)
     const subscription = await checkSubscription()
-    const leadLimit = subscription.isSubscribed ? 9999 : env.FREE_LEAD_LIMIT
+    const leadLimit = subscription.isSubscribed ? 9999 : env.NEXT_PUBLIC_FREE_LEAD_LIMIT
 
     const [config] = await db.insert(icps).values({
       userId: user.id,
