@@ -117,15 +117,12 @@ export async function syncStripeDataToKV(customerId: string) {
 
 async function updateLeadLimitForCustomer(customerId: string, isActive: boolean) {
     try {
-        // Find user ID by customer ID
         const userId = await redis.get(`stripe-customer:${customerId}:user-id`);
         if (!userId) {
-            console.log(`[updateLeadLimit] No user found for customer ${customerId}`);
+            console.log(`[updateLeadLimit]  No user found for customer ${customerId}`);
             return;
         }
-
         const leadLimit = isActive ? 9999 : env.NEXT_PUBLIC_FREE_LEAD_LIMIT;
-        
         await db.update(icps)
             .set({ leadLimit })
             .where(eq(icps.userId, userId as string));
