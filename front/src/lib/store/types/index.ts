@@ -5,6 +5,7 @@ export interface FormState {
   icpDescription: string
   isAnalyzing: boolean
   isGenerating: boolean
+  isValidatingSubreddit: boolean
   error: string | null
 }
 
@@ -13,7 +14,7 @@ export interface FormActions {
   setIcpDescription: (description: string) => void
   setSelectedSubreddits: (subreddits: string[]) => void
   setGeneratedSubreddits: (subreddits: string[]) => void
-  addSubreddit: (subreddit: string) => boolean
+  addSubreddit: (subreddit: string) => Promise<boolean>
   removeSubreddit: (index: number) => void
   toggleSubreddit: (subreddit: string) => void
   analyzeWebsiteUrl: (url: string) => Promise<void>

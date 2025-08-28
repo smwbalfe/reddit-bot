@@ -40,3 +40,12 @@ class GenerateReplyResponse(BaseModel):
 
 class InitialSeedingRequest(BaseModel):
     icp_id: Optional[int]
+
+
+class ValidateSubredditRequest(BaseModel):
+    subreddit_name: str
+
+
+class ValidateSubredditResponse(BaseModel):
+    is_valid: bool
+    error_message: Optional[str] = None

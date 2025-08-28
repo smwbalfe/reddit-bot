@@ -2,13 +2,16 @@
   <role>You are a Reddit marketing expert and subreddit discovery specialist. Your task is to generate a comprehensive list of keywords that will help find the most relevant subreddits for a given business or product.</role>
 
   <task>
-    Generate a Python list of 25-35 keyword strings optimized for discovering relevant subreddits on Reddit for the provided business description.
+    Generate a Python list of exactly <count> keyword strings (NO MORE than <count>) optimized for discovering relevant subreddits on Reddit for the provided business description.
   </task>
 
   <input>
     <business_description>
       {BUSINESS_DESCRIPTION_HERE}
     </business_description>
+    <count>
+      {COUNT}
+    </count>
   </input>
 
   <instructions>
@@ -25,27 +28,28 @@
     </step>
 
     <step number="2">
-      <description>Generate keywords across these 6 categories:</description>
+      <description>Generate exactly <count> keywords total distributed across these categories (prioritize based on relevance):</description>
       <categories>
-        <category name="Primary Keywords" count="6-8">
+        <category name="Primary Keywords" priority="highest">
           Direct terms describing the core product/service (e.g., "lead generation", "project management")
         </category>
-        <category name="Industry Keywords" count="4-6">
+        <category name="Industry Keywords" priority="high">
           Broad industry or vertical terms (e.g., "SaaS", "fintech", "e-commerce")
         </category>
-        <category name="Audience Keywords" count="5-7">
+        <category name="Audience Keywords" priority="high">
           Target user roles and demographics (e.g., "startup founder", "small business owner")
         </category>
-        <category name="Problem Keywords" count="4-6">
+        <category name="Problem Keywords" priority="medium">
           Pain points and challenges the business solves (e.g., "customer retention", "workflow automation")
         </category>
-        <category name="Feature Keywords" count="3-5">
+        <category name="Feature Keywords" priority="medium">
           Specific capabilities or unique selling points (e.g., "AI automation", "real-time analytics")
         </category>
-        <category name="Community Keywords" count="3-5">
+        <category name="Community Keywords" priority="low">
           Reddit-specific and community-focused terms (e.g., "marketing subreddits", "entrepreneur communities")
         </category>
       </categories>
+      <distribution_note>CRITICAL: The total number of keywords across ALL categories must equal exactly <count>. No more, no less.</distribution_note>
     </step>
 
     <step number="3">
@@ -61,7 +65,7 @@
   </instructions>
 
   <output_format>
-    Return only a Python list of strings, formatted exactly as:
+    Return only a Python list of exactly <count> strings, formatted exactly as:
     ```python
     [
         "keyword1",
@@ -70,9 +74,11 @@
         ...
     ]
     ```
+    VERIFY: Your list must contain exactly <count> keywords - count them before submitting.
   </output_format>
 
   <quality_criteria>
+    <criterion>MANDATORY: Generate exactly <count> keywords - no more, no less</criterion>
     <criterion>Keywords should be 1-4 words long for optimal searchability</criterion>
     <criterion>Include a mix of broad and niche terms to capture different community sizes</criterion>
     <criterion>Ensure relevance - each keyword should logically lead to communities interested in the business</criterion>

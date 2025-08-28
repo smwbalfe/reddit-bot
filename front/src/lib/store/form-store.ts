@@ -2,6 +2,7 @@ import { create } from 'zustand'
 import { FormState, FormActions } from '@/src/lib/store/types'
 import { generateSuggestions } from '../actions/content/generate-suggestions'
 import { analyzeUrl } from '../actions/content/analyze-url'
+import { validateSubreddit } from '../actions/content/validate-subreddit'
 
 const initialState: FormState = {
   generatedSubreddits: [],
@@ -10,6 +11,7 @@ const initialState: FormState = {
   icpDescription: '',
   isAnalyzing: false,
   isGenerating: false,
+  isValidatingSubreddit: false,
   error: null
 }
 
@@ -30,14 +32,15 @@ export const useFormStore = create<FormState & FormActions>((set, get) => ({
 
   initializeFromICP: (icp) => {
     if (!icp) return
+    const cleanedSubreddits = (icp.data?.subreddits || []).map((s: string) => s.replace(/^r\//, '').trim()).filter((s: string) => s)
     set({
-      selectedSubreddits: icp.data?.subreddits || [],
+      selectedSubreddits: cleanedSubreddits,
       painPoints: icp.data?.painPoints || '',
       icpDescription: icp.data?.description || ''
     })
   },
 
-  addSubreddit: (subreddit: string) => {
+  addSubreddit: async (subreddit: string) => {
     const { selectedSubreddits } = get()
     const cleanSubreddit = subreddit.replace(/^r\//, '').trim()
     
@@ -49,18 +52,35 @@ export const useFormStore = create<FormState & FormActions>((set, get) => ({
       return false
     }
     
-    if (!selectedSubreddits.includes(cleanSubreddit) && selectedSubreddits.length < 5) {
-      set({ 
-        selectedSubreddits: [...selectedSubreddits, cleanSubreddit],
-        error: null
-      })
-      return true
-    } else if (selectedSubreddits.includes(cleanSubreddit)) {
+    if (selectedSubreddits.includes(cleanSubreddit)) {
       set({ error: 'This subreddit is already added' })
       return false
     }
+
+    if (selectedSubreddits.length >= 5) {
+      set({ error: 'Maximum of 5 subreddits allowed' })
+      return false
+    }
     
-    return false
+    set({ isValidatingSubreddit: true, error: null })
+    
+    try {
+      const validation = await validateSubreddit(cleanSubreddit)
+      if (!validation.is_valid) {
+        set({ error: validation.error_message || 'Invalid subreddit name', isValidatingSubreddit: false })
+        return false
+      }
+      
+      set({ 
+        selectedSubreddits: [...selectedSubreddits, cleanSubreddit],
+        error: null,
+        isValidatingSubreddit: false
+      })
+      return true
+    } catch (error) {
+      set({ error: 'Failed to validate subreddit', isValidatingSubreddit: false })
+      return false
+    }
   },
 
   removeSubreddit: (index: number) => {
@@ -101,15 +121,16 @@ export const useFormStore = create<FormState & FormActions>((set, get) => ({
       
       if (result.icp_description.trim() || result.pain_points.trim()) {
         const suggestions = await generateSuggestions(result.icp_description, result.pain_points)
+        const cleanedGeneratedSubreddits = suggestions.subreddits.map((s: string) => s.replace(/^r\//, '').trim()).filter((s: string) => s)
         set({
-          generatedSubreddits: suggestions.subreddits,
-          selectedSubreddits: suggestions.subreddits.slice(0, 5)
+          generatedSubreddits: cleanedGeneratedSubreddits,
+          selectedSubreddits: cleanedGeneratedSubreddits.slice(0, 5)
         })
       } else {
-    
+        const cleanedSubreddits = result.subreddits.map((s: string) => s.replace(/^r\//, '').trim()).filter((s: string) => s)
         set({
-          generatedSubreddits: result.subreddits,
-          selectedSubreddits: result.subreddits.slice(0, 5)
+          generatedSubreddits: cleanedSubreddits,
+          selectedSubreddits: cleanedSubreddits.slice(0, 5)
         })
       }
     } catch (error) {
@@ -131,9 +152,10 @@ export const useFormStore = create<FormState & FormActions>((set, get) => ({
     
     try {
       const result = await generateSuggestions(icpDescription, painPoints)
+      const cleanedSubreddits = result.subreddits.map((s: string) => s.replace(/^r\//, '').trim()).filter((s: string) => s)
       set({
-        generatedSubreddits: result.subreddits,
-        selectedSubreddits: result.subreddits.slice(0, 5)
+        generatedSubreddits: cleanedSubreddits,
+        selectedSubreddits: cleanedSubreddits.slice(0, 5)
       })
     } catch (error) {
       set({ error: 'Failed to generate suggestions' })

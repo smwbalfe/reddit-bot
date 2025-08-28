@@ -23,6 +23,7 @@ async def extract_keywords(page_description: str, count: int = 10) -> List[str]:
     )
 
     print(result.output.keywords)
+    print(len(result.output.keywords))
 
     if result is None:
         return []
@@ -63,7 +64,7 @@ async def find_relevant_subreddits_from_keywords(
             (name, count, subreddit_subscribers[name], subreddit_descriptions[name])
             for name, count in subreddit_counts.most_common(25)
         ]
-        top_5 = top_subreddits[:20]
+        top_5 = top_subreddits[:15]
      
         for name, count, subscribers, description in top_5:
             print(f"r/{name} - {subscribers} subscribers ({count} keyword matches)")

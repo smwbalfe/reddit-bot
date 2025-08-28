@@ -13,6 +13,7 @@ from src.services.find_subreddits import find_relevant_subreddits_by_keywords
 from src.services.generate_descriptions import generate_icp_and_pain_points_combined
 from src.services.generate_reply import generate_reddit_reply
 from src.utils.parse_page import fetch_html, parse_html_content
+from src.reddit.client import RedditClient
 from src.models.server_models import (
     AnalyzeUrlRequest,
     AnalyzeUrlResponse,
@@ -21,6 +22,8 @@ from src.models.server_models import (
     GenerateReplyRequest,
     GenerateReplyResponse,
     InitialSeedingRequest,
+    ValidateSubredditRequest,
+    ValidateSubredditResponse,
 )
 from datetime import datetime
 import asyncio
@@ -170,6 +173,34 @@ async def get_next_scrape_time():
         raise HTTPException(
             status_code=500, detail=f"Failed to get next scrape time: {str(e)}"
         )
+
+
+@app.post("/api/validate-subreddit", response_model=ValidateSubredditResponse)
+async def validate_subreddit_endpoint(request: ValidateSubredditRequest):
+    reddit_client = RedditClient()
+    try:
+        subreddit = await reddit_client.get_subreddit(request.subreddit_name)
+        await subreddit.load()
+        return ValidateSubredditResponse(is_valid=True)
+    except Exception as e:
+        error_msg = str(e).lower()
+        if "forbidden" in error_msg or "private" in error_msg:
+            return ValidateSubredditResponse(
+                is_valid=False, 
+                error_message="Subreddit exists but is private or restricted"
+            )
+        elif "not found" in error_msg or "redirect" in error_msg:
+            return ValidateSubredditResponse(
+                is_valid=False, 
+                error_message="Subreddit does not exist"
+            )
+        else:
+            return ValidateSubredditResponse(
+                is_valid=False, 
+                error_message=f"Unable to validate subreddit: {str(e)}"
+            )
+    finally:
+        await reddit_client.close()
 
 
 if __name__ == "__main__":
