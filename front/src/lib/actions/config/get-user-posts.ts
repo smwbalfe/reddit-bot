@@ -15,10 +15,9 @@ export async function getUserPosts() {
       throw new Error('Unauthorized')
     }
 
-    // Check subscription status to determine lead limit
     const subscription = await checkSubscription()
-    // Premium users have unlimited leads, free users are capped at env limit
-    const leadLimit = subscription.isSubscribed ? undefined : env.FREE_LEAD_LIMIT
+    
+    const leadLimit = subscription.isSubscribed ? undefined : env.NEXT_PUBLIC_FREE_LEAD_LIMIT
 
     const baseQuery = db.select({
       id: redditPosts.id,
@@ -42,7 +41,7 @@ export async function getUserPosts() {
     // Apply limit only for free users (premium users have no limit)
     const userPosts = await (leadLimit ? baseQuery.limit(leadLimit) : baseQuery)
     
-    return userPosts
+    return userPosts as any[]
   } catch (error) {
     console.error('Error fetching user posts:', error)
     throw new Error('Failed to fetch user posts')

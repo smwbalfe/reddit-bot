@@ -38,7 +38,8 @@ export function LeadsPage() {
   const [scraperPaused, setScraperPaused] = useState(false)
   const [nextScrapeData, setNextScrapeData] = useState<{next_run_time: string, seconds_until_next_run: number} | null>(null)
   const [forcingScrape, setForcingScrape] = useState(false)
-  const [activeTab, setActiveTab] = useState<string>('all')
+  const [activeProductTab, setActiveProductTab] = useState<string>('all')
+  const [activeStatusTab, setActiveStatusTab] = useState<string>('all')
   const [updatingStatus, setUpdatingStatus] = useState<Set<number>>(new Set())
 
 
@@ -152,16 +153,17 @@ export function LeadsPage() {
   }
 
   const getFilteredPosts = () => {
-    if (activeTab === 'all') {
-      return posts
-    } else if (activeTab === 'new') {
-      return posts.filter(post => post.leadStatus === 'new')
-    } else if (activeTab === 'seen') {
-      return posts.filter(post => post.leadStatus === 'seen')
-    } else if (activeTab === 'responded') {
-      return posts.filter(post => post.leadStatus === 'responded')
+    let filteredPosts = posts
+
+    if (activeProductTab !== 'all') {
+      filteredPosts = filteredPosts.filter(post => post.configId.toString() === activeProductTab)
     }
-    return posts.filter(post => post.configId.toString() === activeTab)
+
+    if (activeStatusTab !== 'all') {
+      filteredPosts = filteredPosts.filter(post => post.leadStatus === activeStatusTab)
+    }
+
+    return filteredPosts
   }
 
   const updatePostStatus = async (postId: number, status: 'new' | 'seen' | 'responded') => {
@@ -216,11 +218,15 @@ export function LeadsPage() {
   }
 
   const getStatusCounts = () => {
+    const relevantPosts = activeProductTab === 'all' 
+      ? posts 
+      : posts.filter(post => post.configId.toString() === activeProductTab)
+    
     return {
-      total: posts.length,
-      new: posts.filter(p => p.leadStatus === 'new').length,
-      seen: posts.filter(p => p.leadStatus === 'seen').length,
-      responded: posts.filter(p => p.leadStatus === 'responded').length
+      total: relevantPosts.length,
+      new: relevantPosts.filter(p => p.leadStatus === 'new').length,
+      seen: relevantPosts.filter(p => p.leadStatus === 'seen').length,
+      responded: relevantPosts.filter(p => p.leadStatus === 'responded').length
     }
   }
 
@@ -484,12 +490,12 @@ export function LeadsPage() {
             </CardContent>
           </Card>
         ) : (
-          <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-            <TabsList className="mb-6 flex-wrap">
-              <TabsTrigger value="all">All Leads ({getStatusCounts().total})</TabsTrigger>
-              <TabsTrigger value="new">New ({getStatusCounts().new})</TabsTrigger>
-              <TabsTrigger value="seen">Seen ({getStatusCounts().seen})</TabsTrigger>
-              <TabsTrigger value="responded">Responded ({getStatusCounts().responded})</TabsTrigger>
+          <Tabs value={activeProductTab} onValueChange={(value) => {
+            setActiveProductTab(value)
+            setActiveStatusTab('all')
+          }} className="w-full">
+            <TabsList className="mb-4 flex-wrap">
+              <TabsTrigger value="all">All Products ({posts.length})</TabsTrigger>
               {configs.map(config => {
                 const postCount = posts.filter(post => post.configId === config.id).length
                 return (
@@ -500,7 +506,15 @@ export function LeadsPage() {
               })}
             </TabsList>
 
-            <TabsContent value={activeTab}>
+            <TabsContent value={activeProductTab}>
+              <Tabs value={activeStatusTab} onValueChange={setActiveStatusTab} className="w-full mb-6">
+                <TabsList className="mb-6 flex-wrap">
+                  <TabsTrigger value="all">All ({getStatusCounts().total})</TabsTrigger>
+                  <TabsTrigger value="new">New ({getStatusCounts().new})</TabsTrigger>
+                  <TabsTrigger value="seen">Seen ({getStatusCounts().seen})</TabsTrigger>
+                  <TabsTrigger value="responded">Responded ({getStatusCounts().responded})</TabsTrigger>
+                </TabsList>
+                <TabsContent value={activeStatusTab}>
               <div className="block md:hidden space-y-4">
                 {getFilteredPosts().map(post => {
                 const config = configs.find(c => c.id === post.configId)
@@ -789,6 +803,8 @@ export function LeadsPage() {
               </CardContent>
             </Card>
             </div>
+                </TabsContent>
+              </Tabs>
             </TabsContent>
           </Tabs>
         )}
