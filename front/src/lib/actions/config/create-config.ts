@@ -30,8 +30,8 @@ export async function createConfig(formData: FormData) {
       .from(icps)
       .where(eq(icps.userId, user.id))
     
-    if (existingIcps.length > 0) {
-      return { success: false, error: 'You can only create one product per account. Please edit your existing product instead.' }
+    if (existingIcps.length >= 3) {
+      return { success: false, error: 'You can only create up to 3 products per account. Please delete an existing product to create a new one.' }
     }
 
     const rawData = {
