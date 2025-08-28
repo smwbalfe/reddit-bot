@@ -7,6 +7,7 @@ import { useICPStore } from '@/src/lib/store'
 import { Card, CardContent, CardHeader, CardTitle } from '@/src/lib/components/ui/card'
 import { Button } from '@/src/lib/components/ui/button'
 import { ExternalLink, Trash2, Globe, RefreshCw, Plus, X, Edit2, Package, ChevronDown, ChevronRight, Database } from 'lucide-react'
+import { useSubscription } from '@/src/lib/features/global/hooks/use-subscription'
 
 export function IcpsPage() {
   const [showCreateForm, setShowCreateForm] = useState(false)
@@ -29,6 +30,8 @@ export function IcpsPage() {
     regenerateSuggestions,
     updateSelectedSubreddits,
   } = useICPStore()
+  
+  const { isSubscribed, loading: subscriptionLoading } = useSubscription()
 
   useEffect(() => {
     fetchICPs()
@@ -37,6 +40,8 @@ export function IcpsPage() {
   const handleCreateSuccess = () => {
     setShowCreateForm(false)
   }
+  
+  const canAddProduct = icps.length === 0 || isSubscribed
 
   const startEditing = (field: string, currentValue: any) => {
     setEditingField(field)
@@ -153,9 +158,43 @@ export function IcpsPage() {
   return (
     <DashboardLayout>
       <div className="max-w-4xl mx-auto p-4 sm:p-6 space-y-6">
-        <div className="text-center sm:text-left">
-          <h1 className="text-2xl font-semibold text-gray-900 mb-2">Product Configuration</h1>
-          <p className="text-base text-slate-600">Configure your product profile and targeting</p>
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between">
+          <div className="text-center sm:text-left">
+            <h1 className="text-2xl font-semibold text-gray-900 mb-2">Product Configuration</h1>
+            <p className="text-base text-slate-600">Configure your product profile and targeting</p>
+          </div>
+          {icps.length > 0 && icps.length < 3 && !showCreateForm && (
+            <>
+              {icps.length === 1 || isSubscribed ? (
+                <Button 
+                  onClick={() => setShowCreateForm(true)} 
+                  className="mt-4 sm:mt-0"
+                >
+                  <Plus className="w-4 h-4 mr-2" />
+                  Add Product ({icps.length}/3)
+                </Button>
+              ) : (
+                <div className="mt-4 sm:mt-0 text-center sm:text-right">
+                  <div className="text-sm text-amber-600 font-medium">
+                    Subscription required for multiple products
+                  </div>
+                  <Button 
+                    onClick={() => setShowCreateForm(true)} 
+                    disabled
+                    className="mt-2 opacity-50 cursor-not-allowed"
+                  >
+                    <Plus className="w-4 h-4 mr-2" />
+                    Add Product ({icps.length}/3)
+                  </Button>
+                </div>
+              )}
+            </>
+          )}
+          {icps.length >= 3 && (
+            <div className="text-sm text-slate-600 mt-4 sm:mt-0">
+              Maximum products reached (3/3)
+            </div>
+          )}
         </div>
 
         {icps.length === 0 ? (
@@ -192,7 +231,48 @@ export function IcpsPage() {
             )}
           </>
         ) : (
-          icps.map((icp) => (
+          <>
+            {showCreateForm && canAddProduct && (
+              <Card>
+                <CardHeader className="pb-4 flex flex-row items-center justify-between">
+                  <CardTitle className="text-lg">Add New Product</CardTitle>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => setShowCreateForm(false)}
+                    className="h-8 w-8 p-0"
+                  >
+                    <X className="w-4 h-4" />
+                  </Button>
+                </CardHeader>
+                <CardContent>
+                  <CreateIcpForm onSuccess={handleCreateSuccess} />
+                </CardContent>
+              </Card>
+            )}
+            
+            {icps.length === 1 && !isSubscribed && !subscriptionLoading && (
+              <Card className="border-amber-200 bg-amber-50">
+                <CardContent className="pt-6">
+                  <div className="flex items-start space-x-4">
+                    <div className="w-12 h-12 bg-amber-100 rounded-lg flex items-center justify-center">
+                      <Package className="w-6 h-6 text-amber-600" />
+                    </div>
+                    <div className="flex-1">
+                      <h3 className="text-lg font-semibold text-amber-900 mb-2">
+                        Upgrade to Add More Products
+                      </h3>
+                      <p className="text-amber-800 mb-4">
+                        You've reached the limit for free accounts. Subscribe to our premium plan to add multiple products and unlock advanced features.
+                      </p>
+                
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+            )}
+
+            {icps.map((icp) => (
               <Card key={icp.id} className="overflow-hidden">
                 <CardHeader className="pb-4">
                   <div className="flex items-start justify-between">
@@ -513,7 +593,8 @@ export function IcpsPage() {
                     </div>
                 </CardContent>
               </Card>
-            ))
+            ))}
+          </>
         )}
       </div>
     </DashboardLayout>
