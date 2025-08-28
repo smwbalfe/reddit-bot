@@ -16,21 +16,21 @@ class RedditClient:
 
     def get_client(self) -> asyncpraw.Reddit:
         current_loop = asyncio.get_event_loop()
-        
+
         if self._reddit is None or self._current_loop != current_loop:
             if self._reddit is not None:
                 try:
                     asyncio.create_task(self._reddit.close())
                 except:
                     pass
-            
+
             self._reddit = asyncpraw.Reddit(
                 client_id=self.client_id,
                 client_secret=self.client_secret,
                 user_agent="RedditBot1/1.0",
             )
             self._current_loop = current_loop
-        
+
         return self._reddit
 
     async def close(self):

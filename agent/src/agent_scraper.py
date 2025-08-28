@@ -1,12 +1,9 @@
 import asyncio
-from datetime import datetime
-from typing import List, Optional, Set
+from typing import List, Set
 from src.db.db import ScraperDatabaseManager
 from src.lead_scoring.scoreing import score_post
-from src.models.agent_models import LeadIntentResponse
 from src.reddit.client import RedditClient
 from src.models.db_models import ICPModel
-from src.lead_scoring.lead_scoring_service import score_lead_intent_two_stage
 from src.embeddings.openai_embeddings_service import embeddings_service
 from src.utils.text_utils import condense_reddit_post
 from asyncpraw.models import Submission
@@ -71,7 +68,7 @@ async def handle_regular_collection(
     for icp in icps:
         task = asyncio.create_task(collect_new_posts_for_icp(icp, db_manager))
         tasks.append(task)
-    
+
     results = await asyncio.gather(*tasks, return_exceptions=True)
     for i, result in enumerate(results):
         if isinstance(result, Exception):
@@ -92,37 +89,49 @@ def get_subreddits_for_icp(icp: ICPModel) -> Set[str]:
     return subreddits
 
 
-async def process_subreddit_posts(subreddit_name: str, icp: ICPModel, db_manager: ScraperDatabaseManager, limit: int = 100):
+async def process_subreddit_posts(
+    subreddit_name: str,
+    icp: ICPModel,
+    db_manager: ScraperDatabaseManager,
+    limit: int = 100,
+):
     reddit_client = get_shared_reddit_client()
     subreddit = await reddit_client.get_subreddit(subreddit_name)
-    
+
     can_add_lead = db_manager.can_user_add_lead(icp.userId)
     if not can_add_lead:
         logger.info(f"SKIPPED: User {icp.userId} has reached their lead limit")
         return
-    
+
     posts_to_process = []
     async for post in subreddit.new(limit=limit):
         processed = db_manager.post_processed_for_icp(icp.id, post.id)
         if not processed:
             posts_to_process.append(post)
-    
+
     await process_posts_in_batches(posts_to_process, icp, db_manager)
 
 
-async def process_posts_in_batches(posts: List[Submission], icp: ICPModel, db_manager: ScraperDatabaseManager, batch_size: int = 25):
+async def process_posts_in_batches(
+    posts: List[Submission],
+    icp: ICPModel,
+    db_manager: ScraperDatabaseManager,
+    batch_size: int = 25,
+):
     for i in range(0, len(posts), batch_size):
-        batch = posts[i:i + batch_size]
+        batch = posts[i : i + batch_size]
         tasks = []
         for post in batch:
             task = asyncio.create_task(process_post_for_icp(post, icp, db_manager))
             tasks.append(task)
-        
+
         results = await asyncio.gather(*tasks, return_exceptions=True)
         for j, result in enumerate(results):
             if isinstance(result, Exception):
-                post_id = getattr(batch[j], 'id', 'unknown')
-                logger.warning(f"Exception processing post {post_id} for ICP {icp.id}: {result}")
+                post_id = getattr(batch[j], "id", "unknown")
+                logger.warning(
+                    f"Exception processing post {post_id} for ICP {icp.id}: {result}"
+                )
 
 
 async def collect_new_posts_for_icp(icp: ICPModel, db_manager: ScraperDatabaseManager):
@@ -133,7 +142,10 @@ async def collect_new_posts_for_icp(icp: ICPModel, db_manager: ScraperDatabaseMa
         logger.info(f"No subreddits configured for ICP {icp.id}")
         return
 
-    tasks = [process_subreddit_posts(subreddit_name, icp, db_manager) for subreddit_name in subreddits]
+    tasks = [
+        process_subreddit_posts(subreddit_name, icp, db_manager)
+        for subreddit_name in subreddits
+    ]
     await asyncio.gather(*tasks, return_exceptions=True)
 
 
@@ -155,15 +167,15 @@ def should_process_post(
             f"SKIPPED DUPLICATE: Post {post.id} already processed for ICP {icp.id}"
         )
         return False
-    
+
     can_add_lead = db_manager.can_user_add_lead(icp.userId)
     if not can_add_lead:
         logger.info(
             f"SKIPPED LEAD LIMIT: User {icp.userId} has reached their lead limit"
         )
         return False
-    
-    return True 
+
+    return True
 
 
 def embeddings_prefilter(
@@ -223,15 +235,15 @@ async def process_post_for_icp(
         logger.info(f"SKIPPED: Post {post.id} - no score result")
         return
 
-    logger.info(
-        f"AGENT SCORE: Post {post.id} final_score {result.final_score}"
-    )
+    logger.info(f"AGENT SCORE: Post {post.id} final_score {result.final_score}")
 
     config = get_scraper_config()
     threshold = config["confidence_threshold"]
 
     if result.final_score <= threshold:
-        logger.info(f"SKIPPED: Post {post.id} score {result.final_score} below threshold {threshold}")
+        logger.info(
+            f"SKIPPED: Post {post.id} score {result.final_score} below threshold {threshold}"
+        )
         return
 
     post_data = build_post_data(post, icp, result)
@@ -239,7 +251,13 @@ async def process_post_for_icp(
     db_manager.increment_user_qualified_leads(icp.userId)
 
 
-async def fetch_posts_from_time_period(subreddit, time_filter: str, limit: int, icp: ICPModel, db_manager: ScraperDatabaseManager):
+async def fetch_posts_from_time_period(
+    subreddit,
+    time_filter: str,
+    limit: int,
+    icp: ICPModel,
+    db_manager: ScraperDatabaseManager,
+):
     posts = []
     try:
         if time_filter == "hot":
@@ -255,20 +273,32 @@ async def fetch_posts_from_time_period(subreddit, time_filter: str, limit: int, 
     return posts
 
 
-async def process_initial_subreddit_posts(subreddit_name: str, icp: ICPModel, reddit_client: RedditClient, db_manager: ScraperDatabaseManager, limit: int):
+async def process_initial_subreddit_posts(
+    subreddit_name: str,
+    icp: ICPModel,
+    reddit_client: RedditClient,
+    db_manager: ScraperDatabaseManager,
+    limit: int,
+):
     subreddit = await reddit_client.get_subreddit(subreddit_name)
-    
+
     posts_to_process = []
-    
+
     hot_posts_limit = 30
-    
-    logger.info(f"Building batch for r/{subreddit_name} - fetching top {hot_posts_limit} hot posts from past month")
-    category_posts = await fetch_posts_from_time_period(subreddit, "month", hot_posts_limit, icp, db_manager)
+
+    logger.info(
+        f"Building batch for r/{subreddit_name} - fetching top {hot_posts_limit} hot posts from past month"
+    )
+    category_posts = await fetch_posts_from_time_period(
+        subreddit, "month", hot_posts_limit, icp, db_manager
+    )
     posts_to_process.extend(category_posts)
     logger.info(f"Added {len(category_posts)} hot posts from past month to batch")
-    
-    logger.info(f"Batch complete for r/{subreddit_name} - total {len(posts_to_process)} posts to process")
-    
+
+    logger.info(
+        f"Batch complete for r/{subreddit_name} - total {len(posts_to_process)} posts to process"
+    )
+
     await process_posts_in_batches(posts_to_process, icp, db_manager)
 
 
@@ -281,7 +311,12 @@ async def collect_initial_posts(
     config = get_scraper_config()
     limit = config["initial_seeding_posts_per_subreddit"]
 
-    tasks = [process_initial_subreddit_posts(subreddit_name, icp, reddit_client, db_manager, limit) for subreddit_name in subreddits]
+    tasks = [
+        process_initial_subreddit_posts(
+            subreddit_name, icp, reddit_client, db_manager, limit
+        )
+        for subreddit_name in subreddits
+    ]
     await asyncio.gather(*tasks, return_exceptions=True)
 
 

@@ -31,8 +31,8 @@ const env = {
     RESEND_FROM: process.env.RESEND_FROM!,
     NEXT_PUBLIC_STRIPE_PRICE_ID: process.env.NEXT_PUBLIC_STRIPE_PRICE_ID!,
     
-    FREE_LEAD_LIMIT: parseInt(process.env.FREE_LEAD_LIMIT || '100'),
-    FREE_REPLY_LIMIT: parseInt(process.env.FREE_REPLY_LIMIT || '15'),
+    NEXT_PUBLIC_FREE_LEAD_LIMIT: parseInt(process.env.NEXT_PUBLIC_FREE_LEAD_LIMIT || '100'),
+    NEXT_PUBLIC_FREE_REPLY_LIMIT: parseInt(process.env.NEXT_PUBLIC_FREE_REPLY_LIMIT || '15'),
 }
 
 // console.log('Environment Variables:', {

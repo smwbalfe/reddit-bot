@@ -28,6 +28,7 @@ export async function getUserPosts() {
       content: redditPosts.content,
       url: redditPosts.url,
       leadQuality: redditPosts.leadQuality,
+      leadStatus: redditPosts.leadStatus,
       analysisData: redditPosts.analysisData,
       redditCreatedAt: redditPosts.redditCreatedAt,
       createdAt: redditPosts.createdAt,

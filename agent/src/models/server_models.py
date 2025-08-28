@@ -3,7 +3,6 @@ from typing import Optional, List
 from .agent_models import FactorScores, FactorJustifications
 
 
-
 class AnalyzeUrlRequest(BaseModel):
     url: str
 

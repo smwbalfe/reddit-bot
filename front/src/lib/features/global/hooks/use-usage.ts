@@ -36,7 +36,7 @@ export function useUsage() {
                     checkSubscription()
                 ])
 
-                const replyLimit = subscription.isSubscribed ? null : env.FREE_REPLY_LIMIT
+                const replyLimit = subscription.isSubscribed ? null : env.NEXT_PUBLIC_FREE_REPLY_LIMIT
 
                 setUsage({
                     repliesGenerated: usageData.repliesGenerated,
