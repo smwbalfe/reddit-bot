@@ -62,7 +62,7 @@ export function IcpsPage() {
 
       const formData = new FormData()
       formData.append('name', icp.name)
-      formData.append('website', icp.website)
+      formData.append('website', icp.website || '')
       formData.append('description', field === 'description' ? value : icp.data.description || '')
       formData.append('painPoints', field === 'painPoints' ? value : icp.data.painPoints || '')
       formData.append('keywords', JSON.stringify(field === 'keywords' ? value : icp.data.keywords || []))
@@ -282,7 +282,7 @@ export function IcpsPage() {
                         <Button
                           variant="ghost"
                           size="sm"
-                          onClick={() => window.open(icp.website, '_blank')}
+                          onClick={() => icp.website && window.open(icp.website, '_blank')}
                           className="h-7 w-7 p-0 text-blue-600"
                         >
                           <ExternalLink className="w-4 h-4" />

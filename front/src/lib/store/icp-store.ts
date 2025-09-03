@@ -156,7 +156,7 @@ export const useICPStore = create<ICPState & ICPActions>((set, get) => ({
   analyzeWebsite: async (icpId: number) => {
     const { icps } = get()
     const icp = icps.find(i => i.id === icpId)
-    if (!icp) return
+    if (!icp || !icp.website) return
 
     set({ isAnalyzingUrl: icpId })
 
@@ -168,7 +168,7 @@ export const useICPStore = create<ICPState & ICPActions>((set, get) => ({
 
       const formData = new FormData()
       formData.append('name', icp.name)
-      formData.append('website', icp.website)
+      formData.append('website', icp.website || '')
       formData.append('description', result.icp_description)
       formData.append('painPoints', result.pain_points)
       formData.append('keywords', JSON.stringify(suggestions.keywords))
@@ -205,7 +205,7 @@ export const useICPStore = create<ICPState & ICPActions>((set, get) => ({
 
       const formData = new FormData()
       formData.append('name', icp.name)
-      formData.append('website', icp.website)
+      formData.append('website', icp.website || '')
       formData.append('description', icp.data.description || '')
       formData.append('painPoints', icp.data.painPoints || '')
       formData.append('keywords', JSON.stringify(result.keywords))
