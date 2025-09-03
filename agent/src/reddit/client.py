@@ -27,7 +27,7 @@ class RedditClient:
             self._reddit = asyncpraw.Reddit(
                 client_id=self.client_id,
                 client_secret=self.client_secret,
-                user_agent="RedditBot1/1.0",
+                user_agent=f"python:reddit-bot:v1.0 (by /u/sbdevs)",
             )
             self._current_loop = current_loop
 

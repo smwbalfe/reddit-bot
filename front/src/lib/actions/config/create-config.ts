@@ -10,7 +10,7 @@ import env from '@/src/lib/env'
 
 const createIcpSchema = z.object({
   name: z.string().min(1, 'Name is required'),
-  website: z.string().url('Must be a valid URL'),
+  website: z.string().url('Must be a valid URL').optional().or(z.literal('')),
   description: z.string().min(1, 'Description is required'),
   keywords: z.array(z.string()).default([]),
   subreddits: z.array(z.string()).default([]),
@@ -50,7 +50,7 @@ export async function createConfig(formData: FormData) {
     const [config] = await db.insert(icps).values({
       userId: user.id,
       name: validatedData.name,
-      website: validatedData.website,
+      website: validatedData.website || null,
       leadLimit,
       data: {
         keywords: validatedData.keywords,

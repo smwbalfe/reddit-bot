@@ -12,7 +12,7 @@ export const icps = pgTable('ICP', {
   id: serial('id').primaryKey(),
   userId: varchar('userId').notNull(),
   name: varchar('name').notNull(),
-  website: varchar('website').notNull(),
+  website: varchar('website'),
   data: jsonb('data').$type<{
     keywords?: string[],
     subreddits?: string[],

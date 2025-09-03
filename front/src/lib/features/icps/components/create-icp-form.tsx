@@ -18,6 +18,7 @@ export default function CreateIcpForm({ onSuccess, editingIcp }: CreateIcpFormPr
     const [currentStep, setCurrentStep] = useState(1)
     const [websiteUrl, setWebsiteUrl] = useState('')
     const [productName, setProductName] = useState('')
+    const [urlError, setUrlError] = useState('')
 
     const { createICP, error: icpError, setError: setIcpError } = useICPStore()
 
@@ -43,7 +44,7 @@ export default function CreateIcpForm({ onSuccess, editingIcp }: CreateIcpFormPr
         if (editingIcp) {
             initializeFromICP(editingIcp)
             setProductName(editingIcp.name)
-            setWebsiteUrl(editingIcp.website)
+            setWebsiteUrl(editingIcp.website || '')
             setCurrentStep(3)
         } else {
             resetForm()
@@ -71,7 +72,7 @@ export default function CreateIcpForm({ onSuccess, editingIcp }: CreateIcpFormPr
     const canProceedToNext = () => {
         switch (currentStep) {
             case 1:
-                return productName.trim() && websiteUrl.trim()
+                return productName.trim() && (websiteUrl.trim() === '' || (websiteUrl.trim() !== '' && !urlError))
             case 2:
                 return true
             case 3:
@@ -159,15 +160,40 @@ export default function CreateIcpForm({ onSuccess, editingIcp }: CreateIcpFormPr
                         </div>
                         <div>
                             <label className="block text-sm font-medium text-gray-700 mb-2">
-                                Website URL*
+                                Website URL
                             </label>
                             <input
                                 type="url"
                                 value={websiteUrl}
-                                onChange={(e) => setWebsiteUrl(e.target.value)}
-                                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent text-base"
-                                placeholder="https://example.com"
+                                onChange={(e) => {
+                                    const value = e.target.value
+                                    setWebsiteUrl(value)
+                                    
+                                    // Real-time URL validation
+                                    if (value.trim() === '') {
+                                        setUrlError('')
+                                        return
+                                    }
+                                    
+                                    try {
+                                        const url = new URL(value)
+                                        if (!url.protocol.startsWith('http')) {
+                                            setUrlError('URL must start with http:// or https://')
+                                            return
+                                        }
+                                        setUrlError('')
+                                    } catch {
+                                        setUrlError('Please enter a valid URL (e.g., https://example.com)')
+                                    }
+                                }}
+                                className={`w-full px-4 py-3 border rounded-lg focus:outline-none focus:ring-2 focus:border-transparent text-base ${
+                                    urlError ? 'border-red-300 focus:ring-red-500' : 'border-gray-300 focus:ring-blue-500'
+                                }`}
+                                placeholder="https://example.com (optional)"
                             />
+                            {urlError && (
+                                <p className="mt-1 text-sm text-red-600">{urlError}</p>
+                            )}
                         </div>
                     </div>
                 )
@@ -186,11 +212,14 @@ export default function CreateIcpForm({ onSuccess, editingIcp }: CreateIcpFormPr
                             <button
                                 type="button"
                                 onClick={() => handleAnalyzeUrl(websiteUrl)}
-                                disabled={isAnalyzing}
+                                disabled={isAnalyzing || !websiteUrl.trim() || !!urlError}
                                 className="w-full px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed font-medium transition-all duration-150"
                             >
                                 {isAnalyzing ? 'Analyzing Website...' : 'Generate from Website'}
                             </button>
+                            {!websiteUrl.trim() && (
+                                <p className="mt-2 text-sm text-gray-500">Enter a website URL to use AI analysis</p>
+                            )}
                             <button
                                 type="button"
                                 onClick={() => setCurrentStep(3)}
@@ -304,9 +333,9 @@ export default function CreateIcpForm({ onSuccess, editingIcp }: CreateIcpFormPr
                                 <div>
                                     <h5 className="text-sm font-medium text-gray-700 mb-3">AI Suggestions:</h5>
                                     <div className="grid grid-cols-2 gap-2">
-                                        {generatedSubreddits.map((subreddit, index) => (
+                                        {generatedSubreddits.map((subreddit) => (
                                             <button
-                                                key={index}
+                                                key={subreddit}
                                                 type="button"
                                                 onClick={() => toggleSubreddit(subreddit)}
                                                 className={`p-3 text-sm rounded-lg border transition-all font-medium text-left ${selectedSubreddits.includes(subreddit)
@@ -335,21 +364,6 @@ export default function CreateIcpForm({ onSuccess, editingIcp }: CreateIcpFormPr
             <div className="space-y-6">
                 {/* Progress Indicator */}
                 <div className="mb-8">
-                    <div className="flex justify-center mb-4">
-                        <div className="flex space-x-8">
-                            {STEPS.map((step, index) => (
-                                <div key={step.id} className="flex flex-col items-center">
-                                    <div className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-medium ${currentStep > step.id ? 'bg-blue-600 text-white' :
-                                            currentStep === step.id ? 'bg-blue-100 text-blue-600 border-2 border-blue-600' :
-                                                'bg-gray-200 text-gray-600'
-                                        }`}>
-                                        {currentStep > step.id ? <Check className="w-4 h-4" /> : step.id}
-                                    </div>
-                                    <div className="mt-2 text-xs text-gray-500 hidden sm:block">{step.title}</div>
-                                </div>
-                            ))}
-                        </div>
-                    </div>
                     <div className="text-center">
                         <h2 className="text-xl font-semibold text-gray-900">{STEPS[currentStep - 1]?.title}</h2>
                         <p className="text-gray-600 mt-1">{STEPS[currentStep - 1]?.description}</p>

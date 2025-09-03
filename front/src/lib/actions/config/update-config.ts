@@ -8,7 +8,7 @@ import { notifyConfigChange } from '@/src/lib/actions/notifications/notify-confi
 
 const createIcpSchema = z.object({
   name: z.string().min(1, 'Name is required'),
-  website: z.string().url('Must be a valid URL'),
+  website: z.string().url('Must be a valid URL').optional().or(z.literal('')),
   description: z.string().min(1, 'Description is required'),
   keywords: z.array(z.string()).default([]),
   subreddits: z.array(z.string()).default([]),
@@ -38,7 +38,7 @@ export async function updateConfig(id: number, formData: FormData) {
     const [config] = await db.update(icps)
       .set({
         name: validatedData.name,
-        website: validatedData.website,
+        website: validatedData.website || null,
         data: {
           keywords: validatedData.keywords,
           subreddits: validatedData.subreddits,
