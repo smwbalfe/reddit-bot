@@ -9,14 +9,14 @@ load_dotenv()
 
 class RedditClient:
     def __init__(self):
-        required_envs = ["REDDIT_CLIENT_ID", "REDDIT_CLIENT_SECRET", "REDDIT_USERNAME", "REDDIT_PASSWORD"]
-        missing_envs = [env for env in required_envs if not os.getenv(env)]
+        required_envs = ["REDDIT_CLIENT_ID", "REDDIT_CLIENT_SECRET"]
+      
         
-        if missing_envs:
-            raise RuntimeError(f"Missing required Reddit environment variables: {', '.join(missing_envs)}")
+    
         
         self.client_id = os.getenv("REDDIT_CLIENT_ID")
         self.client_secret = os.getenv("REDDIT_CLIENT_SECRET")
+        print(self.client_id, self.client_secret)  
         self._reddit = None
         self._current_loop = None
 
