@@ -42,48 +42,33 @@ async def find_relevant_subreddits_from_keywords(
     min_subscribers: int = 10000,
 ) -> List[Tuple[str, int, int, str]]:
     print(keywords)
-    try:
-        subreddit_counts = Counter()
-        subreddit_subscribers = {}
-        subreddit_descriptions = {}
 
-        for keyword in keywords:
-            async for subreddit in reddit.get_client().subreddits.search(
-                keyword, limit=limit
-            ):
-                if subreddit.subscribers and subreddit.subscribers >= min_subscribers:
-                    subreddit_counts[subreddit.display_name] += 1
-                    subreddit_subscribers[subreddit.display_name] = (
-                        subreddit.subscribers
-                    )
-                    subreddit_descriptions[subreddit.display_name] = (
-                        subreddit.public_description or ""
-                    )
+    subreddit_counts = Counter()
+    subreddit_subscribers = {}
+    subreddit_descriptions = {}
 
-        top_subreddits = [
-            (name, count, subreddit_subscribers[name], subreddit_descriptions[name])
-            for name, count in subreddit_counts.most_common(25)
-        ]
-        top_5 = top_subreddits[:20]
+    for keyword in keywords:
+        async for subreddit in reddit.get_client().subreddits.search(
+            keyword, limit=limit
+        ):
+            if subreddit.subscribers and subreddit.subscribers >= min_subscribers:
+                subreddit_counts[subreddit.display_name] += 1
+                subreddit_subscribers[subreddit.display_name] = (
+                    subreddit.subscribers
+                )
+                subreddit_descriptions[subreddit.display_name] = (
+                    subreddit.public_description or ""
+                )
 
-        for name, count, subscribers, description in top_5:
-            print(f"r/{name} - {subscribers} subscribers ({count} keyword matches)")
-        return sorted(top_subreddits, key=lambda x: x[1], reverse=True)
+    top_subreddits = [
+        (name, count, subreddit_subscribers[name], subreddit_descriptions[name])
+        for name, count in subreddit_counts.most_common(25)
+    ]
+    top_5 = top_subreddits[:20]
 
-    except asyncpraw.exceptions.ResponseException as e:
-        if e.response.status_code == 403:
-            logger.error(f"403 Forbidden error searching subreddits for keywords {keywords}")
-            logger.error(f"403 Reason: {e.response.reason}")
-            logger.error(f"403 Response text: {e.response.text}")
-            print(f"403 Forbidden - Reason: {e.response.reason}")
-            print(f"Response: {e.response.text}")
-        else:
-            logger.error(f"HTTP {e.response.status_code} error searching subreddits for keywords {keywords}: {e}")
-        return []
-    except Exception as e:
-        logger.error(f"Error searching subreddits for keywords {keywords}: {e}")
-        return []
-
+    for name, count, subscribers, description in top_5:
+        print(f"r/{name} - {subscribers} subscribers ({count} keyword matches)")
+    return sorted(top_subreddits, key=lambda x: x[1], reverse=True)
 
 async def find_relevant_subreddits_by_keywords(description: str) -> List[str]:
     keywords = await extract_keywords(description)
