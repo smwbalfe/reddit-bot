@@ -88,6 +88,9 @@ async def analyze_url_endpoint(request: AnalyzeUrlRequest):
             pain_points=pain_points,
         )
     except Exception as e:
+        import traceback
+        logger.error(f"500 Error in analyze_url: {type(e).__name__}: {str(e)}")
+        logger.error(f"Full traceback: {traceback.format_exc()}")
         raise HTTPException(status_code=500, detail=f"Failed to analyze URL: {str(e)}")
 
 
