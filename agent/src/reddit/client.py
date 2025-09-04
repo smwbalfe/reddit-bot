@@ -28,7 +28,7 @@ class RedditClient:
                 client_id=self.client_id,
                 client_secret=self.client_secret,
                 user_agent=f"python:reddit-bot:v1.0 (by /u/sbdevs)",
-                username=os.getenv("REDDIT_USERNAME")
+                username=os.getenv("REDDIT_USERNAME"),
                 password=os.getenv("REDDIT_PASSWORD")
             )
             self._current_loop = current_loop
