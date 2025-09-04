@@ -11,6 +11,8 @@ class RedditClient:
     def __init__(self):
         self.client_id = os.getenv("REDDIT_CLIENT_ID") or ""
         self.client_secret = os.getenv("REDDIT_CLIENT_SECRET") or ""
+        self.username = os.getenv("REDDIT_USERNAME") or "sbdevs"
+        self.password = os.getenv("REDDIT_PASSWORD") or ""
         self._reddit = None
         self._current_loop = None
 

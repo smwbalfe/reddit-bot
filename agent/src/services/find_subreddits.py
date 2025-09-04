@@ -2,6 +2,7 @@ import json
 import logging
 from typing import List, Tuple
 from collections import Counter
+import asyncpraw
 from ..agents.agents import keyword_generation_agent, subreddit_relevance_agent
 from ..agent.agent_services import run_agent
 from ..reddit.client import RedditClient
@@ -69,6 +70,16 @@ async def find_relevant_subreddits_from_keywords(
             print(f"r/{name} - {subscribers} subscribers ({count} keyword matches)")
         return sorted(top_subreddits, key=lambda x: x[1], reverse=True)
 
+    except asyncpraw.exceptions.ResponseException as e:
+        if e.response.status_code == 403:
+            logger.error(f"403 Forbidden error searching subreddits for keywords {keywords}")
+            logger.error(f"403 Reason: {e.response.reason}")
+            logger.error(f"403 Response text: {e.response.text}")
+            print(f"403 Forbidden - Reason: {e.response.reason}")
+            print(f"Response: {e.response.text}")
+        else:
+            logger.error(f"HTTP {e.response.status_code} error searching subreddits for keywords {keywords}: {e}")
+        return []
     except Exception as e:
         logger.error(f"Error searching subreddits for keywords {keywords}: {e}")
         return []
@@ -101,6 +112,16 @@ async def find_relevant_subreddits_by_keywords(description: str) -> List[str]:
 
         return relevant_subreddits.output.relevant_subreddits
 
+    except asyncpraw.exceptions.ResponseException as e:
+        if e.response.status_code == 403:
+            logger.error(f"403 Forbidden error during keyword-based subreddit discovery")
+            logger.error(f"403 Reason: {e.response.reason}")
+            logger.error(f"403 Response text: {e.response.text}")
+            print(f"403 Forbidden - Reason: {e.response.reason}")
+            print(f"Response: {e.response.text}")
+        else:
+            logger.error(f"HTTP {e.response.status_code} error during keyword-based subreddit discovery: {e}")
+        return []
     except Exception as e:
         logger.error(f"Error during keyword-based subreddit discovery: {e}")
         return []
