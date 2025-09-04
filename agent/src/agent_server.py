@@ -75,21 +75,53 @@ app.add_middleware(
 
 @app.post("/api/analyze-url", response_model=AnalyzeUrlResponse)
 async def analyze_url_endpoint(request: AnalyzeUrlRequest):
+    logger.info(f"Starting URL analysis for: {request.url}")
+    
     try:
+        # Step 1: Fetch HTML content
+        logger.info(f"Step 1: Fetching HTML content from {request.url}")
         html_content = await fetch_html(request.url)
+        
+        # Step 2: Parse HTML content
+        logger.info(f"Step 2: Parsing HTML content ({len(html_content)} characters)")
         parsed_content = parse_html_content(html_content)
+        
+        # Step 3: Generate ICP description and pain points
+        logger.info("Step 3: Generating ICP description and pain points")
         icp_description, pain_points = await generate_icp_and_pain_points_combined(
             parsed_content
         )
+        logger.info(f"Generated ICP description ({len(icp_description)} chars) and {len(pain_points)} pain points")
+        
+        # Step 4: Find relevant subreddits
+        logger.info("Step 4: Finding relevant subreddits")
         subreddits = await find_relevant_subreddits_by_keywords(icp_description)
-        return AnalyzeUrlResponse(
+        logger.info(f"Found {len(subreddits)} subreddits, returning top 20")
+        
+        result = AnalyzeUrlResponse(
             subreddits=subreddits[:20],
             icp_description=icp_description,
             pain_points=pain_points,
         )
+        
+        logger.info(f"Successfully completed URL analysis for: {request.url}")
+        return result
+        
+    except HTTPException as e:
+        # HTTPExceptions from fetch_html or parse_html_content - pass through with context
+        logger.error(f"HTTP error during URL analysis for {request.url}: {e.status_code} - {e.detail}")
+        raise e
+        
+    except ValueError as e:
+        # Validation errors
+        error_msg = f"Invalid input for URL analysis: {str(e)}"
+        logger.error(f"Validation error for URL {request.url}: {error_msg}")
+        raise HTTPException(status_code=400, detail=error_msg)
+        
     except Exception as e:
         import traceback
-        logger.error(f"500 Error in analyze_url: {type(e).__name__}: {str(e)}")
+        error_msg = f"Unexpected error analyzing URL {request.url}: {type(e).__name__}: {str(e)}"
+        logger.error(error_msg)
         logger.error(f"Full traceback: {traceback.format_exc()}")
         raise HTTPException(status_code=500, detail=f"Failed to analyze URL: {str(e)}")
 
