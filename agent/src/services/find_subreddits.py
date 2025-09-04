@@ -87,9 +87,9 @@ async def find_relevant_subreddits_from_keywords(
 
 async def find_relevant_subreddits_by_keywords(description: str) -> List[str]:
     keywords = await extract_keywords(description)
+    reddit_client = RedditClient()
+    
     try:
-        reddit_client = RedditClient()
-
         subreddit_pool = await find_relevant_subreddits_from_keywords(
             reddit_client, keywords, limit=50
         )
@@ -110,6 +110,10 @@ async def find_relevant_subreddits_by_keywords(description: str) -> List[str]:
             context="keyword-based discovery",
         )
 
+        if relevant_subreddits is None:
+            logger.error("Agent returned None for subreddit relevance filtering")
+            return []
+
         return relevant_subreddits.output.relevant_subreddits
 
     except asyncpraw.exceptions.ResponseException as e:
@@ -125,3 +129,6 @@ async def find_relevant_subreddits_by_keywords(description: str) -> List[str]:
     except Exception as e:
         logger.error(f"Error during keyword-based subreddit discovery: {e}")
         return []
+    finally:
+        # Always close the Reddit client to prevent unclosed session warnings
+        await reddit_client.close()
