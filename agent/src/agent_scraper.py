@@ -34,7 +34,7 @@ def get_shared_reddit_client() -> RedditClient:
 
 def get_scraper_config() -> dict:
     return {
-        "polling_interval": 120,
+        "polling_interval": 1800,
         "confidence_threshold": 30,
         "initial_seeding_posts_per_subreddit": 25,
         "error_retry_delay": 60,
