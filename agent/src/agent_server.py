@@ -22,6 +22,7 @@ from src.models.server_models import (
     GenerateReplyResponse,
     InitialSeedingRequest,
 )
+from src.reddit.client import RedditClient
 from datetime import datetime
 import asyncio
 
@@ -207,6 +208,28 @@ async def get_next_scrape_time():
         raise HTTPException(
             status_code=500, detail=f"Failed to get next scrape time: {str(e)}"
         )
+
+
+@app.get("/api/test-reddit")
+async def test_reddit_api():
+    try:
+        reddit_client = RedditClient()
+        reddit = reddit_client.get_client()
+        
+        subreddit = await reddit.subreddit("test")
+      
+        await reddit_client.close()
+        
+        return {
+            "status": "success",
+            "message": "Reddit API is working",
+            "test_subreddit": subreddit.display_name
+        }
+    except Exception as e:
+        return {
+            "status": "error",
+            "message": f"Reddit API test failed: {str(e)}"
+        }
 
 
 if __name__ == "__main__":

@@ -37,8 +37,7 @@ export async function getUserPosts() {
       .innerJoin(icps, eq(redditPosts.icpId, icps.id))
       .where(eq(icps.userId, user.id))
       .orderBy(desc(redditPosts.createdAt))
-
-    // Apply limit only for free users (premium users have no limit)
+      
     const userPosts = await (leadLimit ? baseQuery.limit(leadLimit) : baseQuery)
     
     return userPosts as any[]

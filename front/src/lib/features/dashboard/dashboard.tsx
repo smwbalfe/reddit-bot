@@ -3,7 +3,7 @@
 import { useAuth } from "@/src/lib/features/auth/context/auth-context"
 import { useEffect, useState } from "react"
 import { Card, CardContent, CardHeader, CardTitle } from "@/src/lib/components/ui/card"
-import { MessageSquare, TrendingUp, Activity, Target, Calendar, BarChart3, Zap } from "lucide-react"
+import { MessageSquare, TrendingUp, Activity, Target, Calendar, BarChart3, Zap, TestTube } from "lucide-react"
 import Link from "next/link"
 import { getUserConfigs } from "@/src/lib/actions/config/get-user-configs"
 import { getUserPosts } from "@/src/lib/actions/config/get-user-posts"
@@ -18,6 +18,8 @@ export function Dashboard() {
   const [configs, setConfigs] = useState<ICP[]>([])
   const [posts, setPosts] = useState<PostWithConfigId[]>([])
   const [loading, setLoading] = useState(true)
+  const [redditTesting, setRedditTesting] = useState(false)
+  const [redditTestResult, setRedditTestResult] = useState<any>(null)
   
   const metrics = useDashboardMetrics(posts)
 
@@ -44,6 +46,23 @@ export function Dashboard() {
     }
   }
 
+  const testRedditApi = async () => {
+    setRedditTesting(true)
+    setRedditTestResult(null)
+    try {
+      const response = await fetch('http://localhost:8000/api/test-reddit')
+      const result = await response.json()
+      setRedditTestResult(result)
+    } catch (error) {
+      setRedditTestResult({
+        status: 'error',
+        message: `Failed to connect: ${error}`
+      })
+    } finally {
+      setRedditTesting(false)
+    }
+  }
+
   
 
   if (!user) {
@@ -66,7 +85,7 @@ export function Dashboard() {
         </div>
       ) : (
         <>
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-4 sm:gap-6">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-4 sm:gap-6">
             <Card className="border-0 shadow-sm bg-white">
               <CardContent className="p-4 sm:p-6">
                 <div className="flex items-center justify-between">
@@ -137,6 +156,37 @@ export function Dashboard() {
               </CardContent>
             </Card>
 
+            <Card className="border-0 shadow-sm bg-white">
+              <CardContent className="p-4 sm:p-6">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="text-sm font-medium text-slate-600">Reddit API</p>
+                    <button 
+                      onClick={testRedditApi}
+                      disabled={redditTesting}
+                      className="mt-2 px-3 py-1 bg-blue-600 text-white text-sm rounded hover:bg-blue-700 disabled:opacity-50"
+                    >
+                      {redditTesting ? 'Testing...' : 'Test API'}
+                    </button>
+                  </div>
+                  <div className="h-12 w-12 bg-purple-100 rounded-lg flex items-center justify-center">
+                    <TestTube className="h-6 w-6 text-purple-600" />
+                  </div>
+                </div>
+                {redditTestResult && (
+                  <div className="mt-4">
+                    <p className={`text-xs font-medium ${redditTestResult.status === 'success' ? 'text-green-600' : 'text-red-600'}`}>
+                      {redditTestResult.status === 'success' ? '✓ Working' : '✗ Failed'}
+                    </p>
+                    {redditTestResult.test_subreddit && (
+                      <p className="text-xs text-slate-600 mt-1">
+                        r/{redditTestResult.test_subreddit.name}
+                      </p>
+                    )}
+                  </div>
+                )}
+              </CardContent>
+            </Card>
 
           </div>
 
