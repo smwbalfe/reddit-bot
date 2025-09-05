@@ -8,7 +8,7 @@ import Link from "next/link"
 import { getUserConfigs } from "@/src/lib/actions/config/get-user-configs"
 import { getUserPosts } from "@/src/lib/actions/config/get-user-posts"
 import { useDashboardMetrics } from "@/src/lib/features/dashboard/hooks/use-dashboard-metrics"
-import env from "@/src/lib/env"
+import { testRedditApi } from "@/src/lib/actions/system/test-reddit-api"
 
 import { ICP } from "@/src/lib/db/schema"
 import { PostWithConfigId } from "@/src/lib/types"
@@ -47,13 +47,19 @@ export function Dashboard() {
     }
   }
 
-  const testRedditApi = async () => {
+  const handleTestRedditApi = async () => {
     setRedditTesting(true)
     setRedditTestResult(null)
     try {
-      const response = await fetch(`${env.FASTAPI_SERVER_URL}/api/test-reddit`)
-      const result = await response.json()
-      setRedditTestResult(result)
+      const result = await testRedditApi()
+      if (result.success) {
+        setRedditTestResult(result.data)
+      } else {
+        setRedditTestResult({
+          status: 'error',
+          message: result.error
+        })
+      }
     } catch (error) {
       setRedditTestResult({
         status: 'error',
@@ -163,7 +169,7 @@ export function Dashboard() {
                   <div>
                     <p className="text-sm font-medium text-slate-600">Reddit API</p>
                     <button 
-                      onClick={testRedditApi}
+                      onClick={handleTestRedditApi}
                       disabled={redditTesting}
                       className="mt-2 px-3 py-1 bg-blue-600 text-white text-sm rounded hover:bg-blue-700 disabled:opacity-50"
                     >
