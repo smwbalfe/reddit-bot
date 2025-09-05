@@ -8,6 +8,7 @@ import Link from "next/link"
 import { getUserConfigs } from "@/src/lib/actions/config/get-user-configs"
 import { getUserPosts } from "@/src/lib/actions/config/get-user-posts"
 import { useDashboardMetrics } from "@/src/lib/features/dashboard/hooks/use-dashboard-metrics"
+import env from "@/src/lib/env"
 
 import { ICP } from "@/src/lib/db/schema"
 import { PostWithConfigId } from "@/src/lib/types"
@@ -50,7 +51,7 @@ export function Dashboard() {
     setRedditTesting(true)
     setRedditTestResult(null)
     try {
-      const response = await fetch('http://localhost:8000/api/test-reddit')
+      const response = await fetch(`${env.FASTAPI_SERVER_URL}/api/test-reddit`)
       const result = await response.json()
       setRedditTestResult(result)
     } catch (error) {
