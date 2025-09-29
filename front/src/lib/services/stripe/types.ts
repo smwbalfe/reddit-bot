@@ -9,7 +9,7 @@ export type STRIPE_SUB_CACHE =
         currentPeriodEnd: number | null;
         cancelAtPeriodEnd: boolean;
         paymentMethod: {
-            brand: string | null; // e.g., "visa", "mastercard"
+            brand: string | null; // e.g.,  "visa", "mastercard"
             last4: string | null; // e.g., "4242"
         } | null;
     }
