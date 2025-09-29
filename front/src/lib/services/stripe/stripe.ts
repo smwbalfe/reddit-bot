@@ -6,17 +6,6 @@ import { icps } from "@/src/lib/db/schema";
 import { eq } from "drizzle-orm";
 import env from "@/src/lib/env-backend";
 
-let stripeInstance: Stripe | null = null
-
-function getStripe() {
-    if (!stripeInstance) {
-        stripeInstance = new Stripe(env.STRIPE_SECRET_KEY, {  
-            apiVersion: '2025-06-30.basil'
-        });
-    }
-    return stripeInstance;
-}
-
 export const STRIPE_CACHE_KV = {
     generateKey(stripeCustomerId: string) {
         return `stripe:customer:${stripeCustomerId}:sub-status`;
@@ -84,7 +73,9 @@ export async function processEvent(event: Stripe.Event) {
 }
 
 export async function syncStripeDataToKV(customerId: string) {
-    const stripe = getStripe();
+    const stripe = new Stripe(env.STRIPE_SECRET_KEY, {  
+        apiVersion: '2025-06-30.basil'
+    });
     
     const subscriptions = await stripe.subscriptions.list({
         customer: customerId,
