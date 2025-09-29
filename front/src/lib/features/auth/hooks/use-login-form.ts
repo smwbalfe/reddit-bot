@@ -4,7 +4,7 @@ import { useRouter } from "next/navigation"
 import { useState } from "react"
 import { useForm } from "react-hook-form"
 import { loginSchema } from "../forms/schema"
-import env from "@/src/lib/env"
+import env from "@/src/lib/env-frontend"
 
 const useLoginForm = () => {
     const [loading, setLoading] = useState(false)

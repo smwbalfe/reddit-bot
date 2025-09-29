@@ -4,7 +4,8 @@ import { STRIPE_SUB_CACHE } from "@/src/lib/services/stripe/types";
 import { db } from "@/src/lib/db";
 import { icps } from "@/src/lib/db/schema";
 import { eq } from "drizzle-orm";
-import env from "@/src/lib/env";
+import env from "@/src/lib/env-backend";
+
 
 const stripe = new Stripe(env.STRIPE_SECRET_KEY, {  
     apiVersion: '2025-06-30.basil'

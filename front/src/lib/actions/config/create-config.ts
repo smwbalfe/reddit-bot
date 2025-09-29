@@ -6,7 +6,7 @@ import { makeServerClient } from '@/src/lib/services/supabase/server'
 import { z } from 'zod'
 import { notifyConfigChange } from '@/src/lib/actions/notifications/notify-config-change'
 import { checkSubscription } from '@/src/lib/actions/payment/check-subscription'
-import env from '@/src/lib/env'
+import env from '@/src/lib/env-backend'
 
 const createIcpSchema = z.object({
   name: z.string().min(1, 'Name is required'),

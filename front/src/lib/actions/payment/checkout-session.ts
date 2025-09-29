@@ -1,6 +1,6 @@
 'use server'
 import Stripe from 'stripe';
-import env from '@/src/lib/env';
+import env from '@/src/lib/env-backend';
 import { STRIPE_CUSTOMER_ID_KV } from '@/src/lib/services/stripe/stripe';
 import { CheckoutRequestBody } from '@/src/lib/types';
 

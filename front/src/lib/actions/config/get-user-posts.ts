@@ -4,7 +4,7 @@ import { icps, redditPosts } from "@/src/lib/db/schema"
 import { eq, desc } from "drizzle-orm"
 import { makeServerClient } from '@/src/lib/services/supabase/server'
 import { checkSubscription } from '@/src/lib/actions/payment/check-subscription'
-import env from '@/src/lib/env'
+import env from '@/src/lib/env-backend'
 
 export async function getUserPosts() {
   try {

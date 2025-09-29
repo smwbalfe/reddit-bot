@@ -4,7 +4,7 @@ import WelcomeEmail from '@/src/lib/services/emails/welcome';
 import { db } from '@/src/lib/db';
 import { accounts } from '@/src/lib/db/schema';
 import { eq } from 'drizzle-orm';
-import env from '@/src/lib/env';
+import env from '@/src/lib/env-backend';
 import { EmailData } from '@/src/lib/types';
 
 const resend = new Resend(env.RESEND_API_KEY);

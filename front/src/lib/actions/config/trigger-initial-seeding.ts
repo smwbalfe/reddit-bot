@@ -1,6 +1,6 @@
 'use server'
 
-import env from '@/src/lib/env'
+import env from '@/src/lib/env-backend'
 
 export async function triggerInitialSeeding(icpId: number): Promise<{ success: boolean; error?: string }> {
   try {

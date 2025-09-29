@@ -5,7 +5,7 @@ import { useUser } from '@/src/lib/features/auth/hooks/use-user'
 import { checkLeadLimit } from '@/src/lib/actions/config/check-lead-limit'
 import { getUserUsage } from '@/src/lib/actions/usage/get-user-usage'
 import { checkSubscription } from '@/src/lib/actions/payment/check-subscription'
-import env from '@/src/lib/env'
+import env from '@/src/lib/env-frontend'
 
 interface UsageData {
     repliesGenerated: number
