@@ -35,6 +35,7 @@ const backendEnv = {
     NEXT_PUBLIC_FREE_REPLY_LIMIT: parseInt(process.env.NEXT_PUBLIC_FREE_REPLY_LIMIT || '15'),
 }
 
+// test
 console.log('Backend Environment Variables:', {
     NODE_ENV: backendEnv.NODE_ENV,
     NEXT_PUBLIC_APP_URL: backendEnv.NEXT_PUBLIC_APP_URL,
