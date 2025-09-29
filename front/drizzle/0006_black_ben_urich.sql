@@ -1,1 +1,0 @@
-ALTER TABLE "RedditPost" ADD COLUMN "leadCategory" varchar;

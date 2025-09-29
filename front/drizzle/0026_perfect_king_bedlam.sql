@@ -1,1 +1,0 @@
-ALTER TABLE "RedditPost" ADD COLUMN "leadStatus" varchar DEFAULT 'new' NOT NULL;

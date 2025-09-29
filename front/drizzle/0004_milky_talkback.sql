@@ -1,1 +1,0 @@
-ALTER TABLE "ICP" ADD COLUMN "keywords" text[] DEFAULT '{}' NOT NULL;

@@ -1,1 +1,0 @@
-ALTER TABLE "UsageTracking" ADD COLUMN "qualifiedLeads" integer DEFAULT 0 NOT NULL;

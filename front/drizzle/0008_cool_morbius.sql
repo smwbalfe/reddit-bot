@@ -1,1 +1,0 @@
-ALTER TABLE "ICP" ADD COLUMN "subreddits" text[] DEFAULT '{}' NOT NULL;

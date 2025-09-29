@@ -1,1 +1,0 @@
-ALTER TABLE "ICP" ADD COLUMN "seeded" boolean DEFAULT false NOT NULL;

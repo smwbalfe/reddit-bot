@@ -1,1 +1,0 @@
-ALTER TABLE "ICP" DROP COLUMN "monitoringEnabled";

@@ -1,1 +1,0 @@
-ALTER TABLE "ICP" ADD COLUMN "leadLimit" integer DEFAULT 100 NOT NULL;

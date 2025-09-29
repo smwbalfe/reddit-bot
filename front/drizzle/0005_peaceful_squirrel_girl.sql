@@ -1,1 +1,0 @@
-ALTER TABLE "RedditPost" DROP COLUMN "category";
