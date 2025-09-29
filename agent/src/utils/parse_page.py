@@ -26,7 +26,6 @@ def validate_url(url: str) -> str:
     if parsed.scheme not in ('http', 'https'):
         raise ValueError(f"Unsupported URL scheme: {parsed.scheme}")
     
-    # Validate netloc (domain)
     if not parsed.netloc:
         raise ValueError("Invalid URL: missing domain")
     
@@ -37,7 +36,6 @@ async def fetch_html(url: str) -> str:
     logger = logging.getLogger(__name__)
     
     try:
-        # Validate URL format first
         validated_url = validate_url(url)
         logger.info(f"Fetching HTML from: {validated_url}")
         

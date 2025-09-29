@@ -1,4 +1,3 @@
 #!/bin/bash
-
 source .venv/bin/activate
-python src/agent_server.py
+python3 -m src.agent_server
