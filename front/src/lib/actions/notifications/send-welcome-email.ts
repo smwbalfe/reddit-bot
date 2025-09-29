@@ -7,10 +7,9 @@ import { eq } from 'drizzle-orm';
 import env from '@/src/lib/env-backend';
 import { EmailData } from '@/src/lib/types';
 
-const resend = new Resend(env.RESEND_API_KEY);
-
 export async function sendWelcomeEmail(emailData: EmailData) {
     const { email, name, userId } = emailData;
+    const resend = new Resend(env.RESEND_API_KEY);
     try {
         const [account] = await db.select()
             .from(accounts)
