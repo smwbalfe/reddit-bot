@@ -42,7 +42,7 @@ export const useCheckout = (userId: string | undefined) => {
                     throw new Error(error.message)
                 }
             } else {
-                throw new Error(result.error || 'Checkout session creation failed')
+                throw new Error(result.error || 'Checkout session creation  failed')
             }
         } catch (error) {
             console.error('Checkout error:', error)
