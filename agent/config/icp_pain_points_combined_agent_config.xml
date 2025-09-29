@@ -5,7 +5,7 @@
     <html_content>Raw HTML content from the product/service webpage (required)</html_content>
   </input_format>
   <output_format>
-    <icp_description>Clear, detailed paragraph format (3-5 sentences) describing the ideal customer profile</icp_description>
+    <icp_description>Clear,  detailed paragraph format (3-5 sentences) describing the ideal customer profile</icp_description>
     <pain_points>Concise paragraph format (2-4 sentences) listing the main problems or pain points that the product/service addresses</pain_points>
   </output_format>
   <icp_components>
