@@ -4,7 +4,7 @@ import { STRIPE_SUB_CACHE } from "@/src/lib/services/stripe/types";
 import { db } from "@/src/lib/db";
 import { icps } from "@/src/lib/db/schema";
 import { eq } from "drizzle-orm";
-import env from "@/src/lib/env-backend";
+import env from "@/src/lib/env";
 
 export const STRIPE_CACHE_KV = {
     generateKey(stripeCustomerId: string) {

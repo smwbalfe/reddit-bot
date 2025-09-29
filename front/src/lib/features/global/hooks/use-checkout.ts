@@ -4,7 +4,7 @@ import { useState } from 'react'
 import { loadStripe } from '@stripe/stripe-js'
 import { createCheckoutSession } from '@/src/lib/actions/payment/checkout-session'
 import { supabaseBrowserClient } from '@/src/lib/services/supabase/client'
-import env from '@/src/lib/env-frontend'
+import env from '@/src/lib/env'
 
 export const useCheckout = (userId: string | undefined) => {
     const [isLoading, setIsLoading] = useState(false)

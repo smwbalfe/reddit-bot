@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 import Stripe from "stripe";
 import { headers } from "next/headers";
 import { processEvent } from "@/src/lib/services/stripe/stripe";
-import env from "@/src/lib/env-backend";
+import env from "@/src/lib/env";
 
 export async function POST(req: Request) {
     const body = await req.text();

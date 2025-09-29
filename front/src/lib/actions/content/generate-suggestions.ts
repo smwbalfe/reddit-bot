@@ -1,5 +1,5 @@
 'use server'
-import env from '@/src/lib/env-backend'
+import env from '@/src/lib/env'
 
 
 interface GenerateSuggestionsResponse {

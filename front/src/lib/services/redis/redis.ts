@@ -1,5 +1,5 @@
 import { Redis } from '@upstash/redis'
-import env from '@/src/lib/env-backend'
+import env from '@/src/lib/env'
 
 let redisInstance: Redis | null = null
 

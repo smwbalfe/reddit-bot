@@ -2,7 +2,7 @@ import { createServerClient } from '@supabase/ssr'
 import { NextResponse, type NextRequest } from 'next/server'
 import { redis } from '@/src/lib/services/redis/redis'
 import { STRIPE_SUB_CACHE } from '@/src/lib/services/stripe/types'
-import env from '@/src/lib/env-backend'
+import env from '@/src/lib/env'
 
 const premiumRoutes = ['/dashboard']
 

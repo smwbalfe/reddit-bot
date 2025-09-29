@@ -5,7 +5,7 @@ import { icps, usageTracking } from '@/src/lib/db/schema'
 import { eq, and } from 'drizzle-orm'
 import { checkSubscription } from '@/src/lib/actions/payment/check-subscription'
 import { makeServerClient } from '@/src/lib/services/supabase/server'
-import env from '../env-backend'
+import env from '@/src/lib/env'
 
 interface GenerateReplyRequest {
   icpId: number

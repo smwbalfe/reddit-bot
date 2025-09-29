@@ -1,7 +1,7 @@
 'use server'
 import { checkSubscription } from '@/src/lib/actions/payment/check-subscription'
 import { getUserLeadCount } from '@/src/lib/actions/config/get-user-lead-count'
-import env from '@/src/lib/env-backend'
+import env from '@/src/lib/env'
 
 export async function checkLeadLimit() {
   try {

@@ -4,7 +4,7 @@ import { useState } from "react"
 import { useForm } from "react-hook-form"
 import { z } from "zod"
 import { signupSchema } from "../forms/schema"
-import env from "@/src/lib/env-frontend"
+import env from "@/src/lib/env"
 
 export function useSignupForm() {
     const [loading, setLoading] = useState(false)

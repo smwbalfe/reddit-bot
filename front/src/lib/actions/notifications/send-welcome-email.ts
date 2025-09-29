@@ -4,7 +4,7 @@ import WelcomeEmail from '@/src/lib/services/emails/welcome';
 import { db } from '@/src/lib/db';
 import { accounts } from '@/src/lib/db/schema';
 import { eq } from 'drizzle-orm';
-import env from '@/src/lib/env-backend';
+import env from '@/src/lib/env';
 import { EmailData } from '@/src/lib/types';
 
 export async function sendWelcomeEmail(emailData: EmailData) {

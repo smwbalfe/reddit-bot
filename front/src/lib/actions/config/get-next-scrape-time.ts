@@ -1,6 +1,6 @@
 'use server'
 
-import env from '@/src/lib/env-backend'
+import env from '@/src/lib/env'
 
 interface NextScrapeTimeResponse {
   next_run_time: string
