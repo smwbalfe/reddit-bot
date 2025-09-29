@@ -6,8 +6,6 @@ import { createCheckoutSession } from '@/src/lib/actions/payment/checkout-sessio
 import { supabaseBrowserClient } from '@/src/lib/services/supabase/client'
 import env from '@/src/lib/env-frontend'
 
-const stripePromise = loadStripe(env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY)
-
 export const useCheckout = (userId: string | undefined) => {
     const [isLoading, setIsLoading] = useState(false)
     const handleCheckout = async () => {
@@ -32,6 +30,7 @@ export const useCheckout = (userId: string | undefined) => {
             })
 
             if (result.sessionId) {
+                const stripePromise = loadStripe(env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY)
                 const stripe = await stripePromise
                 if (!stripe) {
                     throw new Error('Stripe failed to initialize')

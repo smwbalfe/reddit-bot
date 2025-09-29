@@ -4,12 +4,11 @@ import env from '@/src/lib/env-backend';
 import { STRIPE_CUSTOMER_ID_KV } from '@/src/lib/services/stripe/stripe';
 import { CheckoutRequestBody } from '@/src/lib/types';
 
-const stripe = new Stripe(env.STRIPE_SECRET_KEY, {
-    apiVersion: '2025-06-30.basil'
-});
-
 export async function createCheckoutSession(formData: CheckoutRequestBody) {
     const { userId, email, line_item } = formData;
+    const stripe = new Stripe(env.STRIPE_SECRET_KEY, {
+        apiVersion: '2025-06-30.basil'
+    });
     console.log('createCheckoutSession called with:', { userId, email, line_item });
 
     if (!userId) {

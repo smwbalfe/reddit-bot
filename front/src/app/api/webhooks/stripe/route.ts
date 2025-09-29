@@ -4,10 +4,6 @@ import { headers } from "next/headers";
 import { processEvent } from "@/src/lib/services/stripe/stripe";
 import env from "@/src/lib/env-backend";
 
-const stripe = new Stripe(env.STRIPE_SECRET_KEY, {
-    apiVersion: '2025-06-30.basil'
-});
-
 export async function POST(req: Request) {
     const body = await req.text();
     
@@ -23,7 +19,11 @@ export async function POST(req: Request) {
         }
 
         try {
-                    const event = stripe.webhooks.constructEvent(
+            const stripe = new Stripe(env.STRIPE_SECRET_KEY, {
+                apiVersion: '2025-06-30.basil'
+            });
+            
+            const event = stripe.webhooks.constructEvent(
             body,
             signature,
             env.STRIPE_WEBHOOK_SECRET
